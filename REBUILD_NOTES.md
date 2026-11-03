@@ -25,3 +25,4 @@
 3. Cards: grid 2/4 cols, icon orb art, element frame, name + Lv badge, one-line effect (spellEffectText). Header visible and all cards in view at both sizes.
 4. Polish: .glass-panel on menu tiles/bar, Research letter, level-up/start headers.
 5. White screen: not reproduced (rapid level-ups, game over, quit-to-menu, 60s+ run all fine, heap ~8MB, 0 errors). Video looks like the browser/tab being killed. Hardening: ErrorBoundary recover screen, dark html background inline (no white flash on reload/SW update), stuck initial weather banner now clears.
+6. Mage sprite matched to Caelen portrait: blue-violet crystal wings (front/side/back), longer silver hair, near-black coat with violet belt + cyan gem; 8-dir facing/float unchanged. v3-mage-match.png.

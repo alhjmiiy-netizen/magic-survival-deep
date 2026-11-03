@@ -306,13 +306,29 @@ function getMage(view: MageView = 'front'): Sprite {
       g.fillStyle = '#bfefff';
       g.beginPath(); g.moveTo(sx, -54); g.lineTo(sx + 3, -46); g.lineTo(sx, -40); g.lineTo(sx - 3, -46); g.fill();
     };
+    // glowing blue-purple crystal wings (matches the Caelen menu portrait)
+    const wing = (dir: number, scale: number) => {
+      g.save(); g.translate(dir * 4, -18); g.scale(dir * scale, 1);
+      const shards: [number, number, number][] = [[34, -30, 7], [36, -14, 6], [30, 2, 5], [22, 14, 4]];
+      for (const [tx, ty, w] of shards) {
+        const gr = g.createLinearGradient(0, 0, tx, ty);
+        gr.addColorStop(0, 'rgba(139,92,246,1)');
+        gr.addColorStop(0.6, 'rgba(59,130,246,0.95)');
+        gr.addColorStop(1, 'rgba(224,242,254,0.95)');
+        g.fillStyle = gr;
+        g.beginPath(); g.moveTo(0, 0); g.lineTo(tx * 0.55, ty * 0.55 - w); g.lineTo(tx, ty); g.lineTo(tx * 0.55 + w * 0.4, ty * 0.55 + w * 0.6); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(30,27,75,0.9)'; g.lineWidth = 0.8; g.stroke();
+      }
+      g.restore();
+    };
+    if (side) wing(-1, 0.8); else { wing(-1, 1); wing(1, 1); }
     if (back) drawStaff();
     g.save();
     if (side) g.scale(0.78, 1);
     // long coat, flared hem swept back (floating)
     const coat = g.createLinearGradient(-20, -20, 20, 25);
-    coat.addColorStop(0, back ? '#1d2740' : '#2a3550');
-    coat.addColorStop(0.5, '#141b2e');
+    coat.addColorStop(0, back ? '#161a2a' : '#1c2236');
+    coat.addColorStop(0.5, '#0c101c');
     coat.addColorStop(1, '#070a14');
     g.fillStyle = coat;
     g.beginPath();
@@ -328,8 +344,9 @@ function getMage(view: MageView = 'front'): Sprite {
     else if (side) { g.moveTo(9, -20); g.lineTo(10, 20); }
     else { g.moveTo(0, -20); g.lineTo(0, 22); g.moveTo(-20, 22); g.lineTo(-6, 19); g.moveTo(20, 22); g.lineTo(6, 19); }
     g.stroke();
-    g.strokeStyle = '#c9a75a'; g.lineWidth = 1.2;
+    g.strokeStyle = '#a78bfa'; g.lineWidth = 1.4;
     g.beginPath(); g.moveTo(-10, -8); g.lineTo(10, -8); g.stroke();
+    g.fillStyle = '#67e8f9'; g.beginPath(); g.arc(0, -8, 1.6, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#1d2740';
     g.beginPath(); g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2); g.fill();
     g.restore();
@@ -349,12 +366,12 @@ function getMage(view: MageView = 'front'): Sprite {
     // head
     const hair = g.createLinearGradient(0, -38, 0, -18);
     hair.addColorStop(0, '#ffffff');
-    hair.addColorStop(1, '#9aa7bd');
+    hair.addColorStop(1, '#c7d2fe');
     if (back) {
       g.fillStyle = hair;
       g.beginPath();
       g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30);
-      g.lineTo(7, -14); g.lineTo(2, -17); g.lineTo(0, -12); g.lineTo(-2, -17); g.lineTo(-7, -14);
+      g.lineTo(8, -6); g.lineTo(3, -10); g.lineTo(0, -4); g.lineTo(-3, -10); g.lineTo(-8, -6);
       g.closePath(); g.fill();
     } else if (side) {
       g.fillStyle = '#eadfd2';
@@ -362,7 +379,7 @@ function getMage(view: MageView = 'front'): Sprite {
       g.fillStyle = hair;
       g.beginPath();
       g.moveTo(4, -32); g.quadraticCurveTo(2, -39, -4, -37); g.quadraticCurveTo(-8, -33, -7, -26);
-      g.lineTo(-12, -14); g.lineTo(-5, -18); g.lineTo(-1, -26); g.lineTo(1, -31);
+      g.lineTo(-13, -6); g.lineTo(-5, -14); g.lineTo(-1, -26); g.lineTo(1, -31);
       g.closePath(); g.fill();
       g.fillStyle = '#7dd3fc';
       g.fillRect(3, -29.5, 1.6, 1);
@@ -372,7 +389,7 @@ function getMage(view: MageView = 'front'): Sprite {
       g.fillStyle = hair;
       g.beginPath();
       g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30);
-      g.lineTo(8, -18); g.lineTo(4, -22); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -22); g.lineTo(-8, -17);
+      g.lineTo(9, -10); g.lineTo(4, -20); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -20); g.lineTo(-9, -10);
       g.closePath(); g.fill();
       g.fillStyle = '#7dd3fc';
       g.fillRect(-2.5, -29.5, 1.6, 1); g.fillRect(1, -29.5, 1.6, 1);
