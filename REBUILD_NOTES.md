@@ -18,3 +18,10 @@
 - [x] 5 powers strip fed by onSpellsUpdate (+ Fast Casting chip).
 - [x] 7 combos: engine.checkCombos uses canFormCombo (both Lv6) -> combo spell that casts both components boosted. QA: qa/flow.js.
 - [x] SW: workbox skipWaiting/clientsClaim/cleanupOutdatedCaches, cacheId magic-survival-v2.
+
+## Round 3 (2026-11-02 PST)
+1. Floating joystick: full-screen touchpad under HUD (pointer capture, per-pointerId, R=52, deadzone 0.14, analog speed in engine). Fixed joystick removed. Dash fires on pointerdown so it works with a second finger. QA touch.js: base spawns at touch point, player moves R/L/U/D/diag at 844x390 & 390x844; HUD touch doesn't spawn it.
+2. Magic bar: bottom-centre glass bar, 52px tiles, Lv badge, pips, cooldown ring (rAF via getCooldowns), tap = tooltip, toast + flash on learn/level. Items belt separate (right, above Dash, labelled ITEMS, potion icons + counts).
+3. Cards: grid 2/4 cols, icon orb art, element frame, name + Lv badge, one-line effect (spellEffectText). Header visible and all cards in view at both sizes.
+4. Polish: .glass-panel on menu tiles/bar, Research letter, level-up/start headers.
+5. White screen: not reproduced (rapid level-ups, game over, quit-to-menu, 60s+ run all fine, heap ~8MB, 0 errors). Video looks like the browser/tab being killed. Hardening: ErrorBoundary recover screen, dark html background inline (no white flash on reload/SW update), stuck initial weather banner now clears.
