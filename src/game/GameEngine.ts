@@ -1380,7 +1380,7 @@ export class GameEngine {
     this.renderLivingEnemies(ctx);
 
     // 6. Player Archmage
-    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt);
+    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt, this.currentHero.id);
 
     // 7. Projectiles (Arcane Missiles & Fused Magic)
     this.renderProjectiles(ctx);

@@ -399,6 +399,145 @@ function getMage(view: MageView = 'front'): Sprite {
   return sp;
 }
 
+
+/* ---------- per-hero sprites (match each hero's menu portrait) ---------- */
+type Wing = 'none' | 'crystal' | 'feather' | 'fire' | 'ice' | 'lightning';
+type Head = 'long' | 'short' | 'hood' | 'antlers' | 'horns';
+type Weapon = 'staff' | 'mace' | 'scythe' | 'daggers' | 'fireHands' | 'orbStaff';
+interface HeroLook {
+  wing: Wing; wingA: string; wingB: string; wingEdge: string;
+  head: Head; hair: [string, string]; skin: string;
+  coat: [string, string, string]; trim: string; accent: string;
+  weapon: Weapon; weaponGlow: string; halo?: string; crown?: string; beard?: string; eyes: string; aura: string;
+  rings?: string; dress?: boolean;
+}
+export const HERO_LOOKS: Record<string, HeroLook> = {
+  aurelia: { wing: 'feather', wingA: '#fde68a', wingB: '#f59e0b', wingEdge: '#fff7d6', head: 'long', hair: ['#fde68a', '#d4a017'], skin: '#f1d6bf', coat: ['#f5d778', '#b8860b', '#6b4a0c'], trim: '#fff1b0', accent: '#fbbf24', weapon: 'mace', weaponGlow: '#ff9d2e', halo: '#ffd75a', eyes: '#3b82f6', aura: 'rgba(255,200,80,1)', dress: true },
+  lyra: { wing: 'ice', wingA: '#bfdbfe', wingB: '#3b82f6', wingEdge: '#e0f2fe', head: 'long', hair: ['#f8fafc', '#cbd5e1'], skin: '#efe2dc', coat: ['#1e3a8a', '#172554', '#0b1230'], trim: '#93c5fd', accent: '#e0f2fe', weapon: 'orbStaff', weaponGlow: '#7dd3fc', crown: '#bae6fd', eyes: '#38bdf8', aura: 'rgba(120,190,255,1)', dress: true },
+  kael: { wing: 'fire', wingA: '#fb923c', wingB: '#b91c1c', wingEdge: '#fde047', head: 'short', hair: ['#3f2a1d', '#1c120c'], skin: '#d6a77f', coat: ['#4a2f22', '#2a1a12', '#120a06'], trim: '#f97316', accent: '#fb923c', weapon: 'fireHands', weaponGlow: '#ff7a1f', beard: '#2a1a10', eyes: '#fb923c', aura: 'rgba(255,120,40,1)' },
+  zephyr: { wing: 'lightning', wingA: '#c4b5fd', wingB: '#7c3aed', wingEdge: '#ede9fe', head: 'short', hair: ['#27272a', '#09090b'], skin: '#dcb79a', coat: ['#2e1f4a', '#1a1230', '#0b0716'], trim: '#a78bfa', accent: '#c084fc', weapon: 'fireHands', weaponGlow: '#a855f7', beard: '#18181b', eyes: '#c4b5fd', aura: 'rgba(170,110,255,1)' },
+  moros: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#18181b', '#09090b'], skin: '#2a2a2e', coat: ['#27272a', '#141416', '#050506'], trim: '#3f3f46', accent: '#22c55e', weapon: 'scythe', weaponGlow: '#4ade80', eyes: '#4ade80', aura: 'rgba(40,220,120,1)' },
+  vane: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'hood', hair: ['#1f1f24', '#0a0a0c'], skin: '#101014', coat: ['#26262c', '#141418', '#060608'], trim: '#3f3f46', accent: '#a855f7', weapon: 'daggers', weaponGlow: '#c084fc', eyes: '#d8b4fe', aura: 'rgba(160,80,255,1)' },
+  eldrin: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'antlers', hair: ['#9ca38f', '#5b6150'], skin: '#b89a7c', coat: ['#3f5a2a', '#263a1a', '#14200d'], trim: '#84cc16', accent: '#4ade80', weapon: 'orbStaff', weaponGlow: '#4ade80', beard: '#a8a89a', eyes: '#86efac', aura: 'rgba(80,220,120,1)' },
+  ignis: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#2a1410', '#120806'], skin: '#a3352a', coat: ['#5a3524', '#3a2016', '#1a0d08'], trim: '#c2410c', accent: '#f97316', weapon: 'fireHands', weaponGlow: '#ff5a1f', beard: '#2a1410', eyes: '#fde047', aura: 'rgba(255,90,30,1)' },
+  nyx: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'long', hair: ['#2a1f3d', '#0f0a1a'], skin: '#e6c9b4', coat: ['#3b2a7a', '#22175a', '#0f0a30'], trim: '#d4a94a', accent: '#60a5fa', weapon: 'orbStaff', weaponGlow: '#c084fc', rings: '#c8963e', crown: '#a78bfa', eyes: '#93c5fd', aura: 'rgba(140,100,255,1)', dress: true },
+};
+
+const heroSprites: Record<string, Sprite> = {};
+function getHeroSprite(heroId: string, view: MageView): Sprite {
+  const L = HERO_LOOKS[heroId];
+  if (!L) return getMage(view);
+  const key = heroId + ':' + view;
+  if (heroSprites[key]) return heroSprites[key];
+  const sp = makeSprite(96, 104, 48, 68, (g) => {
+    const side = view === 'side', back = view === 'back';
+    // ---- wings
+    const wingShape = (dir: number, sc: number) => {
+      if (L.wing === 'none') return;
+      g.save(); g.translate(dir * 4, -18); g.scale(dir * sc, 1);
+      const feathers: [number, number, number][] = L.wing === 'feather'
+        ? [[40, -26, 6], [42, -12, 6], [38, 2, 5], [30, 12, 5], [20, 18, 4]]
+        : [[36, -30, 7], [38, -14, 6], [32, 2, 5], [22, 14, 4]];
+      feathers.forEach(([tx, ty, w], i) => {
+        const gr = g.createLinearGradient(0, 0, tx, ty);
+        gr.addColorStop(0, L.wingB); gr.addColorStop(0.65, L.wingA); gr.addColorStop(1, L.wingEdge);
+        g.fillStyle = gr;
+        g.beginPath();
+        if (L.wing === 'feather') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.5, ty - w * 1.5, tx, ty); g.quadraticCurveTo(tx * 0.6, ty + w, 0, 2); }
+        else if (L.wing === 'fire') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.4, ty * 0.2 - w * 2, tx, ty - 4); g.lineTo(tx * 0.8, ty + 2); g.quadraticCurveTo(tx * 0.5, ty * 0.6 + w, 0, 3); }
+        else if (L.wing === 'lightning') { g.moveTo(0, 0); g.lineTo(tx * 0.35, ty * 0.35 - w); g.lineTo(tx * 0.5, ty * 0.5 + 1); g.lineTo(tx * 0.75, ty * 0.75 - w * 0.6); g.lineTo(tx, ty); g.lineTo(tx * 0.6, ty * 0.6 + w * 0.7); g.closePath(); }
+        else { g.moveTo(0, 0); g.lineTo(tx * 0.55, ty * 0.55 - w); g.lineTo(tx, ty); g.lineTo(tx * 0.55 + w * 0.4, ty * 0.55 + w * 0.6); g.closePath(); }
+        g.fill();
+        g.strokeStyle = L.wing === 'feather' ? 'rgba(120,80,10,0.6)' : 'rgba(20,10,40,0.7)'; g.lineWidth = 0.7; g.stroke();
+        if (i === 0 && L.wing === 'fire') { g.fillStyle = '#fde047'; g.beginPath(); g.arc(tx, ty - 4, 2, 0, Math.PI * 2); g.fill(); }
+      });
+      g.restore();
+    };
+    if (side) wingShape(-1, 0.8); else { wingShape(-1, 1); wingShape(1, 1); }
+    if (L.rings && !side) { g.strokeStyle = L.rings; g.lineWidth = 1.4; g.beginPath(); g.arc(0, -26, 22, 0, Math.PI * 2); g.stroke(); g.lineWidth = 0.8; g.beginPath(); g.ellipse(0, -26, 26, 9, -0.5, 0, Math.PI * 2); g.stroke(); }
+    if (L.halo) { g.strokeStyle = L.halo; g.lineWidth = 2; g.beginPath(); g.arc(0, back ? -34 : -36, 8, 0, Math.PI * 2); g.stroke(); }
+    // ---- weapon (staff-like, drawn behind when back)
+    const weapon = () => {
+      const sx = side ? 11 : 17;
+      if (L.weapon === 'staff' || L.weapon === 'orbStaff' || L.weapon === 'mace' || L.weapon === 'scythe') {
+        g.strokeStyle = L.weapon === 'scythe' ? '#1c1c1f' : L.weapon === 'mace' ? '#d4a017' : '#5b4630'; g.lineWidth = 2.2;
+        g.beginPath(); g.moveTo(sx, L.weapon === 'mace' ? -16 : -42); g.lineTo(sx - 2, 22); g.stroke();
+        if (L.weapon === 'scythe') { g.fillStyle = '#2b2b30'; g.beginPath(); g.moveTo(sx, -42); g.quadraticCurveTo(sx - 26, -48, sx - 30, -26); g.quadraticCurveTo(sx - 20, -40, sx, -36); g.fill(); g.strokeStyle = L.weaponGlow; g.lineWidth = 0.8; g.stroke(); }
+        else if (L.weapon === 'mace') { g.fillStyle = L.weaponGlow; g.beginPath(); g.arc(sx, -19, 4.5, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(sx, -19, 2, 0, Math.PI * 2); g.fill(); }
+        else { g.fillStyle = L.weaponGlow; g.beginPath(); g.arc(sx, -46, 3.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, -46, 1.4, 0, Math.PI * 2); g.fill(); }
+      } else if (L.weapon === 'daggers') {
+        g.fillStyle = L.weaponGlow;
+        for (const dx of side ? [10] : [-16, 16]) { g.beginPath(); g.moveTo(dx, -6); g.lineTo(dx + (dx < 0 ? -2 : 2), 8); g.lineTo(dx, 4); g.closePath(); g.fill(); }
+      } else {
+        g.fillStyle = L.weaponGlow;
+        for (const dx of side ? [11] : [-16, 17]) { g.beginPath(); g.moveTo(dx - 3, -4); g.quadraticCurveTo(dx, -16, dx + 3, -4); g.arc(dx, -4, 3, 0, Math.PI); g.fill(); g.fillStyle = '#fde68a'; g.beginPath(); g.arc(dx, -5, 1.3, 0, Math.PI * 2); g.fill(); g.fillStyle = L.weaponGlow; }
+      }
+    };
+    if (back) weapon();
+    // ---- coat / robe
+    g.save(); if (side) g.scale(0.78, 1);
+    const coat = g.createLinearGradient(-20, -20, 20, 25);
+    coat.addColorStop(0, L.coat[0]); coat.addColorStop(0.5, L.coat[1]); coat.addColorStop(1, L.coat[2]);
+    g.fillStyle = coat; g.beginPath();
+    const hem = L.dress ? 24 : 20;
+    if (side) { g.moveTo(-8, -22); g.lineTo(9, -22); g.lineTo(11, 0); g.lineTo(10, hem); g.lineTo(0, hem - 2); g.lineTo(-12, hem + 4); g.lineTo(-24, hem); g.lineTo(-13, 0); }
+    else { g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(13, 0); g.lineTo(L.dress ? 18 : 20, hem); g.lineTo(6, hem - 3); g.lineTo(0, hem + 1); g.lineTo(-6, hem - 3); g.lineTo(L.dress ? -18 : -20, hem); g.lineTo(-13, 0); }
+    g.closePath(); g.fill();
+    g.strokeStyle = L.trim; g.lineWidth = 1; g.beginPath();
+    if (back) { g.moveTo(-12, 2); g.lineTo(0, 14); g.lineTo(12, 2); }
+    else if (side) { g.moveTo(9, -20); g.lineTo(10, hem); }
+    else { g.moveTo(0, -20); g.lineTo(0, hem); g.moveTo(-18, hem); g.lineTo(-6, hem - 3); g.moveTo(18, hem); g.lineTo(6, hem - 3); }
+    g.stroke();
+    g.strokeStyle = L.trim; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-10, -8); g.lineTo(10, -8); g.stroke();
+    g.fillStyle = L.accent; g.beginPath(); g.arc(0, -8, 1.7, 0, Math.PI * 2); g.fill();
+    g.fillStyle = L.coat[0]; g.beginPath(); g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = L.trim; g.lineWidth = 0.8; g.stroke();
+    g.restore();
+    if (!back) {
+      g.strokeStyle = L.coat[1]; g.lineWidth = 5; g.beginPath();
+      if (side) { g.moveTo(2, -19); g.lineTo(10, -6); } else { g.moveTo(-10, -19); g.lineTo(-15, -4); g.moveTo(10, -19); g.lineTo(16, -6); }
+      g.stroke();
+      weapon();
+    }
+    // ---- head
+    const hair = g.createLinearGradient(0, -38, 0, -10);
+    hair.addColorStop(0, L.hair[0]); hair.addColorStop(1, L.hair[1]);
+    const hx = side ? 1.5 : 0;
+    if (L.head === 'hood' || L.head === 'horns' && L.skin === '#2a2a2e') {
+      g.fillStyle = L.coat[1];
+      g.beginPath(); g.moveTo(hx - 8, -18); g.quadraticCurveTo(hx - 9, -40, hx, -40); g.quadraticCurveTo(hx + 9, -40, hx + 8, -18); g.closePath(); g.fill();
+      if (!back) { g.fillStyle = '#050507'; g.beginPath(); g.ellipse(hx + (side ? 2 : 0), -28, 4.5, 5.5, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = L.eyes; if (side) g.fillRect(hx + 3, -29.5, 2, 1.3); else { g.fillRect(hx - 3, -29.5, 2, 1.3); g.fillRect(hx + 1, -29.5, 2, 1.3); } }
+    } else {
+      if (!back) { g.fillStyle = L.skin; g.beginPath(); g.ellipse(hx, -29, side ? 4 : 4.5, 5.5, 0, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = hair; g.beginPath();
+      if (L.head === 'long') {
+        if (back) { g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30); g.lineTo(8, -6); g.lineTo(0, -4); g.lineTo(-8, -6); }
+        else if (side) { g.moveTo(4, -32); g.quadraticCurveTo(2, -39, -4, -37); g.quadraticCurveTo(-8, -33, -7, -26); g.lineTo(-13, -6); g.lineTo(-5, -14); g.lineTo(-1, -26); g.lineTo(1, -31); }
+        else { g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30); g.lineTo(9, -10); g.lineTo(4, -20); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -20); g.lineTo(-9, -10); }
+      } else {
+        g.moveTo(hx - 5.5, -29); g.quadraticCurveTo(hx - 6, -37, hx, -37); g.quadraticCurveTo(hx + 6, -37, hx + 5.5, -29); g.lineTo(hx + 4, -32); g.lineTo(hx - 4, -32);
+      }
+      g.closePath(); g.fill();
+      if (L.beard && !back) { g.fillStyle = L.beard; g.beginPath(); g.moveTo(hx - 4, -28); g.quadraticCurveTo(hx, L.head === 'antlers' ? -16 : -21, hx + 4, -28); g.lineTo(hx + 3, -26); g.lineTo(hx - 3, -26); g.closePath(); g.fill(); }
+      if (!back) { g.fillStyle = L.eyes; if (side) g.fillRect(hx + 1.5, -30, 1.6, 1.1); else { g.fillRect(hx - 2.5, -30, 1.6, 1.1); g.fillRect(hx + 1, -30, 1.6, 1.1); } }
+    }
+    if (L.head === 'horns') {
+      g.fillStyle = L.skin === '#2a2a2e' ? '#3f3f46' : '#3a2a20';
+      for (const d of side ? [-1] : [-1, 1]) { g.beginPath(); g.moveTo(hx + d * 4, -34); g.quadraticCurveTo(hx + d * 11, -38, hx + d * 9, -46); g.quadraticCurveTo(hx + d * 7, -39, hx + d * 2, -36); g.fill(); }
+    }
+    if (L.head === 'antlers') {
+      g.strokeStyle = '#6b8e3a'; g.lineWidth = 1.6; g.beginPath();
+      for (const d of side ? [-1] : [-1, 1]) { g.moveTo(hx + d * 3, -36); g.lineTo(hx + d * 10, -48); g.moveTo(hx + d * 6, -41); g.lineTo(hx + d * 13, -42); g.moveTo(hx + d * 8, -45); g.lineTo(hx + d * 6, -52); }
+      g.stroke();
+    }
+    if (L.crown) { g.fillStyle = L.crown; g.beginPath(); g.moveTo(hx - 5, -35); g.lineTo(hx - 4, -41); g.lineTo(hx - 1.5, -37); g.lineTo(hx, -43); g.lineTo(hx + 1.5, -37); g.lineTo(hx + 4, -41); g.lineTo(hx + 5, -35); g.closePath(); g.fill(); }
+  });
+  heroSprites[key] = sp;
+  return sp;
+}
+export function heroAura(heroId: string): string { return HERO_LOOKS[heroId]?.aura ?? 'rgba(60,170,255,1)'; }
+
 /** 8-way direction from an angle (canvas coords, y down). 0=E,1=SE,2=S,3=SW,4=W,5=NW,6=N,7=NE */
 export function dir8(angle: number): number {
   return ((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8;
@@ -523,14 +662,14 @@ export class VisualRenderer {
    */
   public static renderArchmage(
     ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, isDashing: boolean,
-    faceAngle: number = Math.PI / 2, moveAmt: number = 0,
+    faceAngle: number = Math.PI / 2, moveAmt: number = 0, heroId: string = 'caelen',
   ) {
     const t = performance.now() * 0.001;
     const d = dir8(faceAngle);
     const view: MageView = d === 2 || d === 1 || d === 3 ? 'front' : d === 0 || d === 4 ? 'side' : 'back';
     const flip = d === 4 || d === 3 || d === 5 ? -1 : 1; // west-ish faces left
     const yaw = d === 1 || d === 3 || d === 5 || d === 7 ? 0.9 : 1; // diagonals slightly turned
-    const s = getMage(view);
+    const s = getHeroSprite(heroId, view);
     const circle = getMageCircle();
     const lift = 16 + Math.sin(t * 2.6) * 5; // hover height
     const fx = Math.cos(faceAngle), fy = Math.sin(faceAngle);
@@ -545,7 +684,7 @@ export class VisualRenderer {
     ctx.fill();
     // runic ground circle + aura
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, 'rgba(60,170,255,1)', 0, 6, 90, 0.5 + Math.sin(t * 2.5) * 0.12);
+    drawGlow(ctx, heroAura(heroId), 0, 6, 90, 0.5 + Math.sin(t * 2.5) * 0.12);
     ctx.save();
     ctx.scale(1, 0.55);
     ctx.translate(0, 38);

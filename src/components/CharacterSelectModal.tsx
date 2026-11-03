@@ -140,6 +140,7 @@ export const CharacterSelectModal: React.FC<CharacterSelectModalProps> = ({
                 return (
                   <div
                     key={hero.id}
+                    data-hero={hero.id}
                     onClick={() => {
                       sound.playItemUse();
                       setSelectedIndex(index);

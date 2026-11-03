@@ -39,6 +39,15 @@ import { PWAInstallButton } from './components/PWAInstallButton';
 import { sound } from './audio/soundEngine';
 import { Play, RotateCcw, BookMarked, User, MapPin, Sparkles, Home, LogOut, BookOpen } from 'lucide-react';
 
+function applyHeroBonuses(e: GameEngine, from: CharacterHero | null, to: CharacterHero) {
+  const st = e.stats;
+  const d = (k: 'bonusHp' | 'bonusMana' | 'bonusPower' | 'bonusSpeed') => to[k] - (from ? from[k] : 0);
+  st.maxHp = Math.max(50, st.maxHp + d('bonusHp')); st.hp = st.maxHp;
+  st.maxMana = Math.max(0, st.maxMana + d('bonusMana')); st.mana = st.maxMana;
+  st.spellPower += d('bonusPower');
+  st.speed = Math.max(1, st.speed + d('bonusSpeed'));
+}
+
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
@@ -49,6 +58,7 @@ export default function App() {
 
   // Character & Arena selection
   const [currentHero, setCurrentHero] = useState<CharacterHero>(HEROES_LIST[0]);
+  const heroRef = useRef<CharacterHero>(HEROES_LIST[0]);
   const [currentArena, setCurrentArena] = useState<ArenaRealm>(ARENAS_LIST[0]);
 
   // Game state
@@ -150,7 +160,9 @@ export default function App() {
       startWave
     );
 
-    engine.currentHero = currentHero;
+    engine.currentHero = heroRef.current;
+    applyHeroBonuses(engine, null, heroRef.current);
+    setStats({ ...engine.stats });
     engine.currentArena = currentArena;
     engine.showDamageNumbers = showDamageNumbers;
     engine.enableScreenShake = enableScreenShake;
@@ -163,7 +175,7 @@ export default function App() {
     setPickingSpell(true);
     engineRef.current = engine;
     (window as unknown as { __engine?: GameEngine }).__engine = engine;
-  }, [gameView, startAtWave8, currentHero, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
+  }, [gameView, startAtWave8, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
 
   useEffect(() => {
     if (gameView === 'PLAYING') {
@@ -290,17 +302,15 @@ export default function App() {
   (window as unknown as { __pickSpell?: (id: string) => void }).__pickSpell = handlePickStartSpell;
 
   const handleSelectHero = (hero: CharacterHero) => {
+    const prev = heroRef.current;
+    heroRef.current = hero;
     setCurrentHero(hero);
-    if (engineRef.current) {
-      engineRef.current.currentHero = hero;
-      // Apply hero trait adjustments
-      engineRef.current.stats.spellPower = INITIAL_PLAYER_STATS.spellPower + hero.bonusPower;
-      engineRef.current.stats.maxHp = INITIAL_PLAYER_STATS.maxHp + hero.bonusHp;
-      engineRef.current.stats.hp = engineRef.current.stats.maxHp;
-      engineRef.current.stats.maxMana = INITIAL_PLAYER_STATS.maxMana + hero.bonusMana;
-      engineRef.current.stats.mana = engineRef.current.stats.maxMana;
-      engineRef.current.stats.speed = INITIAL_PLAYER_STATS.speed + hero.bonusSpeed;
-      setStats({ ...engineRef.current.stats });
+    const e = engineRef.current;
+    if (e && gameView === 'PLAYING') {
+      // live switch mid-run: swap bonus deltas, keep level/xp progress
+      e.currentHero = hero;
+      applyHeroBonuses(e, prev, hero);
+      setStats({ ...e.stats });
     }
     setIsCharacterSelectOpen(false);
     if (gameView === 'PLAYING') {

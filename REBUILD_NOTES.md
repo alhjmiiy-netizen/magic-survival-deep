@@ -26,3 +26,9 @@
 4. Polish: .glass-panel on menu tiles/bar, Research letter, level-up/start headers.
 5. White screen: not reproduced (rapid level-ups, game over, quit-to-menu, 60s+ run all fine, heap ~8MB, 0 errors). Video looks like the browser/tab being killed. Hardening: ErrorBoundary recover screen, dark html background inline (no white flash on reload/SW update), stuck initial weather banner now clears.
 6. Mage sprite matched to Caelen portrait: blue-violet crystal wings (front/side/back), longer silver hair, near-black coat with violet belt + cyan gem; 8-dir facing/float unchanged. v3-mage-match.png.
+
+## Round 4 — Issue #1: hero selection now changes the in-game character
+- `Visuals.ts`: `HERO_LOOKS` + `getHeroSprite(heroId, view)` — per-hero 8-direction sprites (wings, hair/hood/horns/antlers, outfit colours, weapon, halo/crown/rings) matching each portrait; Caelen keeps the item-6 mage sprite. `renderArchmage` takes `heroId`; ground aura per hero.
+- `GameEngine.ts`: passes `currentHero.id`; copies initial stats.
+- `App.tsx`: `heroRef` + `applyHeroBonuses` — bonuses applied at run start and as deltas on mid-run switch; removed `currentHero` from engine-init deps (no stale restart), consecutive picks work.
+- QA: `/workspace/qa/hero.js` at 844x390 and 390x844 (touch), all 10 heroes, 0 console errors. Shots: v4-hero-*.png.
