@@ -73,3 +73,15 @@ export const PASSIVES: Record<string, { title: string; desc: string; icon: strin
   pass_magnet: { title: 'Magnetism', desc: '+50 pickup radius', icon: 'Magnet' },
   pass_swift: { title: 'Swiftness', desc: '+10% move speed', icon: 'Wind' },
 };
+
+/** One-line "what it does" for a spell at its current level. */
+export function spellEffectText(sp: Spell): string {
+  const n = sp.count;
+  switch (sp.id) {
+    case 'thunderstorm': return `${n} lightning bolt${n > 1 ? 's' : ''} per cast`;
+    case 'frost_nova': return `${n} freezing ice shards per cast`;
+    case 'cataclysm': return `${n} fire burst${n > 1 ? 's' : ''} per cast, ${sp.area} radius`;
+    case 'arcane_missiles': return `${n} homing blade${n > 1 ? 's' : ''} per cast`;
+  }
+  return sp.description;
+}
