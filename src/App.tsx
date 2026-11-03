@@ -359,7 +359,7 @@ export default function App() {
 
           {/* Dynamic Weather Transition & Realm Banner */}
           {weatherBanner && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in duration-300">
+            <div className="absolute top-[60%] left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in duration-300">
               <div className="flex items-center gap-2.5 bg-slate-950/90 border border-sky-400/60 px-5 py-2 rounded-full shadow-[0_0_25px_rgba(56,189,248,0.4)] backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
                 <span className="text-xs font-cinzel font-bold tracking-widest text-sky-200 uppercase">
@@ -371,8 +371,8 @@ export default function App() {
 
           {/* Boss Alert Warning Banner */}
           {currentBoss && !gameOverData && (
-            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-pulse">
-              <div className="flex items-center gap-2 bg-red-950/90 border border-red-500/80 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.5)]">
+            <div className="absolute top-[32%] left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-pulse">
+              <div className="flex items-center gap-2 bg-red-950/90 border border-red-500/80 px-3 py-1 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-90">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
                 <span className="text-xs font-cinzel font-black tracking-widest text-red-200 uppercase">
                   Boss Encounter: Void Colossus Titan
