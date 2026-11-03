@@ -289,56 +289,105 @@ function getBoss(): Sprite {
 // ---------------- Archmage ----------------
 let mageSprite: Sprite | null = null;
 let mageCircle: HTMLCanvasElement | null = null;
-function getMage(): Sprite {
-  if (mageSprite) return mageSprite;
-  mageSprite = makeSprite(80, 100, 40, 66, (g) => {
-    shadow(g, 22, 18);
-    // long coat (flared)
+type MageView = 'front' | 'side' | 'back';
+const mageSprites: Partial<Record<MageView, Sprite>> = {};
+function getMage(view: MageView = 'front'): Sprite {
+  const cached = mageSprites[view];
+  if (cached) return cached;
+  const sp = makeSprite(80, 100, 40, 66, (g) => {
+    const side = view === 'side';
+    const back = view === 'back';
+    const drawStaff = () => {
+      const sx = side ? 10 : 17;
+      g.strokeStyle = '#5b4630'; g.lineWidth = 2.2;
+      g.beginPath(); g.moveTo(sx, -42); g.lineTo(sx - 2, 22); g.stroke();
+      g.strokeStyle = '#c9a75a'; g.lineWidth = 1.2;
+      g.beginPath(); g.arc(sx, -45, 5, Math.PI * 0.9, Math.PI * 2.1); g.stroke();
+      g.fillStyle = '#bfefff';
+      g.beginPath(); g.moveTo(sx, -54); g.lineTo(sx + 3, -46); g.lineTo(sx, -40); g.lineTo(sx - 3, -46); g.fill();
+    };
+    if (back) drawStaff();
+    g.save();
+    if (side) g.scale(0.78, 1);
+    // long coat, flared hem swept back (floating)
     const coat = g.createLinearGradient(-20, -20, 20, 25);
-    coat.addColorStop(0, '#2a3550');
+    coat.addColorStop(0, back ? '#1d2740' : '#2a3550');
     coat.addColorStop(0.5, '#141b2e');
     coat.addColorStop(1, '#070a14');
     g.fillStyle = coat;
     g.beginPath();
-    g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(13, 0); g.lineTo(20, 22); g.lineTo(6, 19); g.lineTo(0, 23); g.lineTo(-6, 19); g.lineTo(-20, 22); g.lineTo(-13, 0);
+    if (side) {
+      g.moveTo(-8, -22); g.lineTo(9, -22); g.lineTo(11, 0); g.lineTo(10, 20); g.lineTo(0, 18); g.lineTo(-12, 24); g.lineTo(-24, 20); g.lineTo(-13, 0);
+    } else {
+      g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(13, 0); g.lineTo(20, 22); g.lineTo(6, 19); g.lineTo(0, 23); g.lineTo(-6, 19); g.lineTo(-20, 22); g.lineTo(-13, 0);
+    }
     g.closePath(); g.fill();
-    // coat trim + runes
     g.strokeStyle = '#7dd3fc'; g.lineWidth = 0.9;
-    g.beginPath(); g.moveTo(0, -20); g.lineTo(0, 22); g.moveTo(-20, 22); g.lineTo(-6, 19); g.moveTo(20, 22); g.lineTo(6, 19); g.stroke();
+    g.beginPath();
+    if (back) { g.moveTo(-12, 2); g.lineTo(0, 14); g.lineTo(12, 2); g.moveTo(0, -18); g.lineTo(0, 14); }
+    else if (side) { g.moveTo(9, -20); g.lineTo(10, 20); }
+    else { g.moveTo(0, -20); g.lineTo(0, 22); g.moveTo(-20, 22); g.lineTo(-6, 19); g.moveTo(20, 22); g.lineTo(6, 19); }
+    g.stroke();
     g.strokeStyle = '#c9a75a'; g.lineWidth = 1.2;
     g.beginPath(); g.moveTo(-10, -8); g.lineTo(10, -8); g.stroke();
-    // shoulders / mantle
     g.fillStyle = '#1d2740';
     g.beginPath(); g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2); g.fill();
-    // arms
-    g.strokeStyle = '#151d33'; g.lineWidth = 5;
-    g.beginPath(); g.moveTo(-10, -19); g.lineTo(-15, -4); g.moveTo(10, -19); g.lineTo(16, -6); g.stroke();
-    // hands
-    g.fillStyle = '#e8dccd';
-    g.beginPath(); g.arc(-15, -3, 2.2, 0, Math.PI * 2); g.arc(16, -6, 2.2, 0, Math.PI * 2); g.fill();
-    // staff
-    g.strokeStyle = '#5b4630'; g.lineWidth = 2.2;
-    g.beginPath(); g.moveTo(17, -42); g.lineTo(15, 22); g.stroke();
-    g.strokeStyle = '#c9a75a'; g.lineWidth = 1.2;
-    g.beginPath(); g.arc(17, -45, 5, Math.PI * 0.9, Math.PI * 2.1); g.stroke();
-    g.fillStyle = '#bfefff';
-    g.beginPath(); g.moveTo(17, -54); g.lineTo(20, -46); g.lineTo(17, -40); g.lineTo(14, -46); g.fill();
-    // head: face + silver hair
-    g.fillStyle = '#eadfd2';
-    g.beginPath(); g.ellipse(0, -29, 4.5, 5.5, 0, 0, Math.PI * 2); g.fill();
+    g.restore();
+    if (!back) {
+      g.strokeStyle = '#151d33'; g.lineWidth = 5;
+      g.beginPath();
+      if (side) { g.moveTo(2, -19); g.lineTo(10, -6); }
+      else { g.moveTo(-10, -19); g.lineTo(-15, -4); g.moveTo(10, -19); g.lineTo(16, -6); }
+      g.stroke();
+      g.fillStyle = '#e8dccd';
+      g.beginPath();
+      if (side) g.arc(10, -6, 2.2, 0, Math.PI * 2);
+      else { g.arc(-15, -3, 2.2, 0, Math.PI * 2); g.arc(16, -6, 2.2, 0, Math.PI * 2); }
+      g.fill();
+      drawStaff();
+    }
+    // head
     const hair = g.createLinearGradient(0, -38, 0, -18);
     hair.addColorStop(0, '#ffffff');
     hair.addColorStop(1, '#9aa7bd');
-    g.fillStyle = hair;
-    g.beginPath();
-    g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30);
-    g.lineTo(8, -18); g.lineTo(4, -22); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -22); g.lineTo(-8, -17);
-    g.closePath(); g.fill();
-    g.fillStyle = '#7dd3fc';
-    g.fillRect(-2.5, -29.5, 1.6, 1); g.fillRect(1, -29.5, 1.6, 1);
+    if (back) {
+      g.fillStyle = hair;
+      g.beginPath();
+      g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30);
+      g.lineTo(7, -14); g.lineTo(2, -17); g.lineTo(0, -12); g.lineTo(-2, -17); g.lineTo(-7, -14);
+      g.closePath(); g.fill();
+    } else if (side) {
+      g.fillStyle = '#eadfd2';
+      g.beginPath(); g.ellipse(1.5, -29, 4, 5.5, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = hair;
+      g.beginPath();
+      g.moveTo(4, -32); g.quadraticCurveTo(2, -39, -4, -37); g.quadraticCurveTo(-8, -33, -7, -26);
+      g.lineTo(-12, -14); g.lineTo(-5, -18); g.lineTo(-1, -26); g.lineTo(1, -31);
+      g.closePath(); g.fill();
+      g.fillStyle = '#7dd3fc';
+      g.fillRect(3, -29.5, 1.6, 1);
+    } else {
+      g.fillStyle = '#eadfd2';
+      g.beginPath(); g.ellipse(0, -29, 4.5, 5.5, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = hair;
+      g.beginPath();
+      g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30);
+      g.lineTo(8, -18); g.lineTo(4, -22); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -22); g.lineTo(-8, -17);
+      g.closePath(); g.fill();
+      g.fillStyle = '#7dd3fc';
+      g.fillRect(-2.5, -29.5, 1.6, 1); g.fillRect(1, -29.5, 1.6, 1);
+    }
   });
-  return mageSprite;
+  mageSprites[view] = sp;
+  return sp;
 }
+
+/** 8-way direction from an angle (canvas coords, y down). 0=E,1=SE,2=S,3=SW,4=W,5=NW,6=N,7=NE */
+export function dir8(angle: number): number {
+  return ((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8;
+}
+export const DIR8_NAMES = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+
 function getMageCircle(): HTMLCanvasElement {
   if (mageCircle) return mageCircle;
   const R = 52;
@@ -451,49 +500,72 @@ export class VisualRenderer {
     ctx.restore();
   }
 
-  public static renderArchmage(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, isDashing: boolean) {
+  /**
+   * Floating Archmage. `faceAngle` = smoothed last movement direction (8-way facing),
+   * `moveAmt` 0..1 = how much the mage is currently moving (drives lean + cloak trail).
+   */
+  public static renderArchmage(
+    ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, isDashing: boolean,
+    faceAngle: number = Math.PI / 2, moveAmt: number = 0,
+  ) {
     const t = performance.now() * 0.001;
-    const s = getMage();
+    const d = dir8(faceAngle);
+    const view: MageView = d === 2 || d === 1 || d === 3 ? 'front' : d === 0 || d === 4 ? 'side' : 'back';
+    const flip = d === 4 || d === 3 || d === 5 ? -1 : 1; // west-ish faces left
+    const yaw = d === 1 || d === 3 || d === 5 || d === 7 ? 0.9 : 1; // diagonals slightly turned
+    const s = getMage(view);
     const circle = getMageCircle();
-    const facing = Math.cos(angle) < 0 ? -1 : 1;
+    const lift = 16 + Math.sin(t * 2.6) * 5; // hover height
+    const fx = Math.cos(faceAngle), fy = Math.sin(faceAngle);
+    const lean = fx * 0.2 * moveAmt; // bank into horizontal movement
     ctx.save();
     ctx.translate(x, y);
+    // soft ground shadow (shrinks as the mage rises)
+    const sh = 1 - (lift - 11) / 30;
+    ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 22, 20 * sh, 6.5 * sh, 0, 0, Math.PI * 2);
+    ctx.fill();
     // runic ground circle + aura
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, 'rgba(60,170,255,1)', 0, 6, 90, 0.55 + Math.sin(t * 2.5) * 0.12);
+    drawGlow(ctx, 'rgba(60,170,255,1)', 0, 6, 90, 0.5 + Math.sin(t * 2.5) * 0.12);
     ctx.save();
     ctx.scale(1, 0.55);
     ctx.translate(0, 38);
     ctx.rotate(t * 0.6);
     const cr = circle.width / RES / 2;
-    ctx.globalAlpha = 0.85;
+    ctx.globalAlpha = 0.8;
     ctx.drawImage(circle, -cr, -cr, cr * 2, cr * 2);
     ctx.restore();
     ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    if (isDashing) {
-      for (let k = 3; k >= 1; k--) {
+    // cloak / wing trail behind the mage while moving
+    if (moveAmt > 0.05 || isDashing) {
+      const n = isDashing ? 4 : 3;
+      for (let k = n; k >= 1; k--) {
         ctx.save();
-        ctx.globalAlpha = 0.18 * (4 - k);
-        ctx.translate(-Math.cos(angle) * k * 14, -Math.sin(angle) * k * 14);
-        ctx.scale(facing, 1);
+        ctx.globalAlpha = (isDashing ? 0.22 : 0.13) * moveAmt * (n + 1 - k) / n + (isDashing ? 0.05 : 0);
+        ctx.translate(-fx * k * 11, -fy * k * 11 - lift + Math.sin(t * 2.6 - k * 0.5) * 2);
+        ctx.rotate(lean);
+        ctx.scale(flip * yaw, 1);
         blit(ctx, s, s.frozen);
         ctx.restore();
       }
       ctx.globalAlpha = 1;
     }
-    const bob = Math.sin(t * 4) * 1.2;
+    ctx.globalCompositeOperation = 'source-over';
+    // the mage itself, floating
     ctx.save();
-    ctx.translate(0, bob);
-    ctx.scale(facing, 1);
+    ctx.translate(0, -lift);
+    ctx.rotate(lean);
+    ctx.scale(flip * yaw, 1);
     blit(ctx, s);
     ctx.restore();
     // staff crystal + hand glow
     ctx.globalCompositeOperation = 'lighter';
-    const sx = 17 * facing;
-    drawGlow(ctx, 'rgba(140,220,255,1)', sx, -47 + bob, 22 + Math.sin(t * 6) * 3, 0.95);
-    drawGlow(ctx, 'rgba(90,190,255,1)', -15 * facing, -3 + bob, 10, 0.7);
-    drawGlow(ctx, 'rgba(120,200,255,1)', 0, -10, 46, 0.25);
+    const staffX = (view === 'side' ? 10 * 0.95 : 17) * flip * yaw;
+    const cx = staffX * Math.cos(lean) + 47 * Math.sin(lean);
+    drawGlow(ctx, 'rgba(140,220,255,1)', cx, -47 - lift, 22 + Math.sin(t * 6) * 3, view === 'back' ? 0.6 : 0.95);
+    drawGlow(ctx, 'rgba(120,200,255,1)', 0, -10 - lift, 46, 0.22);
     ctx.restore();
   }
 

@@ -150,6 +150,7 @@ export default function App() {
 
     engine.start();
     engineRef.current = engine;
+    (window as unknown as { __engine?: GameEngine }).__engine = engine;
   }, [gameView, startAtWave8, currentHero, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
 
   useEffect(() => {

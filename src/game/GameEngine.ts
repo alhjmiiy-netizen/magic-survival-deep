@@ -73,6 +73,9 @@ export class GameEngine {
   public playerX: number = 0;
   public playerY: number = 0;
   public playerAngle: number = 0;
+  /** Smoothed facing angle from last non-zero movement (drives 8-way sprite facing). */
+  public faceAngle: number = Math.PI / 2;
+  public moveAmt: number = 0;
   public stats: PlayerStats;
   public spells: Spell[];
 
@@ -531,9 +534,16 @@ export class GameEngine {
       this.playerX += (mx / moveLen) * speed * dt;
       this.playerY += (my / moveLen) * speed * dt;
       this.playerAngle = Math.atan2(my, mx);
+      const target = Math.atan2(my, mx);
+      let diff = target - this.faceAngle;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      this.faceAngle += diff * Math.min(1, dt * 14);
+      this.moveAmt = Math.min(1, this.moveAmt + dt * 5);
     } else if (this.mouseAim.x !== 0 || this.mouseAim.y !== 0) {
       this.playerAngle = Math.atan2(this.mouseAim.y, this.mouseAim.x);
     }
+
+    if (moveLen === 0) this.moveAmt = Math.max(0, this.moveAmt - dt * 4);
 
     // Clamp within stone sanctuary boundary
     const playerDist = Math.hypot(this.playerX, this.playerY);
@@ -1210,7 +1220,7 @@ export class GameEngine {
     this.renderLivingEnemies(ctx);
 
     // 6. Player Archmage
-    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing);
+    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt);
 
     // 7. Projectiles (Arcane Missiles & Fused Magic)
     this.renderProjectiles(ctx);
