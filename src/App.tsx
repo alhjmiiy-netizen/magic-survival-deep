@@ -264,6 +264,15 @@ export default function App() {
     engineRef.current?.useBeltItem(itemId);
   };
 
+  const getCooldowns = useCallback(() => {
+    const out: Record<string, number> = {};
+    const e = engineRef.current;
+    if (!e) return out;
+    const fc = Math.pow(0.9, e.fastCasting);
+    for (const sp of e.spells) out[sp.id] = sp.cooldown > 0 ? Math.min(1, sp.currentCooldown / (sp.cooldown * fc)) : 0;
+    return out;
+  }, []);
+
   const handleSelectUpgrade = (upgradeId: string) => {
     setLevelUpLevel(null);
     engineRef.current?.applyUpgrade(upgradeId);
@@ -276,6 +285,7 @@ export default function App() {
     e.learnSpell(spellId, startAtWave8 ? 5 : 1);
     setPickingSpell(false);
     e.resume();
+    setTimeout(() => setWeatherBanner(null), 3500);
   };
   (window as unknown as { __pickSpell?: (id: string) => void }).__pickSpell = handlePickStartSpell;
 
@@ -480,6 +490,7 @@ export default function App() {
             fastCasting={fastCasting}
             onTriggerDash={() => engineRef.current?.triggerDash()}
             onJoystickMove={(vx, vy) => engineRef.current?.setJoystickVector(vx, vy)}
+            getCooldowns={getCooldowns}
           />
 
           {/* Pause Menu Overlay */}

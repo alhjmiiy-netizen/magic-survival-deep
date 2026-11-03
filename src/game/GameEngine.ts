@@ -18,7 +18,7 @@ import { drawGlow } from './ArtKit';
 import { WeatherSystem } from './WeatherSystem';
 import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS } from './arenas';
 import { HEROES_LIST } from './characters';
-import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell } from './spells';
+import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
 import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
 
 export interface GameEngineCallbacks {
@@ -294,18 +294,13 @@ export class GameEngine {
       for (const id of BASE_SPELL_IDS) {
         if (owned.some((s) => s.id === id)) continue;
         const b = BASE_SPELLS[id];
-        pool.push({ id: `new:${id}`, kind: 'new', title: `New: ${b.name}`, desc: b.description, icon: b.icon, color: b.color, level: 1 });
+        pool.push({ id: `new:${id}`, kind: 'new', title: `${b.name} Lv 1`, desc: spellEffectText(makeSpell(id, 1)), icon: b.icon, color: b.color, level: 1 });
       }
     }
     for (const sp of owned) {
       if (sp.level >= sp.maxLevel) continue;
       const nxt = applySpellLevel({ ...sp, level: sp.level + 1 });
-      const gain =
-        sp.id === 'thunderstorm' ? `${sp.count} → ${nxt.count} bolts` :
-        sp.id === 'frost_nova' ? `${sp.count} → ${nxt.count} shards` :
-        sp.id === 'cataclysm' ? `${sp.count} → ${nxt.count} bursts, bigger blast` :
-        `${sp.count} → ${nxt.count} blades`;
-      pool.push({ id: `lvl:${sp.id}`, kind: 'level', title: `${sp.name} Lv ${sp.level + 1}`, desc: `${gain}, +25% dmg`, icon: sp.icon, color: sp.color, level: sp.level + 1 });
+      pool.push({ id: `lvl:${sp.id}`, kind: 'level', title: `${sp.name} Lv ${sp.level + 1}`, desc: `${spellEffectText(nxt)} (was ${sp.count}), +25% damage`, icon: sp.icon, color: sp.color, level: sp.level + 1 });
     }
     if (owned.length > 0 && this.fastCasting < 6) {
       pool.push({ id: 'fast_cast', kind: 'fast', title: `Fast Casting ${this.fastCasting + 1}`, desc: '-25% cast gap, -10% cooldowns (stacks)', icon: 'Timer', color: '#facc15', level: this.fastCasting + 1 });
@@ -680,8 +675,9 @@ export class GameEngine {
     const moveLen = Math.hypot(mx, my);
     if (moveLen > 0) {
       const speed = this.stats.speed * 60;
-      this.playerX += (mx / moveLen) * speed * dt;
-      this.playerY += (my / moveLen) * speed * dt;
+      const mag = Math.min(1, moveLen); // analog joystick; keys give 1
+      this.playerX += (mx / moveLen) * speed * mag * dt;
+      this.playerY += (my / moveLen) * speed * mag * dt;
       this.playerAngle = Math.atan2(my, mx);
       const target = Math.atan2(my, mx);
       let diff = target - this.faceAngle;

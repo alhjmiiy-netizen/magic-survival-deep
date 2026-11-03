@@ -15,6 +15,7 @@ import {
   Snowflake,
   Zap,
   Flame,
+  FlaskConical,
 } from 'lucide-react';
 import { PlayerStats, Spell, QuickBeltItem, GameQuest } from '../types/game';
 import { RadarData } from '../game/GameEngine';
@@ -38,6 +39,8 @@ interface HUDProps {
   fastCasting?: number;
   onTriggerDash: () => void;
   onJoystickMove: (x: number, y: number) => void;
+  /** live cooldown fraction 0..1 (1 = just cast) per spell id, polled each frame for the cast ring */
+  getCooldowns?: () => Record<string, number>;
   hero: CharacterHero;
 }
 
@@ -61,58 +64,78 @@ export const HUD: React.FC<HUDProps> = ({
   fastCasting = 0,
   onTriggerDash,
   onJoystickMove,
+  getCooldowns,
 }) => {
   const [isObjectivesCollapsed, setIsObjectivesCollapsed] = useState(true);
-  // Joystick handling
-  const joystickRef = useRef<HTMLDivElement>(null);
-  const [joystickActive, setJoystickActive] = useState(false);
-  const [stickPos, setStickPos] = useState({ x: 0, y: 0 });
-
-  const handleJoystickStart = (e: React.TouchEvent | React.MouseEvent) => {
-    setJoystickActive(true);
-    handleJoystickDrag(e);
-  };
-
-  const handleJoystickDrag = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!joystickRef.current) return;
-    const rect = joystickRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-    const dx = clientX - centerX;
-    const dy = clientY - centerY;
-    const dist = Math.hypot(dx, dy);
-    const maxRadius = 40;
-
-    let nx = dx;
-    let ny = dy;
-    if (dist > maxRadius) {
-      nx = (dx / dist) * maxRadius;
-      ny = (dy / dist) * maxRadius;
-    }
-
-    setStickPos({ x: nx, y: ny });
-    onJoystickMove(nx / maxRadius, ny / maxRadius);
-  };
-
-  const handleJoystickEnd = () => {
-    setJoystickActive(false);
-    setStickPos({ x: 0, y: 0 });
+  // Floating joystick: any touch/press on the play area (not HUD buttons) spawns it there.
+  const JOY_R = 52;
+  const DEAD = 0.14;
+  const joyPointer = useRef<number | null>(null);
+  const [joy, setJoy] = useState<{ x: number; y: number; dx: number; dy: number } | null>(null);
+  const joyStart = useRef({ x: 0, y: 0 });
+  const onPadDown = (e: React.PointerEvent) => {
+    if (joyPointer.current !== null) return;
+    joyPointer.current = e.pointerId;
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    joyStart.current = { x: e.clientX, y: e.clientY };
+    setJoy({ x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
     onJoystickMove(0, 0);
   };
+  const onPadMove = (e: React.PointerEvent) => {
+    if (joyPointer.current !== e.pointerId) return;
+    let dx = e.clientX - joyStart.current.x;
+    let dy = e.clientY - joyStart.current.y;
+    const d = Math.hypot(dx, dy);
+    if (d > JOY_R) { dx = (dx / d) * JOY_R; dy = (dy / d) * JOY_R; }
+    setJoy({ x: joyStart.current.x, y: joyStart.current.y, dx, dy });
+    const vx = dx / JOY_R, vy = dy / JOY_R;
+    const m = Math.hypot(vx, vy);
+    if (m < DEAD) onJoystickMove(0, 0);
+    else { const k = (m - DEAD) / (1 - DEAD) / m; onJoystickMove(vx * k, vy * k); }
+  };
+  const onPadUp = (e: React.PointerEvent) => {
+    if (joyPointer.current !== e.pointerId) return;
+    joyPointer.current = null;
+    setJoy(null);
+    onJoystickMove(0, 0);
+  };
+  useEffect(() => () => onJoystickMove(0, 0), []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Magic bar: cast rings polled per frame; flash + toast when a magic is acquired/levelled.
+  const ringRefs = useRef<Record<string, SVGCircleElement | null>>({});
   useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (joystickActive) {
-        handleJoystickEnd();
+    if (!getCooldowns) return;
+    let raf = 0;
+    const tick = () => {
+      const cds = getCooldowns();
+      for (const [id, el] of Object.entries(ringRefs.current)) {
+        if (!el) continue;
+        const f = cds[id] ?? 0; // 1 just cast -> 0 ready
+        el.style.strokeDashoffset = String(151 * f);
+        el.style.opacity = f > 0.85 ? '1' : '0.75';
       }
+      raf = requestAnimationFrame(tick);
     };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [joystickActive]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [getCooldowns]);
+  const prevLevels = useRef<Record<string, number>>({});
+  const [flash, setFlash] = useState<Record<string, number>>({});
+  const [toast, setToast] = useState<{ text: string; color: string; k: number } | null>(null);
+  useEffect(() => {
+    const changed: Spell[] = [];
+    for (const s of spells) {
+      if ((prevLevels.current[s.id] ?? 0) !== s.level) changed.push(s);
+      prevLevels.current[s.id] = s.level;
+    }
+    if (!changed.length) return;
+    const now = Date.now();
+    setFlash((f) => { const n = { ...f }; changed.forEach((s) => (n[s.id] = now)); return n; });
+    const s = changed[changed.length - 1];
+    setToast({ text: s.isCombo ? `COMBO UNLOCKED: ${s.name}` : s.level === 1 ? `New magic: ${s.name}` : `${s.name} → Lv ${s.level}`, color: s.color, k: now });
+  }, [spells]);
+  const [tip, setTip] = useState<string | null>(null);
 
   // Minimap canvas
   const radarCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -282,38 +305,63 @@ export const HUD: React.FC<HUDProps> = ({
   );
 
   const ownedSpells = spells.filter((s) => s.level > 0);
+  const BIG_ICON: Record<string, React.ReactNode> = {
+    arcane_missiles: <Sparkles className="w-6 h-6" />,
+    frost_nova: <Snowflake className="w-6 h-6" />,
+    thunderstorm: <Zap className="w-6 h-6" />,
+    cataclysm: <Flame className="w-6 h-6" />,
+  };
+  const tile = 52;
   const powersBlock = (
     <div
       data-hud="powers"
-      className="absolute flex items-center gap-1 px-1 py-1 rounded-lg bg-slate-950/70 border border-slate-700/60"
-      style={portrait ? { top: 104, left: 6 } : { top: 52, left: '50%', transform: 'translateX(-50%)' }}
+      className="absolute flex items-end gap-1.5 px-2 pt-3 pb-1 rounded-xl glass-panel pointer-events-auto"
+      style={{ bottom: portrait ? 190 : 6, left: '50%', transform: 'translateX(-50%)', minWidth: 120, justifyContent: 'center' }}
     >
-      {ownedSpells.length === 0 && <span className="text-[9px] text-slate-400 px-1">No magic yet</span>}
-      {ownedSpells.map((s) => (
-        <div key={s.id} data-power={s.id} className="flex flex-col items-center w-9">
-          <div
-            className="relative w-7 h-7 rounded-md flex items-center justify-center border text-white"
-            style={{ borderColor: s.color, background: `radial-gradient(circle, ${s.color}55, #020617 75%)` }}
-            title={`${s.name} Lv ${s.level}`}
-          >
-            {s.isCombo ? <Sparkles className="w-4 h-4 text-fuchsia-300" /> : SPELL_ICON[s.id] ?? <Sparkles className="w-4 h-4" />}
-            <span className="absolute -bottom-1 -right-1.5 px-[3px] rounded bg-black border border-amber-400 text-[7px] leading-[10px] font-bold text-amber-300">
-              Lv{s.level}
-            </span>
+      <span className="absolute -top-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 rounded bg-slate-950 border border-sky-500/50 text-[8px] font-bold tracking-widest text-sky-300">MAGIC · AUTO-CAST</span>
+      {ownedSpells.length === 0 && <span className="text-[10px] text-slate-400 px-2 py-3">No magic yet</span>}
+      {ownedSpells.map((s) => {
+        const fl = flash[s.id];
+        return (
+          <div key={s.id} data-power={s.id} className="relative flex flex-col items-center" onClick={() => setTip(tip === s.id ? null : s.id)}>
+            <div
+              key={fl}
+              className={`relative rounded-xl flex items-center justify-center text-white ${fl ? 'magic-flash' : ''}`}
+              style={{ width: tile, height: tile, ['--c' as string]: s.color, border: `2px solid ${s.color}`, background: `radial-gradient(circle at 50% 40%, ${s.color}aa, ${s.color}33 45%, #020617 80%)`, color: '#fff', boxShadow: `0 0 10px ${s.color}66` } as React.CSSProperties}
+            >
+              <svg className="absolute inset-0 -rotate-90" viewBox="0 0 52 52" width={tile} height={tile}>
+                <circle cx="26" cy="26" r="24" fill="none" stroke="#0b1220" strokeWidth="3" opacity="0.6" />
+                <circle ref={(el) => { ringRefs.current[s.id] = el; }} data-ring={s.id} cx="26" cy="26" r="24" fill="none" stroke={s.color} strokeWidth="3" strokeDasharray="151" strokeDashoffset="0" strokeLinecap="round" />
+              </svg>
+              <span style={{ filter: `drop-shadow(0 0 4px ${s.color})` }}>{s.isCombo ? <Sparkles className="w-6 h-6 text-fuchsia-200" /> : BIG_ICON[s.id] ?? <Sparkles className="w-6 h-6" />}</span>
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 rounded bg-black border border-amber-400 text-[10px] leading-[13px] font-black text-amber-300 whitespace-nowrap">
+                {s.isCombo ? 'COMBO' : `Lv ${s.level}`}
+              </span>
+            </div>
+            <div className="flex gap-[2px] mt-[5px] h-[4px]">
+              {!s.isCombo && Array.from({ length: Math.min(8, s.maxLevel) }).map((_, k) => (
+                <span key={k} className={`w-[4px] h-[4px] rounded-full ${k < s.level ? 'bg-amber-300' : 'bg-slate-700'}`} />
+              ))}
+            </div>
+            {tip === s.id && (
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-md glass-panel text-[10px] text-white whitespace-nowrap z-10">
+                {s.name} {s.isCombo ? '(combo)' : `Lv ${s.level}/${s.maxLevel}`} · casts automatically
+              </div>
+            )}
           </div>
-          <div className="flex gap-[1px] mt-[3px]">
-            {Array.from({ length: Math.min(8, s.maxLevel) }).map((_, k) => (
-              <span key={k} className={`w-[3px] h-[3px] rounded-full ${k < s.level ? 'bg-amber-300' : 'bg-slate-700'}`} />
-            ))}
-          </div>
-        </div>
-      ))}
+        );
+      })}
       {fastCasting > 0 && (
-        <div data-power="fast_cast" className="flex flex-col items-center w-9" title={`Fast Casting x${fastCasting}`}>
-          <div className="relative w-7 h-7 rounded-md flex items-center justify-center border border-yellow-400 text-yellow-300 bg-slate-950 text-[10px] font-black">
-            ≫<span className="absolute -bottom-1 -right-1.5 px-[3px] rounded bg-black border border-amber-400 text-[7px] leading-[10px] font-bold text-amber-300">x{fastCasting}</span>
+        <div data-power="fast_cast" className="flex flex-col items-center" title={`Fast Casting x${fastCasting}`}>
+          <div className="relative rounded-xl flex items-center justify-center border-2 border-yellow-400 text-yellow-300 bg-slate-950 text-base font-black" style={{ width: 40, height: 40 }}>
+            ≫<span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 rounded bg-black border border-amber-400 text-[9px] leading-[12px] font-bold text-amber-300">x{fastCasting}</span>
           </div>
-          <span className="text-[6px] text-yellow-300 mt-[2px]">FAST</span>
+          <span className="text-[7px] text-yellow-300 mt-[5px] leading-[4px]">FAST</span>
+        </div>
+      )}
+      {toast && (
+        <div key={toast.k} className="magic-toast absolute left-1/2 bottom-full mb-3 px-3 py-1 rounded-lg glass-panel text-[12px] font-black whitespace-nowrap" style={{ color: toast.color, borderColor: toast.color }}>
+          ✦ {toast.text}
         </div>
       )}
     </div>
@@ -371,40 +419,34 @@ export const HUD: React.FC<HUDProps> = ({
   const beltBlock = (
     <div
       data-hud="belt"
-      className="absolute flex gap-1 pointer-events-auto"
-      style={portrait ? { bottom: 150, left: '50%', transform: 'translateX(-50%)' } : { bottom: 6, left: '50%', transform: 'translateX(-50%)' }}
+      className="absolute flex flex-col items-end pointer-events-auto"
+      style={portrait ? { bottom: 122, right: 6 } : { bottom: 86, right: 6 }}
     >
-      {beltItems.map((b, k) => (
-        <button
-          key={b.id}
-          onClick={() => onUseBeltItem(b.id)}
-          disabled={b.count <= 0}
-          className="relative w-9 h-9 rounded-md bg-slate-950/85 border border-slate-600 flex items-center justify-center text-[11px] font-bold text-white cursor-pointer disabled:opacity-40"
-          title={b.name}
-        >
-          <span className="w-3.5 h-3.5 rounded-sm" style={{ background: b.color }} />
-          <span className="absolute bottom-0 right-0.5 text-[9px]">{b.count}</span>
-          <span className="absolute top-0 left-0.5 text-[7px] text-slate-400">{k + 1}</span>
-        </button>
-      ))}
+      <span className="text-[8px] font-bold tracking-widest text-emerald-300/90 mb-0.5 pr-0.5">ITEMS</span>
+      <div className="flex gap-1 p-1 rounded-lg bg-slate-950/70 border border-emerald-600/40">
+        {beltItems.map((b) => (
+          <button
+            key={b.id}
+            data-item={b.id}
+            onClick={() => onUseBeltItem(b.id)}
+            disabled={b.count <= 0}
+            className="relative w-7 h-7 rounded-full bg-slate-900 border border-slate-600 flex items-center justify-center cursor-pointer disabled:opacity-35"
+            title={`${b.name} (item)`}
+          >
+            <FlaskConical className="w-4 h-4" style={{ color: b.color }} />
+            <span className="absolute -bottom-1 -right-1 min-w-[13px] h-[13px] px-[2px] rounded-full bg-black border border-slate-500 text-[8px] leading-[11px] font-bold text-white text-center">{b.count}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 
-  const joystickBlock = (
-    <div
-      data-hud="joystick"
-      ref={joystickRef}
-      onTouchStart={handleJoystickStart}
-      onTouchMove={handleJoystickDrag}
-      onTouchEnd={handleJoystickEnd}
-      onMouseDown={handleJoystickStart}
-      onMouseMove={(e) => joystickActive && handleJoystickDrag(e)}
-      className="absolute rounded-full border-2 border-sky-500/40 bg-slate-950/40 pointer-events-auto touch-none"
-      style={portrait ? { bottom: 24, left: 16, width: 110, height: 110 } : { bottom: 10, left: 14, width: 100, height: 100 }}
-    >
+  const joystickBlock = joy && (
+    <div className="absolute pointer-events-none" data-joystick style={{ left: joy.x - JOY_R, top: joy.y - JOY_R, width: JOY_R * 2, height: JOY_R * 2 }}>
+      <div className="absolute inset-0 rounded-full border-2 border-sky-400/50 bg-slate-950/30" style={{ boxShadow: '0 0 18px rgba(56,189,248,0.25)' }} />
       <div
-        className="absolute left-1/2 top-1/2 w-11 h-11 -ml-[22px] -mt-[22px] rounded-full bg-gradient-to-b from-sky-400 to-blue-700 border-2 border-sky-200/70"
-        style={{ transform: `translate(${stickPos.x}px, ${stickPos.y}px)` }}
+        className="absolute left-1/2 top-1/2 w-11 h-11 -ml-[22px] -mt-[22px] rounded-full bg-gradient-to-b from-sky-300 to-blue-700 border-2 border-sky-100/80"
+        style={{ transform: `translate(${joy.dx}px, ${joy.dy}px)` }}
       />
     </div>
   );
@@ -412,7 +454,7 @@ export const HUD: React.FC<HUDProps> = ({
   const dashBlock = (
     <button
       data-hud="dash"
-      onClick={onTriggerDash}
+      onPointerDown={(e) => { e.stopPropagation(); onTriggerDash(); }}
       className={`absolute rounded-full flex flex-col items-center justify-center border-2 pointer-events-auto cursor-pointer ${
         dashReady ? 'border-sky-300 bg-sky-900/80 text-sky-100' : 'border-slate-600 bg-slate-900/80 text-slate-500'
       }`}
@@ -425,6 +467,16 @@ export const HUD: React.FC<HUDProps> = ({
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden font-sans">
+      <div
+        data-touchpad
+        className="absolute inset-0 pointer-events-auto"
+        style={{ touchAction: 'none' }}
+        onPointerDown={onPadDown}
+        onPointerMove={onPadMove}
+        onPointerUp={onPadUp}
+        onPointerCancel={onPadUp}
+        onContextMenu={(e) => e.preventDefault()}
+      />
       {statsBlock}
       {timerBlock}
       {currencyBlock}
