@@ -38,6 +38,7 @@ import { ResearchLetterModal } from './components/ResearchLetterModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { sound } from './audio/soundEngine';
 import { Play, RotateCcw, BookMarked, User, MapPin, Sparkles, Home, LogOut, BookOpen } from 'lucide-react';
+import { Settings as SettingsIcon, X } from 'lucide-react';
 
 function applyHeroBonuses(e: GameEngine, from: CharacterHero | null, to: CharacterHero) {
   const st = e.stats;
@@ -92,6 +93,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false);
+  const startRegionRef = useRef(0);
   const [isArenaSelectOpen, setIsArenaSelectOpen] = useState(false);
   const [isComboOpen, setIsComboOpen] = useState(false);
   const [isEncyclopediaOpen, setIsEncyclopediaOpen] = useState(false);
@@ -176,6 +178,7 @@ export default function App() {
     engine.setMode(gameMode);
 
     engine.start();
+    if (gameMode === 'regions' && startRegionRef.current > 0) { const ri = startRegionRef.current; startRegionRef.current = 0; engine.skipToRegion(ri); }
     engine.pause(); // nothing runs until the starting magic is picked
     setSpells([]);
     setFastCasting(0);
@@ -386,7 +389,8 @@ export default function App() {
           currentHero={currentHero}
           currentArena={currentArena}
           stats={stats}
-          onStartGame={(mode) => {
+          onStartGame={(mode, regionIdx) => {
+            startRegionRef.current = regionIdx || 0;
             setGameMode(mode);
             localStorage.setItem('msdeep_mode', mode);
             setGameView('PLAYING');
@@ -564,80 +568,27 @@ export default function App() {
             !researchLetterData &&
             !gameOverData &&
             levelUpLevel === null && (
-              <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-                <div className="p-8 rounded-2xl bg-slate-950/95 gold-border text-center shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
-                  <h2 className="text-2xl font-black font-cinzel tracking-widest gold-gradient-text mb-1">
-                    Battle Paused
-                  </h2>
-                  <p className="text-xs text-slate-400 font-sans mb-5">
-                    The cosmic void pauses its descent
-                  </p>
-
-                  <div className="space-y-2.5 w-full">
-                    <button
-                      onClick={togglePause}
-                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold font-cinzel text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-lg"
-                    >
-                      <Play className="w-4 h-4 fill-slate-950" />
-                      Resume Battle
-                    </button>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setIsStoryOpen(true)}
-                        className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700 font-cinzel text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <BookMarked className="w-3.5 h-3.5" />
-                        Story Lore
-                      </button>
-                      <button
-                        onClick={() => setIsComboOpen(true)}
-                        className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-purple-300 border border-slate-700 font-cinzel text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Fusions
-                      </button>
-                      <button
-                        onClick={() => setIsCharacterSelectOpen(true)}
-                        className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-sky-300 border border-slate-700 font-cinzel text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <User className="w-3.5 h-3.5" />
-                        Hero
-                      </button>
-                      <button
-                        onClick={() => setIsArenaSelectOpen(true)}
-                        className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-700 font-cinzel text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <MapPin className="w-3.5 h-3.5" />
-                        Realm
-                      </button>
-                    </div>
-
-                    <PWAInstallButton variant="compact" />
-
-                    <button
-                      onClick={() => setIsSettingsOpen(true)}
-                      className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-cinzel text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                    >
-                      Settings & Audio
-                    </button>
-
-                    <button
-                      onClick={handleRestart}
-                      className="w-full py-2 rounded-xl bg-slate-900/60 hover:bg-rose-950/60 text-rose-300 border border-rose-900/40 font-cinzel text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Restart Run
-                    </button>
-
-                    <button
-                      onClick={returnToMainMenu}
-                      className="w-full py-2 rounded-xl bg-slate-900/40 hover:bg-slate-900 text-slate-400 hover:text-white border border-slate-800 font-cinzel text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      Quit to Main Menu
-                    </button>
-                  </div>
+              <div className="ms-screen ps" data-screen="pause" style={{ zIndex: 40, background: 'rgba(0,0,0,.94)' }}>
+                <h2 className="ps-title ms-brush">Pause</h2>
+                <div className="ms-card ps-stats">
+                  {([
+                    ['Level', stats.level, '#fff'], ['Max HP', Math.round(stats.maxHp), '#ff5a5a'],
+                    ['Spell Power', `${Math.round(stats.spellPower)}%`, '#5ef08a'], ['Crit', `${Math.round(stats.critChance)}%`, '#ffd700'],
+                    ['Crit Dmg', `x${stats.critMultiplier.toFixed(1)}`, '#ffd700'], ['Cooldown', `-${Math.round(stats.cooldownReduction)}%`, '#21e6e6'],
+                    ['Speed', Math.round(stats.speed), '#5ef08a'], ['Pickup', Math.round(stats.pickupRadius), '#21e6e6'],
+                    ['Gold', stats.gold, '#ffd700'], ['Gems', stats.crystals, '#21e6e6'],
+                  ] as [string, React.ReactNode, string][]).map(([k, v, c]) => (
+                    <div key={k} className="ps-row"><span>{k}</span><b style={{ color: c }}>{v}</b></div>
+                  ))}
+                </div>
+                <button className="ms-glowtext" data-action="resume" onClick={togglePause}>Resume Game</button>
+                <div className="ps-icons">
+                  <button className="ms-ibtn" aria-label="Story" onClick={() => setIsStoryOpen(true)}><BookMarked /></button>
+                  <button className="ms-ibtn" aria-label="Combos" onClick={() => setIsComboOpen(true)}><Sparkles /></button>
+                  <button className="ms-ibtn" aria-label="Hero" onClick={() => setIsCharacterSelectOpen(true)}><User /></button>
+                  <button className="ms-ibtn" aria-label="Settings" onClick={() => setIsSettingsOpen(true)}><SettingsIcon /></button>
+                  <button className="ms-ibtn gold" aria-label="Restart run" onClick={handleRestart}><RotateCcw /></button>
+                  <button className="ms-ibtn red" aria-label="Quit to menu" onClick={returnToMainMenu}><X /></button>
                 </div>
               </div>
             )}

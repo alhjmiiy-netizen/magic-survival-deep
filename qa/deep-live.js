@@ -6,7 +6,7 @@ const [,, url, vw, vh, tag] = process.argv; const res = {};
   const errs = [], bad = []; p.on('console', m => m.type() === 'error' && errs.push(m.text())); p.on('pageerror', e => errs.push(e.message)); p.on('response', r => r.status() >= 400 && bad.push(r.status() + ' ' + r.url()));
   await p.goto(url, { waitUntil: 'networkidle' }); await p.waitForTimeout(800);
   res.title = await p.title(); res.modes = await p.$$eval('[data-mode]', e => e.map(x => x.dataset.mode));
-  await p.locator('[data-mode="regions"]').tap(); await p.waitForSelector('[data-modal="startspell"]'); await p.locator('[data-choice="cataclysm"]').tap();
+  await p.locator('[data-action="start"]').tap(); await p.locator('[data-mode="regions"]').tap(); await p.waitForSelector('[data-modal="startspell"]'); await p.locator('[data-choice="cataclysm"]').tap();
   await p.waitForTimeout(2000);
   await p.evaluate(() => { __engine.learnSpell('frost_nova'); for (let i = 0; i < 7; i++) { __engine.levelSpell('cataclysm'); __engine.levelSpell('frost_nova'); } __engine.evolveSpell('cataclysm'); __engine.grantArtifact('crown'); __engine.skipToRegion(2, false); __engine.regionTime = 150; });
   const fps = await p.evaluate(() => new Promise(r => { const ts = []; const f = (t) => { ts.push(t); if (ts.length < 300) requestAnimationFrame(f); else { const d = []; for (let i = 1; i < ts.length; i++) d.push(ts[i] - ts[i - 1]); d.sort((a, b) => a - b); const avg = d.reduce((a, b) => a + b, 0) / d.length; r({ avgMs: +avg.toFixed(1), p95Ms: +d[Math.floor(d.length * .95)].toFixed(1), fps: +(1000 / avg).toFixed(1), enemies: __engine.enemies.length, particles: __engine.particles.length, workMs: __engine.fps() }); } }; requestAnimationFrame(f); }));

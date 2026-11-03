@@ -14,7 +14,7 @@ async function play(p, ms) { const end = Date.now() + ms; while (Date.now() < en
   res.title = await p.title();
   res.modes = await p.$$eval('[data-mode]', e => e.map(x => x.getAttribute('data-mode')));
   await p.screenshot({ path: S('1-menu') });
-  await p.locator('[data-mode="regions"]').tap();
+  await p.locator('[data-action="start"]').tap(); await p.locator('[data-mode="regions"]').tap();
   await p.waitForSelector('[data-modal="startspell"]');
   await p.locator('[data-choice="thunderstorm"]').tap();
   await W(p, 900);

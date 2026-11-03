@@ -16,7 +16,7 @@ function legacyCss() {
     name: 'msdeep-legacy-css',
     apply: 'build' as const,
     transformIndexHtml: (h: string) => h.replace('%MSDEEP_VER%', VER),
-    async generateBundle(_o: any, bundle: any) {
+    async generateBundle(this: any, _o: any, bundle: any) {
       for (const f of Object.values<any>(bundle)) {
         if (f.type !== 'asset' || !f.fileName.endsWith('.css')) continue;
         let code = String(f.source);
@@ -24,6 +24,19 @@ function legacyCss() {
           targets: browserslistToTargets(['chrome >= 79', 'safari >= 14', 'firefox >= 78']) }).code.toString();
         const root = postcss.parse(code);
         root.walkAtRules('layer', (r) => { if (r.nodes) r.replaceWith(r.nodes); else r.remove(); });
+        // Chrome < 85 has no @property, and Tailwind's own fallback only targets Safari/Firefox:
+        // emit every @property initial-value as a plain universal rule and drop @property.
+        const inits: string[] = [];
+        root.walkAtRules('property', (r) => {
+          let iv: string | null = null;
+          r.walkDecls('initial-value', (d) => { iv = d.value; });
+          inits.push(`${r.params.trim()}:${iv === null ? 'initial' : iv}`);
+          r.remove();
+        });
+        root.walkAtRules('supports', (r) => {
+          if (/color-mix|margin-trim|apple-pay/.test(r.params)) r.remove(); // progressive-enhancement blocks / old fallback (replaced below)
+        });
+        if (inits.length) root.prepend(postcss.parse(`*,:before,:after,::backdrop{${inits.join(';')}}`));
         // Custom properties are not lowered by lightningcss: convert oklch() values in --vars to rgb.
         root.walkDecls(/^--/, (d) => {
           if (!/oklch\(/.test(d.value)) return;

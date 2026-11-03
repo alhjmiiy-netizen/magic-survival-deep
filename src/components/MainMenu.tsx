@@ -1,30 +1,16 @@
+import React, { useState } from 'react';
+import { Settings, Users, FlaskConical, BookOpen, Smartphone, Sparkles, ScrollText } from 'lucide-react';
 import { loadBest } from '../game/deep';
-import React from 'react';
-import {
-  Play,
-  User,
-  MapPin,
-  Sparkles,
-  ArrowUpCircle,
-  BookMarked,
-  Settings,
-  Gem,
-  Circle,
-  Trophy,
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-} from 'lucide-react';
 import { CharacterHero, ArenaRealm, PlayerStats } from '../types/game';
 import { sound } from '../audio/soundEngine';
-import { PWAInstallButton } from './PWAInstallButton';
-import { HEROES_LIST } from '../game/characters';
+import { usePWAInstall } from './usePWAInstall';
+import { RegionSelect } from './RegionSelect';
 
 interface MainMenuProps {
   currentHero: CharacterHero;
   currentArena: ArenaRealm;
   stats: PlayerStats;
-  onStartGame: (mode: 'regions' | 'endless') => void;
+  onStartGame: (mode: 'regions' | 'endless', regionIdx?: number) => void;
   onOpenCharacters: () => void;
   onOpenArenas: () => void;
   onOpenCombos: () => void;
@@ -35,290 +21,90 @@ interface MainMenuProps {
   onQuickSwitchHero?: (hero: CharacterHero) => void;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({
-  currentHero,
-  currentArena,
-  stats,
-  onStartGame,
-  onOpenCharacters,
-  onOpenArenas,
-  onOpenCombos,
-  onOpenUpgrades,
-  onOpenStory,
-  onOpenSettings,
-  onOpenEncyclopedia,
-  onQuickSwitchHero,
-}) => {
-  const best = loadBest();
-  const fmtT = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
-  const currentHeroIndex = HEROES_LIST.findIndex((h) => h.id === currentHero.id);
-
-  const handlePrevHero = () => {
-    sound.playItemUse();
-    const prevIdx = currentHeroIndex > 0 ? currentHeroIndex - 1 : HEROES_LIST.length - 1;
-    onQuickSwitchHero?.(HEROES_LIST[prevIdx]);
-  };
-
-  const handleNextHero = () => {
-    sound.playItemUse();
-    const nextIdx = currentHeroIndex < HEROES_LIST.length - 1 ? currentHeroIndex + 1 : 0;
-    onQuickSwitchHero?.(HEROES_LIST[nextIdx]);
-  };
-
+/** Our own illustration: a shattered gothic tower window glowing teal, with ink-black ragged silhouettes. */
+export function MenuArt({ tint = '#21e6e6' }: { tint?: string }) {
+  const panes: React.ReactNode[] = [];
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 4; c++) {
+    const x = 118 + c * 62, y = 92 + r * 78;
+    panes.push(<rect key={`${r}-${c}`} x={x} y={y} width={54} height={70} rx={2} fill="url(#pane)" opacity={0.78 + ((r * 7 + c * 3) % 5) * 0.05} />);
+  }
   return (
-    <div className="fixed inset-0 z-40 flex flex-col justify-between overflow-hidden bg-black select-none font-sans">
-      {/* 1. High-Res Cosmic Void Background with Animated Fog & Dark Vignette */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_55%,#1e3a8a_0%,#1e1b4b_30%,#05060f_70%)]" />
-        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_50%_60%,rgba(56,189,248,0.35)_0%,transparent_35%),radial-gradient(circle_at_80%_20%,rgba(239,68,68,0.18)_0%,transparent_30%),radial-gradient(circle_at_15%_25%,rgba(147,51,234,0.25)_0%,transparent_35%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/80" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_85%)]" />
-      </div>
+    <svg className="mm-art" viewBox="0 0 400 860" preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <defs>
+        <linearGradient id="pane" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#bffcfc" /><stop offset=".5" stopColor={tint} /><stop offset="1" stopColor="#0d8f95" /></linearGradient>
+        <radialGradient id="glow" cx=".62" cy=".45" r=".6"><stop offset="0" stopColor={tint} stopOpacity=".55" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
+        <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="4" /><feDisplacementMap in="SourceGraphic" scale="14" /></filter>
+        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" /><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .35 0" /><feComposite in2="SourceGraphic" operator="in" /></filter>
+      </defs>
+      <rect width="400" height="860" fill="#000" />
+      <rect width="400" height="860" fill="url(#glow)" />
+      <g filter="url(#rough)">
+        <path d="M104 860 V150 Q104 40 230 20 Q356 40 356 150 V860 Z" fill="#062e30" />
+        {panes}
+      </g>
+      <rect x="100" y="0" width="270" height="860" filter="url(#grain)" fill="#fff" opacity=".9" />
+      <g fill="#000" filter="url(#rough)">
+        <path d="M0 0 H150 L140 70 L168 120 L132 190 L176 250 L120 330 L164 400 L110 470 L150 530 L96 610 L140 690 L90 760 L120 860 H0 Z" />
+        <path d="M150 330 L215 360 L262 300 L248 360 L300 352 L232 392 L150 380 Z" />
+        <path d="M120 560 L190 520 L228 470 L214 540 L262 560 L180 572 Z" />
+        <path d="M400 0 V860 H360 L372 700 L350 520 L376 340 L352 160 L372 0 Z" />
+        <path d="M60 860 L96 700 L120 640 L150 700 L170 640 L196 720 L230 860 Z" />
+      </g>
+    </svg>
+  );
+}
 
-      {/* 2. Top Header Bar: Currencies, PWA Install & Settings */}
-      <div className="relative z-20 flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-amber-500/20 bg-slate-950/75 backdrop-blur-md">
-        {/* Archmage Profile badge */}
-        <div
-          onClick={() => {
-            sound.playItemUse();
-            onOpenCharacters();
-          }}
-          className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
-          title="Click to open Archmage Roster"
-        >
-          <div className="w-10 h-10 rounded-full border-2 border-amber-400 bg-slate-950 overflow-hidden shadow-[0_0_12px_rgba(212,175,55,0.4)] group-hover:scale-105 transition-transform flex-shrink-0">
-            <img
-              src={currentHero.standImage || currentHero.portrait}
-              alt={currentHero.name}
-              className="w-full h-full object-cover object-top brightness-110"
-            />
+export const MainMenu: React.FC<MainMenuProps> = (p) => {
+  const best = loadBest();
+  const [regionOpen, setRegionOpen] = useState(false);
+  const pwa = usePWAInstall();
+  const fmtT = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
+  const tap = (fn?: () => void) => () => { sound.playItemUse(); fn?.(); };
+  const install = () => {
+    if (pwa.isInstallable) pwa.install();
+    else alert(pwa.isIOS ? 'Tap Share, then "Add to Home Screen".' : pwa.isInstalled ? 'Already installed.' : 'Open the browser menu and choose "Install app" / "Add to Home screen".');
+  };
+  const nav: { k: string; label: string; Icon: React.ComponentType<{ strokeWidth?: number }>; on?: boolean; fn: () => void }[] = [
+    { k: 'heroes', label: 'Heroes', Icon: Users, on: true, fn: p.onOpenCharacters },
+    { k: 'research', label: 'Altar', Icon: FlaskConical, fn: p.onOpenUpgrades },
+    { k: 'grimoire', label: 'Grimoire', Icon: BookOpen, fn: () => p.onOpenEncyclopedia?.() },
+    { k: 'combos', label: 'Combos', Icon: Sparkles, fn: p.onOpenCombos },
+    { k: 'install', label: 'Install', Icon: Smartphone, fn: install },
+  ];
+  return (
+    <div className="ms-screen" data-screen="menu" style={{ zIndex: 40 }}>
+      <MenuArt />
+      <div className="mm-top">
+        <div>
+          <div className="mm-cur">
+            <span style={{ color: '#ffd700' }}><i className="mm-dot" style={{ background: '#ffd700', boxShadow: '0 0 6px #ffd700' }} />{p.stats.gold.toLocaleString()}</span>
+            <span style={{ color: '#21e6e6' }}><i className="mm-dot" style={{ background: '#21e6e6', transform: 'rotate(45deg)', borderRadius: 2 }} />{p.stats.crystals.toLocaleString()}</span>
           </div>
-          <div>
-            <div className="text-xs sm:text-sm font-bold font-cinzel text-white flex items-center gap-1.5 sm:gap-2">
-              <span>{currentHero.name}</span>
-              <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
-                Lv. {stats.level}
-              </span>
-            </div>
-            <div className="text-[10px] font-cinzel text-slate-400 group-hover:text-amber-300 transition-colors">
-              {currentHero.title}
-            </div>
-          </div>
-        </div>
-
-        {/* Resources & PWA Mobile Download */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <PWAInstallButton variant="header" />
-
-          <div className="hidden md:flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-sky-500/40 text-sky-300 font-bold font-cinzel text-xs shadow-md">
-            <Gem className="w-3.5 h-3.5 text-sky-400 fill-sky-400/30" />
-            <span>{stats.crystals.toLocaleString()}</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-amber-500/40 text-amber-300 font-bold font-cinzel text-xs shadow-md">
-            <Circle className="w-3.5 h-3.5 text-amber-400 fill-amber-400/40" />
-            <span>{stats.gold.toLocaleString()}</span>
-          </div>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenSettings();
-            }}
-            className="w-9 h-9 rounded-lg bg-slate-900/80 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:border-amber-400 transition-colors cursor-pointer"
-            title="Settings & Audio"
-          >
-            <Settings className="w-4 h-4" />
+          <button className="mm-tag" onClick={tap(p.onOpenCharacters)}>
+            <img src={p.currentHero.standImage || p.currentHero.portrait} alt="" />
+            <span style={{ fontSize: 12, fontWeight: 700 }}>{p.currentHero.name} <span style={{ color: '#e5c158' }}>Lv {p.stats.level}</span></span>
           </button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button className="ms-ibtn" aria-label="Settings" onClick={tap(p.onOpenSettings)}><Settings /></button>
+          <button className="ms-ibtn" aria-label="Campaign" onClick={tap(p.onOpenStory)}><ScrollText /></button>
         </div>
       </div>
-
-      {/* 3. Center Freestanding Character Hero Stage & Action Area */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-2 my-auto max-w-4xl mx-auto w-full">
-        {/* Game Title Header */}
-        <div className="text-center mb-1 sm:mb-2">
-          <span className="text-[10px] sm:text-xs uppercase font-cinzel font-bold tracking-[0.4em] text-sky-300 drop-shadow-[0_0_12px_#38bdf8]">
-            Dark Fantasy Action Roguelike
-          </span>
-          <h1 className="text-4xl sm:text-6xl font-black font-cinzel tracking-wider arcane-gradient-text drop-shadow-[0_4px_25px_rgba(56,189,248,0.7)] mt-1">
-            MAGIC SURVIVAL<span className="text-amber-300">: DEEP</span>
-          </h1>
-          <p className="text-[10px] sm:text-xs font-semibold tracking-[0.35em] text-amber-300/90 uppercase font-cinzel drop-shadow-md">
-            DEEP · REGIONS · ENDLESS · EVOLVE
-          </p>
+      <div className="mm-title"><b>Magic</b><b style={{ marginLeft: -20 }}>Survival</b><i>~ Deep ~</i></div>
+      <div className="mm-bottom">
+        <div className="mm-modes">
+          <button className="ms-glowtext mm-start" data-action="start" onClick={tap(() => setRegionOpen(true))}>Start Game</button>
         </div>
-
-        {/* Freestanding Character Showcase Pedestal */}
-        <div className="relative flex items-center justify-center w-full max-w-md h-56 sm:h-72 my-1">
-          {/* Quick Hero Switch Buttons */}
-          <button
-            onClick={handlePrevHero}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-950/80 border border-amber-500/40 hover:border-amber-400 text-amber-300 hover:text-white flex items-center justify-center shadow-lg cursor-pointer transition-all hover:scale-110 active:scale-95"
-            title="Switch to Previous Archmage"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          <button
-            onClick={handleNextHero}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-950/80 border border-amber-500/40 hover:border-amber-400 text-amber-300 hover:text-white flex items-center justify-center shadow-lg cursor-pointer transition-all hover:scale-110 active:scale-95"
-            title="Switch to Next Archmage"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* Pedestal Runic Glow */}
-          <div
-            className="absolute bottom-2 w-48 sm:w-64 h-12 rounded-full blur-xl pointer-events-none transition-all duration-500 opacity-60"
-            style={{ backgroundColor: currentHero.color }}
-          />
-
-          {/* Freestanding Hero Full-Body Display - object-contain object-center with padding ensures head is 100% visible! */}
-          <div
-            onClick={() => {
-              sound.playItemUse();
-              onOpenCharacters();
-            }}
-            className="relative z-10 w-full h-full flex flex-col items-center justify-center cursor-pointer group p-2"
-            title="Click to view full Archmage details and traits"
-          >
-            <img
-              key={currentHero.id}
-              src={currentHero.standImage || currentHero.portrait}
-              alt={currentHero.name}
-              className="max-h-full max-w-full h-full w-auto object-contain object-center filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.9)] group-hover:scale-105 transition-transform duration-300 animate-in fade-in"
-            />
-            <div className="absolute -bottom-2 px-3 py-0.5 rounded-full bg-slate-950/90 border border-amber-500/50 text-[10px] font-cinzel text-amber-300 shadow-md flex items-center gap-1.5 backdrop-blur-md">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentHero.color }} />
-              <span>{currentHero.name} — {currentHero.title}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Selected Hero & Realm Summary Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 my-3 px-4 py-2 rounded-xl glass-panel">
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenCharacters();
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700 hover:border-sky-400 text-xs font-cinzel text-slate-200 transition-colors cursor-pointer"
-          >
-            <User className="w-3.5 h-3.5 text-sky-400" />
-            <span>Archmage: <strong className="text-sky-300">{currentHero.name}</strong></span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenArenas();
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700 hover:border-emerald-400 text-xs font-cinzel text-slate-200 transition-colors cursor-pointer"
-          >
-            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Realm: <strong className="text-emerald-300">{currentArena.name}</strong></span>
-          </button>
-        </div>
-
-        {/* Mode select: Regions (5 timed regions → endless) or Endless */}
-        <div data-menu="modes" className="flex flex-row items-stretch gap-3 w-full max-w-lg mt-1">
-          <button
-            data-mode="regions"
-            onClick={() => { sound.playLevelUp(); onStartGame('regions'); }}
-            className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black font-cinzel text-xs sm:text-sm tracking-wider flex flex-col items-center justify-center shadow-[0_0_25px_rgba(251,191,36,0.4)] cursor-pointer transition-all"
-          >
-            <span className="flex items-center gap-1.5"><Play className="w-4 h-4 fill-slate-950" />REGIONS</span>
-            <span className="text-[9px] font-sans font-bold opacity-80 normal-case tracking-normal">5 timed regions · bosses · chests</span>
-            <span className="text-[9px] font-sans opacity-75 tracking-normal">Best: {best.regions.cleared}/5 cleared</span>
-          </button>
-          <button
-            data-mode="endless"
-            onClick={() => { sound.playLevelUp(); onStartGame('endless'); }}
-            className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-fuchsia-700 to-indigo-700 hover:brightness-110 active:scale-95 text-white font-black font-cinzel text-xs sm:text-sm tracking-wider flex flex-col items-center justify-center shadow-[0_0_25px_rgba(244,63,94,0.4)] cursor-pointer transition-all"
-          >
-            <span className="flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-300" />ENDLESS</span>
-            <span className="text-[9px] font-sans font-bold opacity-85 normal-case tracking-normal">Scaling horde · boss every 2:00</span>
-            <span className="text-[9px] font-sans opacity-80 tracking-normal">Best: {fmtT(best.endless.time)} · {best.endless.kills} kills · {best.endless.score}</span>
-          </button>
-        </div>
-
-        {/* Mobile PWA Download Button */}
-        <div className="mt-3">
-          <PWAInstallButton variant="hero" />
+        <div className="mm-best">Regions {best.regions.cleared}/5 cleared · Endless best {fmtT(best.endless.time)} · {best.endless.kills} kills</div>
+        <div className="mm-nav">
+          {nav.map(({ k, label, Icon, on, fn }) => (
+            <button key={k} data-nav={k} className={on ? 'on' : ''} onClick={tap(fn)}>
+              <span className="mm-navic"><Icon strokeWidth={1.6} /></span>{label}
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* 4. Bottom Menu Navigation Tabs (6 Categories including Encyclopedia) */}
-      <div className="relative z-20 px-3 sm:px-6 py-2.5 border-t border-amber-500/20 bg-slate-950/85 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto grid grid-cols-6 gap-1.5 sm:gap-2">
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenCharacters();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <User className="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Subjects</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenArenas();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <MapPin className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Realms</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenCombos();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <Sparkles className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Combos</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenEncyclopedia ? onOpenEncyclopedia() : onOpenCombos();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <Flame className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Grimoire</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenUpgrades();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <ArrowUpCircle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Altar</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playItemUse();
-              onOpenStory();
-            }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
-          >
-            <BookMarked className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform mb-0.5" />
-            <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Campaign</span>
-          </button>
-        </div>
-      </div>
+      {regionOpen && <RegionSelect onClose={() => setRegionOpen(false)} onEnter={(i) => p.onStartGame('regions', i)} onInfinite={() => p.onStartGame('endless')} />}
     </div>
   );
 };
-

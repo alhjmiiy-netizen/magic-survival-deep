@@ -11,8 +11,8 @@ interface GameOverModalProps {
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ victory, summary, onRestart, onHome }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="relative w-full max-w-lg bg-slate-950/95 gold-border rounded-2xl shadow-2xl p-6 text-center flex flex-col items-center">
+    <div data-screen="gameover" className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "#000" }}>
+      <div className="ms-panel relative w-full max-w-lg p-6 text-center flex flex-col items-center">
         {/* Crest Icon */}
         <div
           className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border-2 shadow-2xl ${
@@ -111,14 +111,14 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ victory, summary, 
           {onHome && (
             <button
               onClick={onHome}
-              className="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-cinzel text-xs font-bold cursor-pointer transition-colors"
+              className="ms-btn flex-1"
             >
               Main Menu
             </button>
           )}
           <button
             onClick={onRestart}
-            className="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 active:scale-98 text-slate-950 font-black font-cinzel text-sm tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-amber-950/40 cursor-pointer transition-all whitespace-nowrap shrink-0"
+            className="ms-btn gold flex-1 whitespace-nowrap"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Play Again</span>
