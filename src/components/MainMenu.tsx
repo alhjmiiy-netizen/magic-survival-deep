@@ -193,7 +193,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         </div>
 
         {/* Selected Hero & Realm Summary Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 my-3 bg-slate-950/85 px-4 py-2 rounded-xl gold-border backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 my-3 px-4 py-2 rounded-xl glass-panel">
           <button
             onClick={() => {
               sound.playItemUse();
@@ -256,7 +256,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenCharacters();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <User className="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Subjects</span>
@@ -267,7 +267,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenArenas();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <MapPin className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Realms</span>
@@ -278,7 +278,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenCombos();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <Sparkles className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Combos</span>
@@ -289,7 +289,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenEncyclopedia ? onOpenEncyclopedia() : onOpenCombos();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <Flame className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Grimoire</span>
@@ -300,7 +300,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenUpgrades();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <ArrowUpCircle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Altar</span>
@@ -311,7 +311,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playItemUse();
               onOpenStory();
             }}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-900 transition-all cursor-pointer group"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl glass-panel hover:border-amber-300 hover:brightness-125 transition-all cursor-pointer group"
           >
             <BookMarked className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform mb-0.5" />
             <span className="text-[9px] sm:text-[11px] font-cinzel font-bold text-slate-200">Campaign</span>

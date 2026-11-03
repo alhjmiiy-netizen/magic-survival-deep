@@ -20,7 +20,7 @@ export const ResearchLetterModal: React.FC<ResearchLetterModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-3 sm:p-6 select-none font-sans animate-in fade-in duration-300">
       {/* Aged Parchment Document with Burnt Edges and Wax Seal */}
-      <div className="relative w-full max-w-lg bg-[#141824] border-2 border-stone-700/80 rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.98)] p-6 sm:p-8 text-stone-200 flex flex-col font-serif">
+      <div className="relative w-full max-w-lg glass-panel rounded-2xl max-h-[92vh] overflow-y-auto p-5 sm:p-8 text-stone-200 flex flex-col font-serif">
         
         {/* Wax Seal at Top Center */}
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-[#7f1d1d] border-2 border-[#b91c1c] shadow-[0_4px_15px_rgba(185,28,28,0.5)] flex items-center justify-center text-rose-200 z-20">
