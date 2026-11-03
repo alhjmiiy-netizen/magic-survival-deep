@@ -48,9 +48,9 @@
 .mm-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .mm-tag { display: flex; align-items: center; gap: 8px; margin-top: 6px; background: rgba(0,0,0,.75); padding: 3px 10px 3px 3px; border: 1px solid rgba(229,193,88,.5); border-radius: 20px 6px 20px 6px; min-height: 36px; color: #fff; }
 .mm-tag img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: top; border: 1px solid var(--ms-gold); }
-.mm-title { position: absolute; right: 18px; top: 150px; z-index: 2; text-align: right; color: #000; font-family: var(--ms-brush); line-height: .82; transform: rotate(-4deg); }
-.mm-title b { display: block; font-weight: 400; font-size: 58px; text-shadow: 0 0 1px #000, 0 0 18px rgba(255,255,255,.5); }
-.mm-title i { display: block; font-style: normal; font-size: 30px; color: #052b2b; margin-top: 6px; }
+.mm-title { position: absolute; right: calc(max(15vw, 50px) + env(safe-area-inset-right, 0px)); max-width: calc(100% - 64px); padding-right: .14em; top: 150px; z-index: 2; text-align: right; color: #000; font-family: var(--ms-brush); line-height: .82; transform: rotate(-4deg); }
+.mm-title b { display: block; font-weight: 400; font-size: 58px; font-size: min(56px, 13vw); padding-right: .12em; text-shadow: 0 0 1px #000, 0 0 3px rgba(200,255,255,.9), 0 0 12px rgba(200,255,255,.6); }
+.mm-title i { display: block; font-style: normal; font-size: 30px; font-size: min(30px, 7.2vw); padding-right: .2em; text-shadow: 0 0 3px rgba(200,255,255,.9), 0 0 10px rgba(200,255,255,.55); color: #052b2b; margin-top: 6px; }
 .mm-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 14px 12px; background: linear-gradient(180deg, rgba(0,0,0,0), #000 38%); }
 .mm-start { font-size: 46px; padding-left: 4px; }
 .mm-modes { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
@@ -62,7 +62,7 @@
 .mm-nav button.on .mm-navic { border-color: var(--ms-gold); background: radial-gradient(circle, rgba(255,215,0,.18), rgba(0,0,0,0) 70%); }
 .mm-navic { display: flex; align-items: center; justify-content: center; width: 44px; height: 40px; border: 1.5px solid transparent; border-radius: 48% 52% 46% 54% / 55% 45% 55% 45%; }
 @media (orientation: landscape) and (max-height: 500px) {
-  .mm-title { top: 14px; right: 70px; } .mm-title b { font-size: 48px; } .mm-title i { font-size: 22px; }
+  .mm-title { top: 14px; right: calc(140px + env(safe-area-inset-right, 0px)); } .mm-title b { font-size: 48px; } .mm-title i { font-size: 22px; }
   .mm-start { font-size: 36px; } .mm-nav button { min-height: 46px; } .mm-nav { max-width: 460px; } .mm-best { margin-bottom: 2px; }
 }
 /* ---------------- region select ---------------- */

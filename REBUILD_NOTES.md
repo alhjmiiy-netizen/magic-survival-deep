@@ -19,3 +19,10 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 
 ## QA
 `qa/deep.js` (all features), `qa/endless.js` (real-time endless run), `qa/deep-live.js` (live smoke test plus rAF FPS)
+
+## v3 — flat 2D heroes + title fix
+- In-game hero sprites (`Visuals.ts` `getHeroSprite`) redrawn as flat 2D cartoon: solid fills, ~1.7 world-unit ink outlines (`#120c18`), one flat clipped cel-shadow per part (`shadeOf`), no gradients. Caelen now uses the same flat path (`CAELEN_LOOK`; old `getMage` kept unused). Still cached per hero+view offscreen; 8-dir facing, float/bob, trail, hitbox unchanged.
+- Removed the soft body aura glow per frame; weapon glow slightly reduced (r 22→20, a .95→.8). Aura ring/ground circle unchanged. Enemies/bosses/spells/arena/menu art untouched.
+- Debug hook `globalThis.__msHero(ctx,x,y,faceAngle,heroId)` for sprite contact sheets (`/tmp/heroes2d.cjs`).
+- Main-menu title: moved inside the art panel (right: max(15vw,50px); landscape 140px), font min(56px,13vw)/min(30px,7.2vw), glyph padding + light halo so it never clips at 360–412 portrait or 844x390.
+- QA note: `qa/deep.js` times out waiting for `[data-modal="chest"]` (also on the pre-v3 live build — script drift, not a regression); endless.js and deep-live.js pass with 0 errors.

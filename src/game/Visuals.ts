@@ -423,122 +423,161 @@ export const HERO_LOOKS: Record<string, HeroLook> = {
   nyx: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'long', hair: ['#2a1f3d', '#0f0a1a'], skin: '#e6c9b4', coat: ['#3b2a7a', '#22175a', '#0f0a30'], trim: '#d4a94a', accent: '#60a5fa', weapon: 'orbStaff', weaponGlow: '#c084fc', rings: '#c8963e', crown: '#a78bfa', eyes: '#93c5fd', aura: 'rgba(140,100,255,1)', dress: true, chestGem: '#3b82f6' },
 };
 
+/* Flat 2D cartoon look: solid fills, dark outlines, one flat cel-shadow shape per part, no gradients. */
+const CAELEN_LOOK: HeroLook = { wing: 'crystal', wingA: '#93c5fd', wingB: '#6d5bd0', wingEdge: '#e0f2fe', head: 'long', hair: ['#eef2ff', '#b9c3e8'], skin: '#eadfd2', coat: ['#26324f', '#161d33', '#0b1020'], trim: '#7dd3fc', accent: '#67e8f9', weapon: 'staff', weaponGlow: '#bfefff', eyes: '#38bdf8', aura: 'rgba(80,200,255,1)' };
+const INK = '#120c18';
+const OUT = 1.7; // outline width in world units
 const heroSprites: Record<string, Sprite> = {};
 function getHeroSprite(heroId: string, view: MageView): Sprite {
-  const L = HERO_LOOKS[heroId];
-  if (!L) return getMage(view);
+  const L = HERO_LOOKS[heroId] ?? CAELEN_LOOK;
   const key = heroId + ':' + view;
   if (heroSprites[key]) return heroSprites[key];
-  const sp = makeSprite(96, 104, 48, 68, (g) => {
+  const sp = makeSprite(96, 108, 48, 70, (g) => {
     const side = view === 'side', back = view === 'back';
-    // ---- wings
+    /** fill a path flat, optionally add a flat cel shadow (clipped), then ink outline */
+    const part = (path: () => void, fill: string, shade?: string, shadePath?: () => void, lw = OUT) => {
+      g.beginPath(); path(); g.fillStyle = fill; g.fill();
+      if (shade && shadePath) { g.save(); g.beginPath(); path(); g.clip(); g.beginPath(); shadePath(); g.fillStyle = shade; g.fill(); g.restore(); }
+      g.beginPath(); path(); g.strokeStyle = INK; g.lineWidth = lw; g.stroke();
+    };
+    const line = (path: () => void, col: string, w: number) => { // inked stick: dark under-stroke + colour
+      g.beginPath(); path(); g.strokeStyle = INK; g.lineWidth = w + OUT * 1.6; g.stroke();
+      g.beginPath(); path(); g.strokeStyle = col; g.lineWidth = w; g.stroke();
+    };
+    // ---- wings (flat panels, lower half shaded)
     const wingShape = (dir: number, sc: number) => {
       if (L.wing === 'none') return;
       g.save(); g.translate(dir * 4, -18); g.scale(dir * sc, 1);
       const feathers: [number, number, number][] = L.wing === 'feather'
-        ? [[40, -26, 6], [42, -12, 6], [38, 2, 5], [30, 12, 5], [20, 18, 4]]
-        : [[36, -30, 7], [38, -14, 6], [32, 2, 5], [22, 14, 4]];
+        ? [[20, 18, 4], [30, 12, 5], [38, 2, 5], [42, -12, 6], [40, -26, 6]]
+        : [[22, 14, 4], [32, 2, 5], [38, -14, 6], [36, -30, 7]];
       feathers.forEach(([tx, ty, w], i) => {
-        const gr = g.createLinearGradient(0, 0, tx, ty);
-        gr.addColorStop(0, L.wingB); gr.addColorStop(0.65, L.wingA); gr.addColorStop(1, L.wingEdge);
-        g.fillStyle = gr;
-        g.beginPath();
-        if (L.wing === 'feather') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.5, ty - w * 1.5, tx, ty); g.quadraticCurveTo(tx * 0.6, ty + w, 0, 2); }
-        else if (L.wing === 'fire') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.4, ty * 0.2 - w * 2, tx, ty - 4); g.lineTo(tx * 0.8, ty + 2); g.quadraticCurveTo(tx * 0.5, ty * 0.6 + w, 0, 3); }
-        else if (L.wing === 'lightning') { g.moveTo(0, 0); g.lineTo(tx * 0.35, ty * 0.35 - w); g.lineTo(tx * 0.5, ty * 0.5 + 1); g.lineTo(tx * 0.75, ty * 0.75 - w * 0.6); g.lineTo(tx, ty); g.lineTo(tx * 0.6, ty * 0.6 + w * 0.7); g.closePath(); }
-        else { g.moveTo(0, 0); g.lineTo(tx * 0.55, ty * 0.55 - w); g.lineTo(tx, ty); g.lineTo(tx * 0.55 + w * 0.4, ty * 0.55 + w * 0.6); g.closePath(); }
-        g.fill();
-        g.strokeStyle = L.wing === 'feather' ? 'rgba(120,80,10,0.6)' : 'rgba(20,10,40,0.7)'; g.lineWidth = 0.7; g.stroke();
-        if (i === 0 && L.wing === 'fire') { g.fillStyle = '#fde047'; g.beginPath(); g.arc(tx, ty - 4, 2, 0, Math.PI * 2); g.fill(); }
+        const p = () => {
+          if (L.wing === 'feather') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.5, ty - w * 1.5, tx, ty); g.quadraticCurveTo(tx * 0.6, ty + w, 0, 2); g.closePath(); }
+          else if (L.wing === 'fire') { g.moveTo(0, 0); g.quadraticCurveTo(tx * 0.35, ty * 0.3 - w * 2.4, tx, ty - 4); g.quadraticCurveTo(tx * 0.8, ty + w * 0.6, tx * 0.7, ty + w * 1.2); g.quadraticCurveTo(tx * 0.45, ty * 0.6 + w * 1.6, 0, 4); g.closePath(); }
+          else if (L.wing === 'lightning') { g.moveTo(0, 0); g.lineTo(tx * 0.35, ty * 0.35 - w); g.lineTo(tx * 0.5, ty * 0.5 + 1); g.lineTo(tx * 0.75, ty * 0.75 - w * 0.6); g.lineTo(tx, ty); g.lineTo(tx * 0.6, ty * 0.6 + w * 0.7); g.closePath(); }
+          else { g.moveTo(0, 0); g.lineTo(tx * 0.55, ty * 0.55 - w); g.lineTo(tx, ty); g.lineTo(tx * 0.55 + w * 0.4, ty * 0.55 + w * 0.6); g.closePath(); }
+        };
+        const light = i % 2 === 0 ? L.wingA : L.wingEdge;
+        part(p, light, L.wingB, () => { g.moveTo(0, 0); g.lineTo(tx * 0.5, ty * 0.5); g.lineTo(tx * 0.5 + 30, ty * 0.5 + 30); g.lineTo(-10, 30); g.closePath(); }, 1.3);
+        if (L.wing === 'fire' && i === feathers.length - 1) part(() => g.arc(tx, ty - 4, 2.2, 0, Math.PI * 2), '#fde047', undefined, undefined, 1);
       });
       g.restore();
     };
     if (side) wingShape(-1, 0.8); else { wingShape(-1, 1); wingShape(1, 1); }
-    if (L.rings && !side) { g.strokeStyle = L.rings; g.lineWidth = 1.4; g.beginPath(); g.arc(0, -26, 22, 0, Math.PI * 2); g.stroke(); g.lineWidth = 0.8; g.beginPath(); g.ellipse(0, -26, 26, 9, -0.5, 0, Math.PI * 2); g.stroke(); }
-    if (L.halo) { g.strokeStyle = L.halo; g.lineWidth = 2; g.beginPath(); g.arc(0, back ? -34 : -36, 8, 0, Math.PI * 2); g.stroke(); }
-    // ---- weapon (staff-like, drawn behind when back)
+    if (L.rings && !side) {
+      line(() => g.arc(0, -26, 22, 0, Math.PI * 2), L.rings, 1.4);
+      line(() => g.ellipse(0, -26, 26, 9, -0.5, 0, Math.PI * 2), '#e0b55a', 1);
+    }
+    if (L.halo) line(() => g.arc(0, back ? -36 : -38, 8, 0, Math.PI * 2), L.halo, 2);
+    // ---- weapon
     const weapon = () => {
       const sx = side ? 11 : 17;
       if (L.weapon === 'staff' || L.weapon === 'orbStaff' || L.weapon === 'mace' || L.weapon === 'scythe') {
-        g.strokeStyle = L.weapon === 'scythe' ? '#1c1c1f' : L.weapon === 'mace' ? '#d4a017' : '#5b4630'; g.lineWidth = 2.2;
-        g.beginPath(); g.moveTo(sx, L.weapon === 'mace' ? -16 : -42); g.lineTo(sx - 2, 22); g.stroke();
-        if (L.weapon === 'scythe') { g.fillStyle = '#2b2b30'; g.beginPath(); g.moveTo(sx, -42); g.quadraticCurveTo(sx - 26, -48, sx - 30, -26); g.quadraticCurveTo(sx - 20, -40, sx, -36); g.fill(); g.strokeStyle = L.weaponGlow; g.lineWidth = 0.8; g.stroke(); }
-        else if (L.weapon === 'mace') { g.fillStyle = L.weaponGlow; g.beginPath(); g.arc(sx, -19, 4.5, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(sx, -19, 2, 0, Math.PI * 2); g.fill(); }
-        else { g.fillStyle = L.weaponGlow; g.beginPath(); g.moveTo(sx, -54); g.lineTo(sx + 4, -46); g.lineTo(sx, -39); g.lineTo(sx - 4, -46); g.closePath(); g.fill(); g.beginPath(); g.arc(sx, -46, 3.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, -46, 1.4, 0, Math.PI * 2); g.fill(); }
+        const pole = L.weapon === 'scythe' ? '#3a3a40' : L.weapon === 'mace' ? '#d4a017' : '#7a5a36';
+        line(() => { g.moveTo(sx, L.weapon === 'mace' ? -16 : L.weapon === 'scythe' ? -52 : -42); g.lineTo(sx - 2, 22); }, pole, 2.2);
+        if (L.weapon === 'scythe') {
+          part(() => { g.moveTo(sx, -52); g.quadraticCurveTo(sx - 30, -58, sx - 36, -34); g.quadraticCurveTo(sx - 24, -48, sx, -45); g.closePath(); }, '#d4d8db', '#7c8388', () => { g.moveTo(sx - 36, -34); g.quadraticCurveTo(sx - 22, -47, sx, -45); g.lineTo(sx, -40); g.lineTo(sx - 40, -28); g.closePath(); });
+          g.beginPath(); g.moveTo(sx - 4, -51); g.quadraticCurveTo(sx - 24, -54, sx - 31, -38); g.strokeStyle = L.weaponGlow; g.lineWidth = 0.9; g.stroke();
+        } else if (L.weapon === 'mace') {
+          part(() => g.arc(sx, -19, 5, 0, Math.PI * 2), L.weaponGlow, '#c2620e', () => g.rect(sx - 6, -19, 12, 7));
+          part(() => g.arc(sx - 1, -20.5, 1.8, 0, Math.PI * 2), '#fff3c4', undefined, undefined, 0.8);
+        } else {
+          if (L.weapon === 'staff') line(() => g.arc(sx, -45, 5, Math.PI * 0.9, Math.PI * 2.1), '#c9a75a', 1.2);
+          part(() => { g.moveTo(sx, -55); g.lineTo(sx + 4.5, -46); g.lineTo(sx, -38); g.lineTo(sx - 4.5, -46); g.closePath(); }, L.weaponGlow, shadeOf(L.weaponGlow), () => { g.moveTo(sx, -55); g.lineTo(sx + 5, -46); g.lineTo(sx, -37); g.closePath(); });
+          g.fillStyle = '#ffffff'; g.fillRect(sx - 2, -48, 1.6, 2.4);
+        }
       } else if (L.weapon === 'daggers') {
-        g.fillStyle = L.weaponGlow;
-        for (const dx of side ? [10] : [-16, 16]) { g.beginPath(); g.moveTo(dx, -6); g.lineTo(dx + (dx < 0 ? -2 : 2), 8); g.lineTo(dx, 4); g.closePath(); g.fill(); }
+        for (const dx of side ? [10] : [-16, 16]) {
+          const s = dx < 0 ? -1 : 1;
+          line(() => { g.moveTo(dx - 2.5, -6); g.lineTo(dx + 2.5, -6); }, '#3f3f46', 1.4);
+          part(() => { g.moveTo(dx - 1.6, -6); g.lineTo(dx + s * 2.5, 9); g.lineTo(dx + 1.6, -6); g.closePath(); }, L.weaponGlow, '#7e22ce', () => { g.moveTo(dx, -6); g.lineTo(dx + s * 3, 10); g.lineTo(dx + s * 3, -6); g.closePath(); }, 1.2);
+        }
       } else {
-        g.fillStyle = L.weaponGlow;
-        for (const dx of side ? [11] : [-16, 17]) { g.beginPath(); g.moveTo(dx - 4.5, -4); g.quadraticCurveTo(dx - 5, -14, dx - 1, -22); g.quadraticCurveTo(dx, -14, dx + 2, -17); g.quadraticCurveTo(dx + 5, -10, dx + 4.5, -4); g.arc(dx, -4, 4.5, 0, Math.PI); g.fill(); g.fillStyle = '#ffd04a'; g.beginPath(); g.moveTo(dx - 2.5, -4); g.quadraticCurveTo(dx - 1, -13, dx, -12); g.quadraticCurveTo(dx + 2.5, -8, dx + 2.5, -4); g.arc(dx, -4, 2.5, 0, Math.PI); g.fill(); g.fillStyle = '#fff7d6'; g.beginPath(); g.arc(dx, -4, 1.4, 0, Math.PI * 2); g.fill(); g.fillStyle = L.weaponGlow; }
+        for (const dx of side ? [11] : [-16, 17]) {
+          part(() => { g.moveTo(dx - 4.5, -4); g.quadraticCurveTo(dx - 5, -14, dx - 1, -22); g.quadraticCurveTo(dx, -14, dx + 2, -17); g.quadraticCurveTo(dx + 5, -10, dx + 4.5, -4); g.arc(dx, -4, 4.5, 0, Math.PI); g.closePath(); }, L.weaponGlow, undefined, undefined, 1.3);
+          g.fillStyle = '#ffd04a'; g.beginPath(); g.moveTo(dx - 2.5, -4); g.quadraticCurveTo(dx - 1, -13, dx, -12); g.quadraticCurveTo(dx + 2.5, -8, dx + 2.5, -4); g.arc(dx, -4, 2.5, 0, Math.PI); g.fill();
+        }
       }
     };
     if (back) weapon();
     // ---- coat / robe
     g.save(); if (side) g.scale(0.78, 1);
-    const coat = g.createLinearGradient(-20, -20, 20, 25);
-    coat.addColorStop(0, L.coat[0]); coat.addColorStop(0.5, L.coat[1]); coat.addColorStop(1, L.coat[2]);
-    g.fillStyle = coat; g.beginPath();
     const hem = L.dress ? 24 : 20;
-    if (side) { g.moveTo(-8, -22); g.lineTo(9, -22); g.lineTo(11, 0); g.lineTo(10, hem); g.lineTo(0, hem - 2); g.lineTo(-12, hem + 4); g.lineTo(-24, hem); g.lineTo(-13, 0); }
-    else { g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(13, 0); g.lineTo(L.dress ? 18 : 20, hem); g.lineTo(6, hem - 3); g.lineTo(0, hem + 1); g.lineTo(-6, hem - 3); g.lineTo(L.dress ? -18 : -20, hem); g.lineTo(-13, 0); }
-    g.closePath(); g.fill();
-    g.strokeStyle = L.trim; g.lineWidth = 1; g.beginPath();
+    const coatPath = () => {
+      if (side) { g.moveTo(-8, -22); g.lineTo(9, -22); g.lineTo(11, 0); g.lineTo(10, hem); g.lineTo(0, hem - 2); g.lineTo(-12, hem + 4); g.lineTo(-24, hem); g.lineTo(-13, 0); }
+      else { g.moveTo(-9, -22); g.lineTo(9, -22); g.lineTo(13, 0); g.lineTo(L.dress ? 18 : 20, hem); g.lineTo(6, hem - 3); g.lineTo(0, hem + 1); g.lineTo(-6, hem - 3); g.lineTo(L.dress ? -18 : -20, hem); g.lineTo(-13, 0); }
+      g.closePath();
+    };
+    const main = L.coat[0], dark = L.coat[1];
+    part(coatPath, main, dark, () => { if (side) g.rect(-30, -24, 22, 60); else { g.moveTo(3, -24); g.lineTo(30, -24); g.lineTo(30, 40); g.lineTo(6, 40); g.lineTo(1, 0); g.closePath(); } });
+    g.lineCap = 'round';
+    g.strokeStyle = L.trim; g.lineWidth = 1.1; g.beginPath();
     if (back) { g.moveTo(-12, 2); g.lineTo(0, 14); g.lineTo(12, 2); }
-    else if (side) { g.moveTo(9, -20); g.lineTo(10, hem); }
-    else { g.moveTo(0, -20); g.lineTo(0, hem); g.moveTo(-18, hem); g.lineTo(-6, hem - 3); g.moveTo(18, hem); g.lineTo(6, hem - 3); }
+    else if (side) { g.moveTo(8, -19); g.lineTo(9, hem - 1); }
+    else { g.moveTo(0, -19); g.lineTo(0, hem - 1); }
     g.stroke();
-    g.strokeStyle = L.trim; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-10, -8); g.lineTo(10, -8); g.stroke();
-    g.fillStyle = L.accent; g.beginPath(); g.arc(0, -8, 1.7, 0, Math.PI * 2); g.fill();
-    if (L.chestGem && !back) { g.fillStyle = L.chestGem; g.beginPath(); g.moveTo(0, -18); g.lineTo(3, -14); g.lineTo(0, -10); g.lineTo(-3, -14); g.closePath(); g.fill(); g.fillStyle = '#dbeafe'; g.fillRect(-0.8, -15.5, 1.6, 1.6); }
-    g.fillStyle = L.coat[0]; g.beginPath(); g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = L.trim; g.lineWidth = 0.8; g.stroke();
+    line(() => { g.moveTo(-11, -8); g.lineTo(11, -8); }, L.trim, 1.6);
+    part(() => g.arc(0, -8, 1.9, 0, Math.PI * 2), L.accent, undefined, undefined, 0.9);
+    if (L.chestGem && !back) { part(() => { g.moveTo(0, -18.5); g.lineTo(3.2, -14); g.lineTo(0, -9.5); g.lineTo(-3.2, -14); g.closePath(); }, L.chestGem, '#1e40af', () => g.rect(0, -20, 4, 12), 1); g.fillStyle = '#dbeafe'; g.fillRect(-1.4, -16, 1.4, 1.4); }
+    part(() => g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2), main, dark, () => g.rect(0, -27, 14, 12), 1.4);
     g.restore();
     if (!back) {
-      g.strokeStyle = L.coat[1]; g.lineWidth = 5; g.beginPath();
-      if (side) { g.moveTo(2, -19); g.lineTo(10, -6); } else { g.moveTo(-10, -19); g.lineTo(-15, -4); g.moveTo(10, -19); g.lineTo(16, -6); }
-      g.stroke();
+      if (side) line(() => { g.moveTo(2, -19); g.lineTo(10, -6); }, dark, 4.5);
+      else { line(() => { g.moveTo(-10, -19); g.lineTo(-15, -4); }, main, 4.5); line(() => { g.moveTo(10, -19); g.lineTo(16, -6); }, dark, 4.5); }
+      if (L.weapon !== 'fireHands') for (const [hx2, hy2] of side ? [[10, -5]] : [[-15, -3], [16, -5]]) part(() => g.arc(hx2, hy2, 2.3, 0, Math.PI * 2), L.skull || L.head === 'hood' ? '#2a2a30' : L.skin, undefined, undefined, 1);
       weapon();
     }
     // ---- head
-    const hair = g.createLinearGradient(0, -38, 0, -10);
-    hair.addColorStop(0, L.hair[0]); hair.addColorStop(1, L.hair[1]);
     const hx = side ? 1.5 : 0;
-    if (L.head === 'hood' || L.head === 'horns' && L.skin === '#2a2a2e') {
-      g.fillStyle = L.coat[1];
-      g.beginPath(); g.moveTo(hx - 8, -18); g.quadraticCurveTo(hx - 9, -40, hx, -40); g.quadraticCurveTo(hx + 9, -40, hx + 8, -18); g.closePath(); g.fill();
-      if (!back) { g.fillStyle = '#050507'; g.beginPath(); g.ellipse(hx + (side ? 2 : 0), -28, 4.5, 5.5, 0, 0, Math.PI * 2); g.fill();
-        if (L.skull) { g.fillStyle = '#c9c5b8'; g.beginPath(); g.ellipse(hx + (side ? 2.5 : 0), -28.5, 3.4, 4.2, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#0b0b0d'; g.fillRect(hx + (side ? 2 : -2.6), -26, side ? 2.5 : 5.2, 1); }
-        g.fillStyle = L.eyes; if (side) g.fillRect(hx + 3, -29.5, 2, 1.3); else { g.fillRect(hx - 3, -29.5, 2, 1.3); g.fillRect(hx + 1, -29.5, 2, 1.3); } }
-    } else {
-      if (!back) { g.fillStyle = L.skin; g.beginPath(); g.ellipse(hx, -29, side ? 4 : 4.5, 5.5, 0, 0, Math.PI * 2); g.fill(); }
-      g.fillStyle = hair; g.beginPath();
-      if (L.head === 'long') {
-        if (back) { g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30); g.lineTo(8, -6); g.lineTo(0, -4); g.lineTo(-8, -6); }
-        else if (side) { g.moveTo(4, -32); g.quadraticCurveTo(2, -39, -4, -37); g.quadraticCurveTo(-8, -33, -7, -26); g.lineTo(-13, -6); g.lineTo(-5, -14); g.lineTo(-1, -26); g.lineTo(1, -31); }
-        else { g.moveTo(-6, -30); g.quadraticCurveTo(-7, -38, 0, -38); g.quadraticCurveTo(7, -38, 6.5, -30); g.lineTo(9, -10); g.lineTo(4, -20); g.lineTo(3, -31); g.lineTo(-2, -32); g.lineTo(-4, -20); g.lineTo(-9, -10); }
-      } else {
-        g.moveTo(hx - 5.5, -29); g.quadraticCurveTo(hx - 6, -37, hx, -37); g.quadraticCurveTo(hx + 6, -37, hx + 5.5, -29); g.lineTo(hx + 4, -32); g.lineTo(hx - 4, -32);
+    if (L.head === 'hood' || (L.head === 'horns' && L.skull)) {
+      const hood = () => { g.moveTo(hx - 8.5, -17); g.quadraticCurveTo(hx - 10, -41, hx, -41); g.quadraticCurveTo(hx + 10, -41, hx + 8.5, -17); g.closePath(); };
+      part(hood, L.coat[0], L.coat[1], () => g.rect(hx + 1, -44, 12, 30));
+      if (!back) {
+        part(() => g.ellipse(hx + (side ? 2 : 0), -28, 4.8, 5.8, 0, 0, Math.PI * 2), '#050507', undefined, undefined, 1);
+        if (L.skull) { part(() => g.ellipse(hx + (side ? 2.5 : 0), -28.5, 3.6, 4.4, 0, 0, Math.PI * 2), '#e7e2d3', '#a8a392', () => g.rect(hx - 4, -27, 9, 5), 1); g.fillStyle = INK; g.fillRect(hx + (side ? 2 : -2.6), -25.5, side ? 2.5 : 5.2, 1); }
+        g.fillStyle = L.eyes; if (side) g.fillRect(hx + 3, -30, 2.2, 1.6); else { g.fillRect(hx - 3.2, -30, 2.2, 1.6); g.fillRect(hx + 1, -30, 2.2, 1.6); }
       }
-      g.closePath(); g.fill();
-      if (L.beard && !back) { g.fillStyle = L.beard; g.beginPath(); g.moveTo(hx - 4, -28); g.quadraticCurveTo(hx, L.head === 'antlers' ? -16 : -21, hx + 4, -28); g.lineTo(hx + 3, -26); g.lineTo(hx - 3, -26); g.closePath(); g.fill(); }
-      if (!back) { g.fillStyle = L.eyes; if (side) g.fillRect(hx + 1.5, -30, 1.6, 1.1); else { g.fillRect(hx - 2.5, -30, 1.6, 1.1); g.fillRect(hx + 1, -30, 1.6, 1.1); } }
+    } else {
+      // long hair behind the face
+      const longBack = () => {
+        if (back) { g.moveTo(-6.5, -30); g.quadraticCurveTo(-7.5, -39, 0, -39); g.quadraticCurveTo(7.5, -39, 7, -30); g.lineTo(8.5, -6); g.lineTo(0, -4); g.lineTo(-8.5, -6); }
+        else if (side) { g.moveTo(4, -32); g.quadraticCurveTo(2, -40, -4, -38); g.quadraticCurveTo(-8.5, -33, -7.5, -26); g.lineTo(-13, -6); g.lineTo(-5, -14); g.lineTo(-1, -26); g.lineTo(1, -31); }
+        else { g.moveTo(-6.5, -30); g.quadraticCurveTo(-7.5, -39, 0, -39); g.quadraticCurveTo(7.5, -39, 7, -30); g.lineTo(9.5, -10); g.lineTo(5, -18); g.lineTo(4.5, -25); g.lineTo(-4.5, -25); g.lineTo(-5, -18); g.lineTo(-9.5, -10); }
+        g.closePath();
+      };
+      if (L.head === 'long') part(longBack, L.hair[0], L.hair[1], () => g.rect(hx + 1, -42, 14, 40));
+      if (!back) part(() => g.ellipse(hx, -29, side ? 4.2 : 4.7, 5.6, 0, 0, Math.PI * 2), L.skin, shadeOf(L.skin), () => g.rect(hx + (side ? -6 : 1.5), -36, 6, 14), 1.4);
+      // fringe / short hair cap
+      const cap = () => {
+        if (L.head === 'long' && !back) { if (side) { g.moveTo(hx + 4.5, -31); g.quadraticCurveTo(hx + 3, -39, hx - 4, -37); g.lineTo(hx - 2, -30); g.closePath(); } else { g.moveTo(hx - 5.5, -29); g.quadraticCurveTo(hx - 6, -37.5, hx, -37.5); g.quadraticCurveTo(hx + 6, -37.5, hx + 5.5, -29); g.lineTo(hx + 2.5, -32.5); g.lineTo(hx - 1, -31); g.lineTo(hx - 3.5, -32.5); g.closePath(); } }
+        else if (L.head !== 'long') { g.moveTo(hx - 5.4, back ? -27 : -30.5); g.quadraticCurveTo(hx - 6.2, -37.5, hx, -37.5); g.quadraticCurveTo(hx + 6.2, -37.5, hx + 5.4, back ? -27 : -30.5); g.lineTo(hx + 4.5, back ? -26 : -33.5); g.lineTo(hx - 4.5, back ? -26 : -33.5); g.closePath(); }
+      };
+      if (!(L.head === 'long' && back)) part(cap, L.hair[0], L.hair[1], () => g.rect(hx + 1, -40, 10, 14), 1.4);
+      if (L.beard && !back) part(() => { g.moveTo(hx - 4.3, -28); g.quadraticCurveTo(hx, L.head === 'antlers' ? -15 : -21, hx + 4.3, -28); g.lineTo(hx + 3, -26); g.lineTo(hx - 3, -26); g.closePath(); }, L.beard, shadeOf(L.beard), () => g.rect(hx + 0.5, -30, 6, 16), 1.2);
+      if (!back) { g.fillStyle = INK; if (side) g.fillRect(hx + 1.4, -30.4, 1.9, 1.7); else { g.fillRect(hx - 2.7, -30.4, 1.9, 1.7); g.fillRect(hx + 0.9, -30.4, 1.9, 1.7); }
+        g.fillStyle = L.eyes; if (side) g.fillRect(hx + 1.9, -30.1, 0.9, 0.9); else { g.fillRect(hx - 2.2, -30.1, 0.9, 0.9); g.fillRect(hx + 1.4, -30.1, 0.9, 0.9); } }
     }
     if (L.head === 'horns') {
-      g.fillStyle = L.skin === '#2a2a2e' ? '#3f3f46' : '#3a2a20';
-      for (const d of side ? [-1] : [-1, 1]) { g.beginPath(); g.moveTo(hx + d * 4, -34); g.quadraticCurveTo(hx + d * 11, -38, hx + d * 9, -46); g.quadraticCurveTo(hx + d * 7, -39, hx + d * 2, -36); g.fill(); }
-      if (L.hornFlame) for (const d of side ? [-1] : [-1, 1]) { g.fillStyle = L.hornFlame; g.beginPath(); g.moveTo(hx + d * 7.5, -44); g.quadraticCurveTo(hx + d * 12, -50, hx + d * 9, -55); g.quadraticCurveTo(hx + d * 8, -50, hx + d * 6, -48); g.closePath(); g.fill(); g.fillStyle = '#ffd04a'; g.beginPath(); g.arc(hx + d * 8.8, -46.5, 1.4, 0, Math.PI * 2); g.fill(); }
+      const hc = L.skull ? '#4a4a52' : '#2b1d16';
+      for (const d of side ? [-1] : [-1, 1]) part(() => { g.moveTo(hx + d * 4, -34); g.quadraticCurveTo(hx + d * 11, -38, hx + d * 9, -46); g.quadraticCurveTo(hx + d * 7, -39, hx + d * 2, -36); g.closePath(); }, hc, undefined, undefined, 1.2);
+      if (L.hornFlame) for (const d of side ? [-1] : [-1, 1]) { part(() => { g.moveTo(hx + d * 7.5, -44); g.quadraticCurveTo(hx + d * 12, -50, hx + d * 9, -56); g.quadraticCurveTo(hx + d * 8, -50, hx + d * 6, -48); g.closePath(); }, L.hornFlame, undefined, undefined, 1); }
     }
     if (L.head === 'antlers') {
-      g.strokeStyle = L.antler ?? '#6b8e3a'; g.lineWidth = 1.8; g.beginPath();
-      for (const d of side ? [-1] : [-1, 1]) { g.moveTo(hx + d * 3, -36); g.lineTo(hx + d * 10, -48); g.moveTo(hx + d * 6, -41); g.lineTo(hx + d * 13, -42); g.moveTo(hx + d * 8, -45); g.lineTo(hx + d * 6, -52); }
-      g.stroke();
-      g.fillStyle = L.trim; for (const d of side ? [-1] : [-1, 1]) { g.beginPath(); g.arc(hx + d * 10, -48, 1.6, 0, Math.PI * 2); g.arc(hx + d * 13, -42, 1.3, 0, Math.PI * 2); g.arc(hx + d * 6, -52, 1.3, 0, Math.PI * 2); g.fill(); }
+      const ant = () => { for (const d of side ? [-1] : [-1, 1]) { g.moveTo(hx + d * 3, -36); g.lineTo(hx + d * 10, -48); g.moveTo(hx + d * 6, -41); g.lineTo(hx + d * 13, -42); g.moveTo(hx + d * 8, -45); g.lineTo(hx + d * 6, -52); } };
+      line(ant, L.antler ?? '#7a5c3a', 1.9);
+      for (const d of side ? [-1] : [-1, 1]) for (const [ax, ay, r] of [[10, -48, 1.7], [13, -42, 1.4], [6, -52, 1.4]] as const) part(() => g.arc(hx + d * ax, ay, r, 0, Math.PI * 2), L.trim, undefined, undefined, 0.8);
     }
-    if (L.crown) { g.fillStyle = L.crown; g.beginPath(); g.moveTo(hx - 5, -35); g.lineTo(hx - 4, -41); g.lineTo(hx - 1.5, -37); g.lineTo(hx, -43); g.lineTo(hx + 1.5, -37); g.lineTo(hx + 4, -41); g.lineTo(hx + 5, -35); g.closePath(); g.fill(); }
+    if (L.crown) part(() => { g.moveTo(hx - 5, -35); g.lineTo(hx - 4.5, -41.5); g.lineTo(hx - 1.7, -37.5); g.lineTo(hx, -44); g.lineTo(hx + 1.7, -37.5); g.lineTo(hx + 4.5, -41.5); g.lineTo(hx + 5, -35); g.closePath(); }, L.crown, shadeOf(L.crown), () => g.rect(hx, -46, 8, 12), 1.1);
   });
   heroSprites[key] = sp;
   return sp;
+}
+/** darker flat tone of a #rrggbb colour for cel shadow */
+function shadeOf(hex: string, k = 0.68): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.round(v * k).toString(16).padStart(2, '0');
+  return '#' + c(n >> 16 & 255) + c(n >> 8 & 255) + c(n & 255);
 }
 export function heroAura(heroId: string): string { return HERO_LOOKS[heroId]?.aura ?? 'rgba(60,170,255,1)'; }
 
@@ -676,6 +715,7 @@ export class VisualRenderer {
     const s = getHeroSprite(heroId, view);
     const L = HERO_LOOKS[heroId];
     const circle = L ? getMageCircle(L.aura, L.trim) : getMageCircle();
+    void getMage;
     const lift = 16 + Math.sin(t * 2.6) * 5; // hover height
     const fx = Math.cos(faceAngle), fy = Math.sin(faceAngle);
     const lean = fx * 0.2 * moveAmt; // bank into horizontal movement
@@ -725,9 +765,8 @@ export class VisualRenderer {
     ctx.globalCompositeOperation = 'lighter';
     const staffX = (view === 'side' ? 10 * 0.95 : 17) * flip * yaw;
     const cx = staffX * Math.cos(lean) + 47 * Math.sin(lean);
-    drawGlow(ctx, L ? L.weaponGlow : 'rgba(140,220,255,1)', cx, -47 - lift, 22 + Math.sin(t * 6) * 3, view === 'back' ? 0.6 : 0.95);
-    drawGlow(ctx, L ? L.aura : 'rgba(120,200,255,1)', 0, -10 - lift, 46, 0.22);
-    if (L && L.weapon === 'fireHands') for (const hx of view === 'side' ? [11] : [-16, 17]) drawGlow(ctx, L.weaponGlow, hx * flip * yaw, -8 - lift, 18 + Math.sin(t * 9 + hx) * 3, 0.9);
+    drawGlow(ctx, L ? L.weaponGlow : 'rgba(140,220,255,1)', cx, -47 - lift, 20 + Math.sin(t * 6) * 3, view === 'back' ? 0.5 : 0.8);
+        if (L && L.weapon === 'fireHands') for (const hx of view === 'side' ? [11] : [-16, 17]) drawGlow(ctx, L.weaponGlow, hx * flip * yaw, -8 - lift, 18 + Math.sin(t * 9 + hx) * 3, 0.9);
     if (L && L.weapon === 'daggers') for (const hx of view === 'side' ? [10] : [-16, 16]) drawGlow(ctx, L.weaponGlow, hx * flip * yaw, 0 - lift, 12, 0.7);
     ctx.restore();
   }
@@ -844,3 +883,6 @@ export class VisualRenderer {
     ctx.restore();
   }
 }
+
+// debug hook for QA: draw a hero sprite (flat 2D) at a given facing
+(globalThis as unknown as { __msHero?: unknown }).__msHero = (ctx: CanvasRenderingContext2D, x: number, y: number, face: number, hero: string) => VisualRenderer.renderArchmage(ctx, x, y, 0, false, face, 0, hero);
