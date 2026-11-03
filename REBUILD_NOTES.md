@@ -32,3 +32,10 @@
 - `GameEngine.ts`: passes `currentHero.id`; copies initial stats.
 - `App.tsx`: `heroRef` + `applyHeroBonuses` — bonuses applied at run start and as deltas on mid-run switch; removed `currentHero` from engine-init deps (no stale restart), consecutive picks work.
 - QA: `/workspace/qa/hero.js` at 844x390 and 390x844 (touch), all 10 heroes, 0 console errors. Shots: v4-hero-*.png.
+
+## Round 5 — cohesion: in-game heroes match their menu portraits (2026-11-03 PST)
+- `Visuals.ts`: ground rune circle now per-hero colour (`getMageCircle(aura, trim)`, cached per colour) instead of cyan for everyone; staff-tip glow uses hero `weaponGlow`, body glow uses hero aura; fire-hand heroes (Kael, Zephyr, Ignis) get bigger 2-tone hand flames + additive hand glow; Vane dagger glow.
+- Signature features: Moros bone skull face inside hood; Ignis flame-tipped horns; Eldrin brown antlers with glowing green tips + crystal staff head; Nyx blue chest gem; orbStaff heads now crystal (Lyra/Eldrin/Nyx).
+- `HUD.tsx`: portrait ring border + glow and hero name tag use `hero.color`.
+- QA: `/workspace/qa/cohesion.js` (dsf 3, clears spells/enemies for clean crops; menu screenshot | portrait | front/side/back). 844x390 + 390x844 touch, 10 heroes, 0 console errors. Shots: v5-cohesion-<hero>.png, -port.png, v5-cohesion-all.png.
+- Known: arena backdrop's cyan rune lines dominate crops regardless of hero (arena art, not hero); sprites remain ~50px chibi so portrait detail (armour plates, robe embroidery) is simplified.

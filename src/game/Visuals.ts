@@ -409,18 +409,18 @@ interface HeroLook {
   head: Head; hair: [string, string]; skin: string;
   coat: [string, string, string]; trim: string; accent: string;
   weapon: Weapon; weaponGlow: string; halo?: string; crown?: string; beard?: string; eyes: string; aura: string;
-  rings?: string; dress?: boolean;
+  rings?: string; dress?: boolean; skull?: boolean; hornFlame?: string; chestGem?: string; antler?: string;
 }
 export const HERO_LOOKS: Record<string, HeroLook> = {
   aurelia: { wing: 'feather', wingA: '#fde68a', wingB: '#f59e0b', wingEdge: '#fff7d6', head: 'long', hair: ['#fde68a', '#d4a017'], skin: '#f1d6bf', coat: ['#f5d778', '#b8860b', '#6b4a0c'], trim: '#fff1b0', accent: '#fbbf24', weapon: 'mace', weaponGlow: '#ff9d2e', halo: '#ffd75a', eyes: '#3b82f6', aura: 'rgba(255,200,80,1)', dress: true },
   lyra: { wing: 'ice', wingA: '#bfdbfe', wingB: '#3b82f6', wingEdge: '#e0f2fe', head: 'long', hair: ['#f8fafc', '#cbd5e1'], skin: '#efe2dc', coat: ['#1e3a8a', '#172554', '#0b1230'], trim: '#93c5fd', accent: '#e0f2fe', weapon: 'orbStaff', weaponGlow: '#7dd3fc', crown: '#bae6fd', eyes: '#38bdf8', aura: 'rgba(120,190,255,1)', dress: true },
   kael: { wing: 'fire', wingA: '#fb923c', wingB: '#b91c1c', wingEdge: '#fde047', head: 'short', hair: ['#3f2a1d', '#1c120c'], skin: '#d6a77f', coat: ['#4a2f22', '#2a1a12', '#120a06'], trim: '#f97316', accent: '#fb923c', weapon: 'fireHands', weaponGlow: '#ff7a1f', beard: '#2a1a10', eyes: '#fb923c', aura: 'rgba(255,120,40,1)' },
   zephyr: { wing: 'lightning', wingA: '#c4b5fd', wingB: '#7c3aed', wingEdge: '#ede9fe', head: 'short', hair: ['#27272a', '#09090b'], skin: '#dcb79a', coat: ['#2e1f4a', '#1a1230', '#0b0716'], trim: '#a78bfa', accent: '#c084fc', weapon: 'fireHands', weaponGlow: '#a855f7', beard: '#18181b', eyes: '#c4b5fd', aura: 'rgba(170,110,255,1)' },
-  moros: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#18181b', '#09090b'], skin: '#2a2a2e', coat: ['#27272a', '#141416', '#050506'], trim: '#3f3f46', accent: '#22c55e', weapon: 'scythe', weaponGlow: '#4ade80', eyes: '#4ade80', aura: 'rgba(40,220,120,1)' },
+  moros: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#18181b', '#09090b'], skin: '#2a2a2e', coat: ['#27272a', '#141416', '#050506'], trim: '#3f3f46', accent: '#22c55e', weapon: 'scythe', weaponGlow: '#4ade80', eyes: '#4ade80', aura: 'rgba(40,220,120,1)', skull: true },
   vane: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'hood', hair: ['#1f1f24', '#0a0a0c'], skin: '#101014', coat: ['#26262c', '#141418', '#060608'], trim: '#3f3f46', accent: '#a855f7', weapon: 'daggers', weaponGlow: '#c084fc', eyes: '#d8b4fe', aura: 'rgba(160,80,255,1)' },
-  eldrin: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'antlers', hair: ['#9ca38f', '#5b6150'], skin: '#b89a7c', coat: ['#3f5a2a', '#263a1a', '#14200d'], trim: '#84cc16', accent: '#4ade80', weapon: 'orbStaff', weaponGlow: '#4ade80', beard: '#a8a89a', eyes: '#86efac', aura: 'rgba(80,220,120,1)' },
-  ignis: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#2a1410', '#120806'], skin: '#a3352a', coat: ['#5a3524', '#3a2016', '#1a0d08'], trim: '#c2410c', accent: '#f97316', weapon: 'fireHands', weaponGlow: '#ff5a1f', beard: '#2a1410', eyes: '#fde047', aura: 'rgba(255,90,30,1)' },
-  nyx: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'long', hair: ['#2a1f3d', '#0f0a1a'], skin: '#e6c9b4', coat: ['#3b2a7a', '#22175a', '#0f0a30'], trim: '#d4a94a', accent: '#60a5fa', weapon: 'orbStaff', weaponGlow: '#c084fc', rings: '#c8963e', crown: '#a78bfa', eyes: '#93c5fd', aura: 'rgba(140,100,255,1)', dress: true },
+  eldrin: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'antlers', hair: ['#9ca38f', '#5b6150'], skin: '#b89a7c', coat: ['#3f5a2a', '#263a1a', '#14200d'], trim: '#84cc16', accent: '#4ade80', weapon: 'orbStaff', weaponGlow: '#4ade80', beard: '#a8a89a', eyes: '#86efac', aura: 'rgba(80,220,120,1)', antler: '#7a5c3a' },
+  ignis: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'horns', hair: ['#2a1410', '#120806'], skin: '#a3352a', coat: ['#5a3524', '#3a2016', '#1a0d08'], trim: '#c2410c', accent: '#f97316', weapon: 'fireHands', weaponGlow: '#ff5a1f', beard: '#2a1410', eyes: '#fde047', aura: 'rgba(255,90,30,1)', hornFlame: '#ff8a1f' },
+  nyx: { wing: 'none', wingA: '', wingB: '', wingEdge: '', head: 'long', hair: ['#2a1f3d', '#0f0a1a'], skin: '#e6c9b4', coat: ['#3b2a7a', '#22175a', '#0f0a30'], trim: '#d4a94a', accent: '#60a5fa', weapon: 'orbStaff', weaponGlow: '#c084fc', rings: '#c8963e', crown: '#a78bfa', eyes: '#93c5fd', aura: 'rgba(140,100,255,1)', dress: true, chestGem: '#3b82f6' },
 };
 
 const heroSprites: Record<string, Sprite> = {};
@@ -464,13 +464,13 @@ function getHeroSprite(heroId: string, view: MageView): Sprite {
         g.beginPath(); g.moveTo(sx, L.weapon === 'mace' ? -16 : -42); g.lineTo(sx - 2, 22); g.stroke();
         if (L.weapon === 'scythe') { g.fillStyle = '#2b2b30'; g.beginPath(); g.moveTo(sx, -42); g.quadraticCurveTo(sx - 26, -48, sx - 30, -26); g.quadraticCurveTo(sx - 20, -40, sx, -36); g.fill(); g.strokeStyle = L.weaponGlow; g.lineWidth = 0.8; g.stroke(); }
         else if (L.weapon === 'mace') { g.fillStyle = L.weaponGlow; g.beginPath(); g.arc(sx, -19, 4.5, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(sx, -19, 2, 0, Math.PI * 2); g.fill(); }
-        else { g.fillStyle = L.weaponGlow; g.beginPath(); g.arc(sx, -46, 3.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, -46, 1.4, 0, Math.PI * 2); g.fill(); }
+        else { g.fillStyle = L.weaponGlow; g.beginPath(); g.moveTo(sx, -54); g.lineTo(sx + 4, -46); g.lineTo(sx, -39); g.lineTo(sx - 4, -46); g.closePath(); g.fill(); g.beginPath(); g.arc(sx, -46, 3.6, 0, Math.PI * 2); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, -46, 1.4, 0, Math.PI * 2); g.fill(); }
       } else if (L.weapon === 'daggers') {
         g.fillStyle = L.weaponGlow;
         for (const dx of side ? [10] : [-16, 16]) { g.beginPath(); g.moveTo(dx, -6); g.lineTo(dx + (dx < 0 ? -2 : 2), 8); g.lineTo(dx, 4); g.closePath(); g.fill(); }
       } else {
         g.fillStyle = L.weaponGlow;
-        for (const dx of side ? [11] : [-16, 17]) { g.beginPath(); g.moveTo(dx - 3, -4); g.quadraticCurveTo(dx, -16, dx + 3, -4); g.arc(dx, -4, 3, 0, Math.PI); g.fill(); g.fillStyle = '#fde68a'; g.beginPath(); g.arc(dx, -5, 1.3, 0, Math.PI * 2); g.fill(); g.fillStyle = L.weaponGlow; }
+        for (const dx of side ? [11] : [-16, 17]) { g.beginPath(); g.moveTo(dx - 4.5, -4); g.quadraticCurveTo(dx - 5, -14, dx - 1, -22); g.quadraticCurveTo(dx, -14, dx + 2, -17); g.quadraticCurveTo(dx + 5, -10, dx + 4.5, -4); g.arc(dx, -4, 4.5, 0, Math.PI); g.fill(); g.fillStyle = '#ffd04a'; g.beginPath(); g.moveTo(dx - 2.5, -4); g.quadraticCurveTo(dx - 1, -13, dx, -12); g.quadraticCurveTo(dx + 2.5, -8, dx + 2.5, -4); g.arc(dx, -4, 2.5, 0, Math.PI); g.fill(); g.fillStyle = '#fff7d6'; g.beginPath(); g.arc(dx, -4, 1.4, 0, Math.PI * 2); g.fill(); g.fillStyle = L.weaponGlow; }
       }
     };
     if (back) weapon();
@@ -490,6 +490,7 @@ function getHeroSprite(heroId: string, view: MageView): Sprite {
     g.stroke();
     g.strokeStyle = L.trim; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-10, -8); g.lineTo(10, -8); g.stroke();
     g.fillStyle = L.accent; g.beginPath(); g.arc(0, -8, 1.7, 0, Math.PI * 2); g.fill();
+    if (L.chestGem && !back) { g.fillStyle = L.chestGem; g.beginPath(); g.moveTo(0, -18); g.lineTo(3, -14); g.lineTo(0, -10); g.lineTo(-3, -14); g.closePath(); g.fill(); g.fillStyle = '#dbeafe'; g.fillRect(-0.8, -15.5, 1.6, 1.6); }
     g.fillStyle = L.coat[0]; g.beginPath(); g.ellipse(0, -21, 13, 5, 0, 0, Math.PI * 2); g.fill();
     g.strokeStyle = L.trim; g.lineWidth = 0.8; g.stroke();
     g.restore();
@@ -507,6 +508,7 @@ function getHeroSprite(heroId: string, view: MageView): Sprite {
       g.fillStyle = L.coat[1];
       g.beginPath(); g.moveTo(hx - 8, -18); g.quadraticCurveTo(hx - 9, -40, hx, -40); g.quadraticCurveTo(hx + 9, -40, hx + 8, -18); g.closePath(); g.fill();
       if (!back) { g.fillStyle = '#050507'; g.beginPath(); g.ellipse(hx + (side ? 2 : 0), -28, 4.5, 5.5, 0, 0, Math.PI * 2); g.fill();
+        if (L.skull) { g.fillStyle = '#c9c5b8'; g.beginPath(); g.ellipse(hx + (side ? 2.5 : 0), -28.5, 3.4, 4.2, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#0b0b0d'; g.fillRect(hx + (side ? 2 : -2.6), -26, side ? 2.5 : 5.2, 1); }
         g.fillStyle = L.eyes; if (side) g.fillRect(hx + 3, -29.5, 2, 1.3); else { g.fillRect(hx - 3, -29.5, 2, 1.3); g.fillRect(hx + 1, -29.5, 2, 1.3); } }
     } else {
       if (!back) { g.fillStyle = L.skin; g.beginPath(); g.ellipse(hx, -29, side ? 4 : 4.5, 5.5, 0, 0, Math.PI * 2); g.fill(); }
@@ -525,11 +527,13 @@ function getHeroSprite(heroId: string, view: MageView): Sprite {
     if (L.head === 'horns') {
       g.fillStyle = L.skin === '#2a2a2e' ? '#3f3f46' : '#3a2a20';
       for (const d of side ? [-1] : [-1, 1]) { g.beginPath(); g.moveTo(hx + d * 4, -34); g.quadraticCurveTo(hx + d * 11, -38, hx + d * 9, -46); g.quadraticCurveTo(hx + d * 7, -39, hx + d * 2, -36); g.fill(); }
+      if (L.hornFlame) for (const d of side ? [-1] : [-1, 1]) { g.fillStyle = L.hornFlame; g.beginPath(); g.moveTo(hx + d * 7.5, -44); g.quadraticCurveTo(hx + d * 12, -50, hx + d * 9, -55); g.quadraticCurveTo(hx + d * 8, -50, hx + d * 6, -48); g.closePath(); g.fill(); g.fillStyle = '#ffd04a'; g.beginPath(); g.arc(hx + d * 8.8, -46.5, 1.4, 0, Math.PI * 2); g.fill(); }
     }
     if (L.head === 'antlers') {
-      g.strokeStyle = '#6b8e3a'; g.lineWidth = 1.6; g.beginPath();
+      g.strokeStyle = L.antler ?? '#6b8e3a'; g.lineWidth = 1.8; g.beginPath();
       for (const d of side ? [-1] : [-1, 1]) { g.moveTo(hx + d * 3, -36); g.lineTo(hx + d * 10, -48); g.moveTo(hx + d * 6, -41); g.lineTo(hx + d * 13, -42); g.moveTo(hx + d * 8, -45); g.lineTo(hx + d * 6, -52); }
       g.stroke();
+      g.fillStyle = L.trim; for (const d of side ? [-1] : [-1, 1]) { g.beginPath(); g.arc(hx + d * 10, -48, 1.6, 0, Math.PI * 2); g.arc(hx + d * 13, -42, 1.3, 0, Math.PI * 2); g.arc(hx + d * 6, -52, 1.3, 0, Math.PI * 2); g.fill(); }
     }
     if (L.crown) { g.fillStyle = L.crown; g.beginPath(); g.moveTo(hx - 5, -35); g.lineTo(hx - 4, -41); g.lineTo(hx - 1.5, -37); g.lineTo(hx, -43); g.lineTo(hx + 1.5, -37); g.lineTo(hx + 4, -41); g.lineTo(hx + 5, -35); g.closePath(); g.fill(); }
   });
@@ -544,21 +548,21 @@ export function dir8(angle: number): number {
 }
 export const DIR8_NAMES = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
 
-function getMageCircle(): HTMLCanvasElement {
-  if (mageCircle) return mageCircle;
+const heroCircles: Record<string, HTMLCanvasElement> = {};
+function getMageCircle(col = 'rgba(80,200,255,1)', hi = '#e6f8ff'): HTMLCanvasElement {
+  if (heroCircles[col]) return heroCircles[col];
   const R = 52;
   const [c, g] = makeCanvas((R + 8) * 2 * RES, (R + 8) * 2 * RES);
   g.scale(RES, RES);
   g.translate(R + 8, R + 8);
-  const col = 'rgba(80,200,255,1)';
-  for (const rr of [R, R - 8, 26]) { g.beginPath(); g.arc(0, 0, rr, 0, Math.PI * 2); glowStroke(g, col, '#e6f8ff', 1); }
+  for (const rr of [R, R - 8, 26]) { g.beginPath(); g.arc(0, 0, rr, 0, Math.PI * 2); glowStroke(g, col, hi, 1); }
   g.beginPath();
   for (let i = 0; i <= 6; i++) { const a = ((i * 2) % 6) / 6 * Math.PI * 2; if (i === 0) g.moveTo(Math.cos(a) * (R - 8), Math.sin(a) * (R - 8)); else g.lineTo(Math.cos(a) * (R - 8), Math.sin(a) * (R - 8)); }
   g.beginPath();
   for (let tri = 0; tri < 2; tri++) for (let i = 0; i <= 3; i++) { const a = (i / 3) * Math.PI * 2 + tri * Math.PI / 3; if (i === 0) g.moveTo(Math.cos(a) * (R - 8), Math.sin(a) * (R - 8)); else g.lineTo(Math.cos(a) * (R - 8), Math.sin(a) * (R - 8)); }
-  glowStroke(g, col, '#e6f8ff', 0.9);
-  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; g.fillStyle = '#e6f8ff'; g.fillRect(Math.cos(a) * (R - 4) - 1, Math.sin(a) * (R - 4) - 1, 2, 2); }
-  mageCircle = c;
+  glowStroke(g, col, hi, 0.9);
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; g.fillStyle = hi; g.fillRect(Math.cos(a) * (R - 4) - 1, Math.sin(a) * (R - 4) - 1, 2, 2); }
+  heroCircles[col] = c;
   return c;
 }
 
@@ -670,7 +674,8 @@ export class VisualRenderer {
     const flip = d === 4 || d === 3 || d === 5 ? -1 : 1; // west-ish faces left
     const yaw = d === 1 || d === 3 || d === 5 || d === 7 ? 0.9 : 1; // diagonals slightly turned
     const s = getHeroSprite(heroId, view);
-    const circle = getMageCircle();
+    const L = HERO_LOOKS[heroId];
+    const circle = L ? getMageCircle(L.aura, L.trim) : getMageCircle();
     const lift = 16 + Math.sin(t * 2.6) * 5; // hover height
     const fx = Math.cos(faceAngle), fy = Math.sin(faceAngle);
     const lean = fx * 0.2 * moveAmt; // bank into horizontal movement
@@ -720,8 +725,10 @@ export class VisualRenderer {
     ctx.globalCompositeOperation = 'lighter';
     const staffX = (view === 'side' ? 10 * 0.95 : 17) * flip * yaw;
     const cx = staffX * Math.cos(lean) + 47 * Math.sin(lean);
-    drawGlow(ctx, 'rgba(140,220,255,1)', cx, -47 - lift, 22 + Math.sin(t * 6) * 3, view === 'back' ? 0.6 : 0.95);
-    drawGlow(ctx, 'rgba(120,200,255,1)', 0, -10 - lift, 46, 0.22);
+    drawGlow(ctx, L ? L.weaponGlow : 'rgba(140,220,255,1)', cx, -47 - lift, 22 + Math.sin(t * 6) * 3, view === 'back' ? 0.6 : 0.95);
+    drawGlow(ctx, L ? L.aura : 'rgba(120,200,255,1)', 0, -10 - lift, 46, 0.22);
+    if (L && L.weapon === 'fireHands') for (const hx of view === 'side' ? [11] : [-16, 17]) drawGlow(ctx, L.weaponGlow, hx * flip * yaw, -8 - lift, 18 + Math.sin(t * 9 + hx) * 3, 0.9);
+    if (L && L.weapon === 'daggers') for (const hx of view === 'side' ? [10] : [-16, 16]) drawGlow(ctx, L.weaponGlow, hx * flip * yaw, 0 - lift, 12, 0.7);
     ctx.restore();
   }
 

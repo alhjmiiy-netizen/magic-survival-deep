@@ -243,12 +243,12 @@ export const HUD: React.FC<HUDProps> = ({
   // ---- blocks ----
   const statsBlock = (
     <div data-hud="stats" className="absolute flex items-center gap-2 pointer-events-auto" style={{ top: 6, left: 6, width: portrait ? 200 : 214 }}>
-      <div className="relative w-11 h-11 flex-shrink-0 rounded-full border-2 border-amber-400/80 overflow-hidden bg-black">
+      <div data-hud="hero-ring" className="relative w-11 h-11 flex-shrink-0 rounded-full border-2 overflow-hidden bg-black" style={{ borderColor: hero.color, boxShadow: `0 0 10px ${hero.color}aa` }} title={hero.name}>
         <img src={hero.portrait} alt={hero.name} className="w-full h-full object-cover object-top" />
       </div>
       <div className="flex flex-col gap-[3px] flex-1 min-w-0">
         <div className="flex items-center justify-between text-[9px] font-cinzel font-bold text-amber-300 leading-none">
-          <span>Lv. {stats.level}</span>
+          <span><span style={{ color: hero.color }}>{hero.name.split(' ')[0]}</span> Lv. {stats.level}</span>
           <span className="text-slate-400">XP {Math.floor(xpPct)}%</span>
         </div>
         {bar(hpPct, 'bg-gradient-to-r from-red-800 to-red-500', `${Math.ceil(stats.hp)} / ${stats.maxHp}`)}
