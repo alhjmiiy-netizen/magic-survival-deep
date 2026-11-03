@@ -1,0 +1,11 @@
+# Rebuild notes
+- [x] copied
+- [x] node_modules copied via cp -a (tar --exclude=dist had broken lucide-react)
+- [x] Task 3 hero imports in characters.ts; Task 4 HUD hero prop (App passes currentHero); Task 5 stats in constants.ts (INITIAL + BOSS_TEST_*), engine/App use them
+- [x] screenshot removed (public/assets/aistudio deleted, MainMenu gradient bg)
+- [ ] next: src/game/ArtKit.ts (glow sprites, rng), ArenaRenderer rewrite in arenas.ts, Visuals.ts rewrite, FX.ts, engine renderBackdrop
+- [x] arena renderer done (arenas.ts + ArtKit.ts), vite base './', manifest relative, .nojekyll in public
+- PERF: shadowBlur is the swiftshader killer (1500ms->30ms/frame). Removed from engine/weather; never use in Visuals. QA scripts in /workspace/qa (serve.sh, shot.js, base2.js, prof.js)
+- [x] Visuals.ts rewritten (sprites), FX.ts, engine wired (projectiles/particles/FX hooks). next: visual iteration
+- [x] QA: 844x390 + 390x844 touch, 0 console errors, 0 4xx; frame avg ~28-42ms (swiftshader). Boss spawn moved to (250,-150), boss hp 90000 (still dies in seconds vs lvl-8 evolved spells).
+- [ ] deploy

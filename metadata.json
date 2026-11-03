@@ -1,0 +1,6 @@
+{
+  "name": "Magic Survival: Become Legendary",
+  "description": "Survive against relentless demonic hordes, evolve devastating spells, and conquer the void in this dark fantasy magic survival roguelike action RPG.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
