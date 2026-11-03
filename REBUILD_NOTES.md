@@ -26,3 +26,8 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 - Debug hook `globalThis.__msHero(ctx,x,y,faceAngle,heroId)` for sprite contact sheets (`/tmp/heroes2d.cjs`).
 - Main-menu title: moved inside the art panel (right: max(15vw,50px); landscape 140px), font min(56px,13vw)/min(30px,7.2vw), glyph padding + light halo so it never clips at 360–412 portrait or 844x390.
 - QA note: `qa/deep.js` times out waiting for `[data-modal="chest"]` (also on the pre-v3 live build — script drift, not a regression); endless.js and deep-live.js pass with 0 errors.
+
+## Fix: Altar research resets (2026-11-03 PST)
+- Root cause: `UpgradeModal` kept ranks/points in component-local `useState(INITIAL_RESEARCH_ATTRIBUTES)` / `useState(3)`, nothing saved to localStorage, so every reopen/reload re-initialised to defaults. Gold was also run-local (engine started from `INITIAL_PLAYER_STATS.gold = 0`), so spent gold/bought points vanished and research never applied at run start.
+- Fix: `src/game/research.ts` — `ms_research_v1` {points, ranks, gold}; loaded on modal mount and app start, saved synchronously on every enhance/reset/buy; `applyResearch` applies purchased ranks (delta vs defaults: might/vitality/haste/snipe/agility/explorer/saturation) + gold wallet at engine init; App saves gold on change. Load merges/clamps (no wipe on unknown/partial data). No previous save existed to migrate.
+- Regression: `qa/research-persist.js <url> <shotdir> <tag>` (390x844 touch): buy point + 4 enhances, close/reopen, run start (effects + gold), reload.
