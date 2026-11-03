@@ -50,6 +50,18 @@ export const ARENAS_LIST: ArenaRealm[] = [
     hazardDescription: 'Abyssal blood rain accelerates demonic movement velocity by 15%.',
     unlocked: true,
   },
+  {
+    id: 'celestial_throne',
+    name: 'Celestial Throne',
+    subtitle: 'The Golden Eclipse',
+    description: 'A gilded throne-dais under a dying eclipse. Radiant runes burn gold and the final Colossus waits.',
+    ambientColor: '#140f04',
+    ringColor: 'rgba(250, 204, 21, 0.7)',
+    sigilColor: '#facc15',
+    primaryWeather: 'stardust',
+    hazardDescription: 'Solar flares scorch the dais.',
+    unlocked: true,
+  },
 ];
 
 interface ArenaTheme {
@@ -113,6 +125,18 @@ const THEMES: Record<string, ArenaTheme> = {
     runeCore: '#f5e8ff',
     ember: '255,50,110',
     crystal: '200,140,255',
+  },
+  celestial_throne: {
+    seed: 2026,
+    voidTop: '#120c03',
+    voidBottom: '#040201',
+    nebula: ['255,190,60', '255,140,40', '200,120,255', '255,220,120'],
+    stone: [62, 54, 40],
+    crack: 'rgba(12,8,2,0.9)',
+    rune: '255,210,90',
+    runeCore: '#fffbe6',
+    ember: '255,180,60',
+    crystal: '255,220,120',
   },
 };
 

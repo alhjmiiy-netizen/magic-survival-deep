@@ -39,6 +39,7 @@ export interface Projectile {
   life: number;
   pierce: number;
   hitEnemies: Set<string>;
+  split?: boolean;
   type: 'arcane_missile' | 'frost_shard' | 'lightning_arc' | 'meteor' | 'fire_wave' | 'combo_singularity' | 'combo_superconductor' | 'combo_blizzard';
   homingTarget?: Enemy | null;
   areaOfEffect?: number;
@@ -76,7 +77,7 @@ export interface LootItem {
   id: string;
   x: number;
   y: number;
-  type: 'xp' | 'crystal' | 'gold' | 'potion' | 'magnet';
+  type: 'xp' | 'crystal' | 'gold' | 'potion' | 'magnet' | 'chest';
   value: number;
   color: string;
   bobOffset: number;
@@ -100,6 +101,8 @@ export interface Spell {
   evolutionName?: string;
   evolutionDesc?: string;
   isCombo?: boolean;
+  /** 0 base, 1 = Lv5 evolution, 2 = Lv8 final form */
+  tier?: number;
 }
 
 export interface ComboMagic {

@@ -39,7 +39,7 @@ export function applySpellLevel(sp: Spell): Spell {
     case 'cataclysm': sp.count = 1 + Math.floor(l / 2); sp.area = Math.round(b.area * (1 + 0.1 * (l - 1))); break;
     case 'arcane_missiles': sp.count = 1 + Math.floor(l / 2); break;
   }
-  sp.evolved = l >= sp.maxLevel;
+  sp.evolved = (sp.tier ?? 0) > 0;
   return sp;
 }
 
@@ -58,7 +58,7 @@ export function makeComboSpell(comboId: string): Spell {
 
 export interface UpgradeChoice {
   id: string; // new:<spell> | lvl:<spell> | fast_cast | pass_*
-  kind: 'new' | 'level' | 'fast' | 'passive';
+  kind: 'new' | 'level' | 'fast' | 'passive' | 'evolve' | 'artifact';
   title: string;
   desc: string;
   icon: string;
