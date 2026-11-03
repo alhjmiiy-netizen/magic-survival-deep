@@ -15,8 +15,8 @@ export default defineConfig(() => {
         includeAssets: ['apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: './',
-          name: 'Magic Survival: Become Legendary',
-          short_name: 'MagicSurv',
+          name: 'Magic Survival: Deep',
+          short_name: 'MS Deep',
           description: 'Dark fantasy action roguelike. Survive the void horde, evolve spells, and defeat the Colossus.',
           theme_color: '#020617',
           background_color: '#020617',
@@ -51,7 +51,7 @@ export default defineConfig(() => {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
-          cacheId: 'magic-survival-v2',
+          cacheId: 'magic-survival-deep-v1',
         },
         devOptions: {
           enabled: true,

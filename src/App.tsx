@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { GameEngine, RadarData, RunSummary } from './game/GameEngine';
+import { GameEngine, RadarData, RunSummary, GameMode } from './game/GameEngine';
 import {
   INITIAL_PLAYER_STATS,
   BOSS_TEST_PLAYER_STATS,
@@ -21,8 +21,8 @@ import {
 import { HEROES_LIST } from './game/characters';
 import { ARENAS_LIST } from './game/arenas';
 import { MainMenu } from './components/MainMenu';
-import { HUD } from './components/HUD';
-import { LevelUpModal, StartSpellModal } from './components/LevelUpModal';
+import { HUD, DeepHUD } from './components/HUD';
+import { LevelUpModal, StartSpellModal, ChestModal } from './components/LevelUpModal';
 import type { UpgradeChoice } from './game/spells';
 import { InventoryModal } from './components/InventoryModal';
 import { SkillsModal } from './components/SkillsModal';
@@ -54,7 +54,12 @@ export default function App() {
 
   // View state: Home Page Main Menu vs Active Gameplay
   const [gameView, setGameView] = useState<'MAIN_MENU' | 'PLAYING'>('MAIN_MENU');
-  const [startAtWave8, setStartAtWave8] = useState<boolean>(true);
+  const startAtWave8 = false;
+  const [gameMode, setGameMode] = useState<GameMode>(() => (localStorage.getItem('msdeep_mode') === 'endless' ? 'endless' : 'regions'));
+  const [chest, setChest] = useState<{ title: string; sub: string; choices: UpgradeChoice[] } | null>(null);
+  const [deep, setDeep] = useState<DeepHUD | null>(null);
+  const [notice, setNotice] = useState<{ text: string; color: string; k: number; kind: string } | null>(null);
+  const [regionBanner, setRegionBanner] = useState<{ text: string; color: string; k: number } | null>(null);
 
   // Character & Arena selection
   const [currentHero, setCurrentHero] = useState<CharacterHero>(HEROES_LIST[0]);
@@ -153,6 +158,7 @@ export default function App() {
           setWeatherBanner(title);
           setTimeout(() => setWeatherBanner(null), 4000);
         },
+        onChest: (title, sub, choices) => setChest({ title, sub, choices }),
         onSurvivalMilestone: (time, waveReached, demons) => {
           setResearchLetterData({ time, wave: waveReached, demons });
         },
@@ -167,6 +173,7 @@ export default function App() {
     engine.showDamageNumbers = showDamageNumbers;
     engine.enableScreenShake = enableScreenShake;
     engine.autoAim = autoAim;
+    engine.setMode(gameMode);
 
     engine.start();
     engine.pause(); // nothing runs until the starting magic is picked
@@ -175,7 +182,7 @@ export default function App() {
     setPickingSpell(true);
     engineRef.current = engine;
     (window as unknown as { __engine?: GameEngine }).__engine = engine;
-  }, [gameView, startAtWave8, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
+  }, [gameView, gameMode, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
 
   useEffect(() => {
     if (gameView === 'PLAYING') {
@@ -285,10 +292,37 @@ export default function App() {
     return out;
   }, []);
 
+  // Poll deep-run state (region/timer/synergies/artifacts/notices) — cheap, 4x/sec
+  useEffect(() => {
+    if (gameView !== 'PLAYING') return;
+    let k = 0;
+    const id = window.setInterval(() => {
+      const e = engineRef.current; if (!e) return;
+      setDeep(e.deepState() as DeepHUD);
+      const n = e.notices.shift();
+      if (n) {
+        k++;
+        if (n.kind === 'region') setRegionBanner({ text: n.text, color: n.color, k });
+        else setNotice({ ...n, k });
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [gameView]);
+  useEffect(() => { if (!regionBanner) return; const t = setTimeout(() => setRegionBanner(null), 3200); return () => clearTimeout(t); }, [regionBanner]);
+  useEffect(() => { if (!notice) return; const t = setTimeout(() => setNotice(null), 2600); return () => clearTimeout(t); }, [notice]);
+
+  const handleChestPick = (id: string) => {
+    setChest(null);
+    const e = engineRef.current; if (!e) return;
+    e.applyUpgrade(id);
+    e.afterChest();
+    if (levelUpLevel === null) e.resume();
+  };
+
   const handleSelectUpgrade = (upgradeId: string) => {
     setLevelUpLevel(null);
     engineRef.current?.applyUpgrade(upgradeId);
-    engineRef.current?.resume();
+    if (!chest) engineRef.current?.resume();
   };
 
   const handlePickStartSpell = (spellId: string) => {
@@ -296,6 +330,7 @@ export default function App() {
     if (!e) return;
     e.learnSpell(spellId, startAtWave8 ? 5 : 1);
     setPickingSpell(false);
+    e.announceMode();
     e.resume();
     setTimeout(() => setWeatherBanner(null), 3500);
   };
@@ -351,8 +386,9 @@ export default function App() {
           currentHero={currentHero}
           currentArena={currentArena}
           stats={stats}
-          onStartGame={(startWave8) => {
-            setStartAtWave8(startWave8);
+          onStartGame={(mode) => {
+            setGameMode(mode);
+            localStorage.setItem('msdeep_mode', mode);
             setGameView('PLAYING');
           }}
           onOpenCharacters={() => setIsCharacterSelectOpen(true)}
@@ -390,7 +426,7 @@ export default function App() {
               <div className="flex items-center gap-2 bg-red-950/90 border border-red-500/80 px-3 py-1 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-90">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
                 <span className="text-xs font-cinzel font-black tracking-widest text-red-200 uppercase">
-                  Boss Encounter: Void Colossus Titan
+                  Boss: {currentBoss.name}
                 </span>
               </div>
             </div>
@@ -468,6 +504,15 @@ export default function App() {
             </button>
           </div>
 
+          {regionBanner && (
+            <div key={regionBanner.k} data-hud="region-banner" className="absolute top-[18%] left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in zoom-in-95 duration-500 text-center">
+              <div className="px-6 py-2 rounded-xl bg-slate-950/85 border-y-2 backdrop-blur-md" style={{ borderColor: regionBanner.color, boxShadow: `0 0 30px ${regionBanner.color}66` }}>
+                <div className="text-[9px] tracking-[0.35em] font-bold text-slate-400">{regionBanner.text.startsWith('REGION') ? regionBanner.text.split(':')[0] : 'MODE'}</div>
+                <div className="text-lg font-cinzel font-black tracking-widest uppercase" style={{ color: regionBanner.color }}>{regionBanner.text.includes(':') ? regionBanner.text.split(':')[1].trim() : regionBanner.text.split('—')[0]}</div>
+              </div>
+            </div>
+          )}
+
           {/* Main HUD Overlay (Clear layout, ZERO overlaps) */}
           <HUD
             hero={currentHero}
@@ -501,6 +546,8 @@ export default function App() {
             onTriggerDash={() => engineRef.current?.triggerDash()}
             onJoystickMove={(vx, vy) => engineRef.current?.setJoystickVector(vx, vy)}
             getCooldowns={getCooldowns}
+            deep={deep}
+            notice={notice}
           />
 
           {/* Pause Menu Overlay */}
@@ -601,6 +648,9 @@ export default function App() {
       {/* Level Up Modal */}
       {gameView === 'PLAYING' && pickingSpell && (
         <StartSpellModal bossTest={startAtWave8} onPick={handlePickStartSpell} />
+      )}
+      {chest && levelUpLevel === null && !gameOverData && (
+        <ChestModal title={chest.title} sub={chest.sub} choices={chest.choices} onSelect={handleChestPick} />
       )}
       {levelUpLevel !== null && (
         <LevelUpModal level={levelUpLevel} choices={upgradeChoices} onSelectUpgrade={handleSelectUpgrade} />

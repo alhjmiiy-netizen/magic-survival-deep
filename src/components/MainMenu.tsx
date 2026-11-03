@@ -1,3 +1,4 @@
+import { loadBest } from '../game/deep';
 import React from 'react';
 import {
   Play,
@@ -23,7 +24,7 @@ interface MainMenuProps {
   currentHero: CharacterHero;
   currentArena: ArenaRealm;
   stats: PlayerStats;
-  onStartGame: (startAtWave8: boolean) => void;
+  onStartGame: (mode: 'regions' | 'endless') => void;
   onOpenCharacters: () => void;
   onOpenArenas: () => void;
   onOpenCombos: () => void;
@@ -48,6 +49,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onOpenEncyclopedia,
   onQuickSwitchHero,
 }) => {
+  const best = loadBest();
+  const fmtT = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
   const currentHeroIndex = HEROES_LIST.findIndex((h) => h.id === currentHero.id);
 
   const handlePrevHero = () => {
@@ -138,10 +141,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             Dark Fantasy Action Roguelike
           </span>
           <h1 className="text-4xl sm:text-6xl font-black font-cinzel tracking-wider arcane-gradient-text drop-shadow-[0_4px_25px_rgba(56,189,248,0.7)] mt-1">
-            MAGIC SURVIVAL
+            MAGIC SURVIVAL<span className="text-amber-300">: DEEP</span>
           </h1>
           <p className="text-[10px] sm:text-xs font-semibold tracking-[0.35em] text-amber-300/90 uppercase font-cinzel drop-shadow-md">
-            SURVIVE • EVOLVE • BECOME LEGENDARY
+            DEEP · REGIONS · ENDLESS · EVOLVE
           </p>
         </div>
 
@@ -217,28 +220,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </button>
         </div>
 
-        {/* Two Play Options: Fresh Run (Wave 1) or Boss test mode (Wave 8, Lv. 8, 08:00) */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-lg mt-1">
+        {/* Mode select: Regions (5 timed regions → endless) or Endless */}
+        <div data-menu="modes" className="flex flex-row items-stretch gap-3 w-full max-w-lg mt-1">
           <button
-            onClick={() => {
-              sound.playLevelUp();
-              onStartGame(false); // Start Fresh at Wave 1
-            }}
-            className="w-full py-3 sm:py-3.5 px-5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black font-cinzel text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(251,191,36,0.4)] cursor-pointer transition-all"
+            data-mode="regions"
+            onClick={() => { sound.playLevelUp(); onStartGame('regions'); }}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black font-cinzel text-xs sm:text-sm tracking-wider flex flex-col items-center justify-center shadow-[0_0_25px_rgba(251,191,36,0.4)] cursor-pointer transition-all"
           >
-            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950" />
-            <span>START SURVIVAL (WAVE 1)</span>
+            <span className="flex items-center gap-1.5"><Play className="w-4 h-4 fill-slate-950" />REGIONS</span>
+            <span className="text-[9px] font-sans font-bold opacity-80 normal-case tracking-normal">5 timed regions · bosses · chests</span>
+            <span className="text-[9px] font-sans opacity-75 tracking-normal">Best: {best.regions.cleared}/5 cleared</span>
           </button>
-
           <button
-            onClick={() => {
-              sound.playLevelUp();
-              onStartGame(true); // Wave 8 boss encounter battle
-            }}
-            className="w-full py-3 sm:py-3.5 px-5 rounded-xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:brightness-110 active:scale-95 text-white font-black font-cinzel text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(56,189,248,0.4)] cursor-pointer transition-all"
+            data-mode="endless"
+            onClick={() => { sound.playLevelUp(); onStartGame('endless'); }}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-fuchsia-700 to-indigo-700 hover:brightness-110 active:scale-95 text-white font-black font-cinzel text-xs sm:text-sm tracking-wider flex flex-col items-center justify-center shadow-[0_0_25px_rgba(244,63,94,0.4)] cursor-pointer transition-all"
           >
-            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-            <span>COLOSSUS BATTLE · BOSS TEST (WAVE 8)</span>
+            <span className="flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-300" />ENDLESS</span>
+            <span className="text-[9px] font-sans font-bold opacity-85 normal-case tracking-normal">Scaling horde · boss every 2:00</span>
+            <span className="text-[9px] font-sans opacity-80 tracking-normal">Best: {fmtT(best.endless.time)} · {best.endless.kills} kills · {best.endless.score}</span>
           </button>
         </div>
 

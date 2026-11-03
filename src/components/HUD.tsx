@@ -16,7 +16,16 @@ import {
   Zap,
   Flame,
   FlaskConical,
+  Eye, Hourglass, Magnet, Heart, Feather, Triangle, Hexagon, Sword, Crown, Link2,
 } from 'lucide-react';
+
+export interface DeepHUD {
+  mode: 'regions' | 'endless'; endless: boolean; regionIdx: number; regionTotal: number; regionName: string; regionColor: string;
+  timeLeft: string; phase: string; endlessTime: string;
+  synergies: { id: string; name: string; color: string; desc: string }[];
+  artifacts: { id: string; name: string; icon: string; color: string; level: number; desc: string }[];
+}
+const ART_ICON: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = { Eye, Hourglass, Magnet, Heart, Feather, Triangle, Hexagon, Sword, Crown };
 import { PlayerStats, Spell, QuickBeltItem, GameQuest } from '../types/game';
 import { RadarData } from '../game/GameEngine';
 
@@ -42,6 +51,8 @@ interface HUDProps {
   /** live cooldown fraction 0..1 (1 = just cast) per spell id, polled each frame for the cast ring */
   getCooldowns?: () => Record<string, number>;
   hero: CharacterHero;
+  deep?: DeepHUD | null;
+  notice?: { text: string; color: string; k: number; kind: string } | null;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -65,7 +76,10 @@ export const HUD: React.FC<HUDProps> = ({
   onTriggerDash,
   onJoystickMove,
   getCooldowns,
+  deep,
+  notice,
 }) => {
+  const [artTip, setArtTip] = useState<string | null>(null);
   const [isObjectivesCollapsed, setIsObjectivesCollapsed] = useState(true);
   // Floating joystick: any touch/press on the play area (not HUD buttons) spawns it there.
   const JOY_R = 52;
@@ -266,8 +280,9 @@ export const HUD: React.FC<HUDProps> = ({
     >
       <span className="text-lg leading-tight font-cinzel font-bold text-white tabular-nums">{timeStr}</span>
       <span className="text-[9px] leading-none text-amber-300 font-bold tracking-wider pb-0.5">
-        WAVE {wave} · <Skull className="inline w-2.5 h-2.5 -mt-0.5" /> {enemiesRemaining}
+        {deep ? (deep.endless ? <>ENDLESS · {deep.endlessTime}</> : <>R{deep.regionIdx + 1}/{deep.regionTotal} · {deep.phase === 'fight' ? deep.timeLeft : deep.phase === 'boss' ? 'BOSS!' : 'CLEARED'}</>) : <>WAVE {wave}</>} · <Skull className="inline w-2.5 h-2.5 -mt-0.5" /> {enemiesRemaining}
       </span>
+      {deep && <span data-hud="region-name" className="text-[8px] leading-none font-bold tracking-widest pb-0.5 uppercase" style={{ color: deep.endless ? '#f43f5e' : deep.regionColor }}>{deep.endless ? 'Endless Survival' : deep.regionName}</span>}
     </div>
   );
 
@@ -322,18 +337,21 @@ export const HUD: React.FC<HUDProps> = ({
       {ownedSpells.length === 0 && <span className="text-[10px] text-slate-400 px-2 py-3">No magic yet</span>}
       {ownedSpells.map((s) => {
         const fl = flash[s.id];
+        const tier = s.tier ?? 0;
         return (
           <div key={s.id} data-power={s.id} className="relative flex flex-col items-center" onClick={() => setTip(tip === s.id ? null : s.id)}>
             <div
               key={fl}
-              className={`relative rounded-xl flex items-center justify-center text-white ${fl ? 'magic-flash' : ''}`}
-              style={{ width: tile, height: tile, ['--c' as string]: s.color, border: `2px solid ${s.color}`, background: `radial-gradient(circle at 50% 40%, ${s.color}aa, ${s.color}33 45%, #020617 80%)`, color: '#fff', boxShadow: `0 0 10px ${s.color}66` } as React.CSSProperties}
+              data-tier={tier}
+              className={`relative rounded-xl flex items-center justify-center text-white ${fl ? 'magic-flash' : ''} ${tier ? 'evo-tile' : ''}`}
+              style={{ width: tile, height: tile, ['--c' as string]: s.color, border: tier ? `2px solid ${tier >= 2 ? '#fde047' : '#fbbf24'}` : `2px solid ${s.color}`, outline: tier >= 2 ? `1px solid ${s.color}` : undefined, outlineOffset: 1, background: `radial-gradient(circle at 50% 40%, ${s.color}aa, ${s.color}33 45%, #020617 80%)`, color: '#fff', boxShadow: `0 0 10px ${s.color}66` } as React.CSSProperties}
             >
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 52 52" width={tile} height={tile}>
                 <circle cx="26" cy="26" r="24" fill="none" stroke="#0b1220" strokeWidth="3" opacity="0.6" />
                 <circle ref={(el) => { ringRefs.current[s.id] = el; }} data-ring={s.id} cx="26" cy="26" r="24" fill="none" stroke={s.color} strokeWidth="3" strokeDasharray="151" strokeDashoffset="0" strokeLinecap="round" />
               </svg>
               <span style={{ filter: `drop-shadow(0 0 4px ${s.color})` }}>{s.isCombo ? <Sparkles className="w-6 h-6 text-fuchsia-200" /> : BIG_ICON[s.id] ?? <Sparkles className="w-6 h-6" />}</span>
+              {tier > 0 && <span data-star className="absolute -top-2 -right-1.5 text-[11px] leading-none font-black text-amber-300 drop-shadow-[0_0_4px_#fde047]">{'★'.repeat(tier)}</span>}
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 rounded bg-black border border-amber-400 text-[10px] leading-[13px] font-black text-amber-300 whitespace-nowrap">
                 {s.isCombo ? 'COMBO' : `Lv ${s.level}`}
               </span>
@@ -345,7 +363,7 @@ export const HUD: React.FC<HUDProps> = ({
             </div>
             {tip === s.id && (
               <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-md glass-panel text-[10px] text-white whitespace-nowrap z-10">
-                {s.name} {s.isCombo ? '(combo)' : `Lv ${s.level}/${s.maxLevel}`} · casts automatically
+                {s.name} {s.isCombo ? '(combo)' : `Lv ${s.level}/${s.maxLevel}`}{tier ? ` · ${s.evolutionDesc}` : ' · casts automatically'}
               </div>
             )}
           </div>
@@ -389,6 +407,32 @@ export const HUD: React.FC<HUDProps> = ({
           ))}
         </div>
       )}
+    </div>
+  );
+
+  const artifactBlock = deep && deep.artifacts.length > 0 && (
+    <div data-hud="artifacts" className="absolute flex items-center gap-1 px-1 py-0.5 rounded-lg bg-slate-950/75 border border-amber-500/40 pointer-events-auto"
+      style={portrait ? { top: 100, left: 6, maxWidth: 230, flexWrap: 'wrap' } : { top: 58, left: 104, maxWidth: 230, flexWrap: 'wrap' }}>
+      <span className="text-[7px] font-bold tracking-widest text-amber-300/90 pr-0.5">RELICS</span>
+      {deep.artifacts.map((a) => { const I = ART_ICON[a.icon] ?? Sparkles; return (
+        <div key={a.id} data-artifact={a.id} className="relative w-6 h-6 rounded-md flex items-center justify-center bg-slate-900" style={{ border: `1px solid ${a.color}`, boxShadow: `0 0 6px ${a.color}88` }} onClick={() => setArtTip(artTip === a.id ? null : a.id)}>
+          <I className="w-3.5 h-3.5" style={{ color: a.color }} />
+          <span className="absolute -bottom-1 -right-1 min-w-[11px] h-[11px] rounded-full bg-black border border-amber-400 text-[7px] leading-[9px] font-black text-amber-300 text-center">{a.level}</span>
+          {artTip === a.id && <div className="absolute top-full mt-1 left-0 px-2 py-1 rounded-md glass-panel text-[10px] text-white whitespace-nowrap z-20"><b style={{ color: a.color }}>{a.name}</b> Lv{a.level}: {a.desc}</div>}
+        </div>); })}
+    </div>
+  );
+  const synergyBlock = deep && deep.synergies.length > 0 && (
+    <div data-hud="synergies" className="absolute flex flex-col gap-[2px] px-1.5 py-1 rounded-lg bg-slate-950/75 border border-fuchsia-500/40"
+      style={portrait ? { top: 178, left: 6, maxWidth: 150 } : { top: 86, left: 6, maxWidth: 150 }}>
+      <span className="text-[7px] font-bold tracking-widest text-fuchsia-300/90 flex items-center gap-1"><Link2 className="w-2.5 h-2.5" />SYNERGIES</span>
+      {deep.synergies.map((y) => <span key={y.id} data-synergy={y.id} className="text-[9px] font-bold leading-tight truncate" style={{ color: y.color }}>◆ {y.name}</span>)}
+    </div>
+  );
+  const noticeBlock = notice && (
+    <div key={notice.k} data-hud="notice" data-kind={notice.kind} className="magic-toast absolute left-1/2 px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-center"
+      style={{ top: portrait ? '30%' : '22%', color: notice.color, borderColor: notice.color, maxWidth: portrait ? 340 : 520, boxShadow: `0 0 18px ${notice.color}66` }}>
+      {notice.text}
     </div>
   );
 
@@ -483,6 +527,9 @@ export const HUD: React.FC<HUDProps> = ({
       {radarBlock}
       {powersBlock}
       {questBlock}
+      {artifactBlock}
+      {synergyBlock}
+      {noticeBlock}
       {utilBlock}
       {beltBlock}
       {joystickBlock}

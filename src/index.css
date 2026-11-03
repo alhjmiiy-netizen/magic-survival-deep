@@ -85,3 +85,8 @@ html, body, #root { height: 100%; background: #020617; overscroll-behavior: none
 .magic-flash { animation: magic-flash 1.3s ease-out 2; }
 @keyframes toast-up { 0% { opacity: 0; transform: translate(-50%, 8px); } 15%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -8px); } }
 .magic-toast { animation: toast-up 2.4s ease-out forwards; }
+
+@keyframes evoPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+.evo-card { animation: evoPulse 1.2s ease-in-out infinite; }
+@keyframes evoGlow { 0%,100% { box-shadow: 0 0 8px var(--c), 0 0 14px #fde04788; } 50% { box-shadow: 0 0 16px var(--c), 0 0 24px #fde047cc; } }
+.evo-tile { animation: evoGlow 1.6s ease-in-out infinite; }

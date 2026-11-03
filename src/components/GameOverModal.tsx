@@ -91,13 +91,20 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ victory, summary, 
           <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
             <Trophy className="w-4 h-4 text-emerald-400" />
             <div className="text-left">
-              <div className="text-[10px] text-slate-400 font-cinzel">Wave Reached</div>
+              <div className="text-[10px] text-slate-400 font-cinzel">{summary.endlessTime ? 'Endless Time' : 'Region Reached'}</div>
               <div className="font-mono font-bold text-emerald-300 text-sm">
-                Wave {summary.waveReached} / 20
+                {summary.endlessTime ? summary.endlessTime : `${summary.regionReached ?? 1}/5 ${summary.regionName ?? ''}`}
               </div>
             </div>
           </div>
         </div>
+        {summary.score !== undefined && (
+          <div data-gameover="score" className="w-full mb-3 px-3 py-2 rounded-xl bg-slate-900/80 border border-amber-500/40 text-center">
+            <div className="text-[10px] text-slate-400 font-cinzel tracking-widest">{(summary.mode ?? 'regions').toUpperCase()} · SCORE</div>
+            <div className="font-mono font-black text-amber-300 text-lg">{summary.score.toLocaleString()} {summary.newBest && <span className="text-[10px] text-emerald-300 ml-1">NEW BEST!</span>}</div>
+            {summary.bestText && <div className="text-[10px] text-slate-400">{summary.bestText}</div>}
+          </div>
+        )}
 
         {/* Action Buttons: Play Again & Return Home */}
         <div className="flex items-center gap-3 w-full">
