@@ -9,10 +9,10 @@ export const INITIAL_PLAYER_STATS: PlayerStats = {
   mana: 300,
   maxMana: 300,
   speed: 4.2,
-  spellPower: 145, // percentage
-  critChance: 28,  // percentage
-  critMultiplier: 2.2,
-  cooldownReduction: 20, // percentage
+  spellPower: 100, // percentage
+  critChance: 5,  // percentage
+  critMultiplier: 1.8,
+  cooldownReduction: 0, // percentage
   pickupRadius: 180,
   crystals: 0,
   gold: 0,
@@ -413,4 +413,6 @@ export const BOSS_TEST_PLAYER_STATS: PlayerStats = {
   maxMana: 380,
   crystals: 9,
   gold: 640,
+  spellPower: 170, // BOSS TEST ONLY: boosted so the wave-8 boss is testable
+  critChance: 15,
 };

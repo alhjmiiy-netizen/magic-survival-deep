@@ -48,6 +48,10 @@ export default defineConfig(() => {
         workbox: {
           maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,jpg}'],
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
+          cacheId: 'magic-survival-v2',
         },
         devOptions: {
           enabled: true,

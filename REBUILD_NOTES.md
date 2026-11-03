@@ -13,3 +13,8 @@
 ## Round 2 (Nov 2 2026, user phone bug report)
 - [x] 1 HUD redesign: HUD.tsx rewritten with orientation-aware absolute blocks (stats, timer, currency+pause, radar, powers strip, collapsible quests (collapsed by default), utility col, belt, joystick, dash). Banners moved to 32%/60%. Playwright rect check: 0 overlaps both orientations (qa/overlap.js).
 - [x] 2+6 facing/float: Visuals.getMage(view front/side/back), dir8(), renderArchmage(faceAngle, moveAmt): hover lift+bob, shrinking ground shadow, lean, cloak afterimage trail. Engine faceAngle smoothed from last movement. Verified via qa/face.js crops (front/side/back differ). Enemies already face player.
+- [x] 3 start spell select: StartSpellModal (LevelUpModal.tsx), engine paused + spells=[] until pick; boss test labelled, starts picked spell Lv5 + boosted stats (BOSS_TEST_PLAYER_STATS), boss hp 40000.
+- [x] 4 passive magic: src/game/spells.ts (level-1 defs + applySpellLevel), engine autoCast with global stagger gap (0.35*0.75^n) and Fast Casting (cooldown *0.9^n); learnSpell/levelSpell/getUpgradeChoices/applyUpgrade; LevelUpModal driven by engine choices; manual cast removed; stats 100/5%/1.8x/0 CDR; early-wave enemy scaling.
+- [x] 5 powers strip fed by onSpellsUpdate (+ Fast Casting chip).
+- [x] 7 combos: engine.checkCombos uses canFormCombo (both Lv6) -> combo spell that casts both components boosted. QA: qa/flow.js.
+- [x] SW: workbox skipWaiting/clientsClaim/cleanupOutdatedCaches, cacheId magic-survival-v2.

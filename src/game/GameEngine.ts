@@ -18,6 +18,8 @@ import { drawGlow } from './ArtKit';
 import { WeatherSystem } from './WeatherSystem';
 import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS } from './arenas';
 import { HEROES_LIST } from './characters';
+import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell } from './spells';
+import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
 
 export interface GameEngineCallbacks {
   onStatsUpdate: (stats: PlayerStats) => void;
@@ -29,6 +31,8 @@ export interface GameEngineCallbacks {
   onRadarUpdate: (data: RadarData) => void;
   onWeatherChange?: (weatherTitle: string) => void;
   onSurvivalMilestone?: (timeStr: string, wave: number, demons: number) => void;
+  onSpellsUpdate?: (spells: Spell[]) => void;
+  onComboUnlocked?: (comboName: string) => void;
 }
 
 export interface RadarData {
@@ -128,7 +132,8 @@ export class GameEngine {
     if (!context) throw new Error('Could not get 2D canvas context');
     this.ctx = context;
     this.stats = { ...initialStats };
-    this.spells = initialSpells.map((s) => ({ ...s }));
+    void initialSpells; // run starts with no magic: player picks one on the spell-select screen
+    this.spells = [];
     this.callbacks = callbacks;
 
     this.currentWave = startWave;
@@ -234,6 +239,140 @@ export class GameEngine {
     }
   }
 
+  /** Number of Fast Casting stacks owned. */
+  public fastCasting = 0;
+  /** Global stagger gap between consecutive auto-casts (so multiple magics alternate). */
+  private castGapTimer = 0;
+  public castLog: { id: string; t: number }[] = [];
+  public comboLog: string[] = [];
+
+  private emitSpells() {
+    this.callbacks.onSpellsUpdate?.(this.spells.map((s) => ({ ...s })));
+  }
+
+  public castGap() {
+    return 0.35 * Math.pow(0.75, this.fastCasting);
+  }
+
+  public learnSpell(id: string, level = 1) {
+    if (!BASE_SPELLS[id] || this.spells.some((s) => s.id === id)) return;
+    this.spells.push(makeSpell(id, level));
+    this.checkCombos();
+    this.emitSpells();
+  }
+
+  public levelSpell(id: string) {
+    const sp = this.spells.find((s) => s.id === id);
+    if (!sp || sp.isCombo || sp.level >= sp.maxLevel) return;
+    sp.level++;
+    applySpellLevel(sp);
+    this.spawnFloatingText(`${sp.name} Lv ${sp.level}`, this.playerX, this.playerY - 50, sp.color, true);
+    this.checkCombos();
+    this.emitSpells();
+  }
+
+  private checkCombos() {
+    const base = this.spells.filter((s) => !s.isCombo);
+    for (let i = 0; i < base.length; i++) {
+      for (let j = i + 1; j < base.length; j++) {
+        const combo = canFormCombo(base[i], base[j]);
+        if (combo && !this.spells.some((s) => s.id === combo.id)) {
+          this.spells.push(makeComboSpell(combo.id));
+          this.comboLog.push(`unlocked:${combo.id}`);
+          FX.star(this.playerX, this.playerY, 260);
+          this.spawnFloatingText(`COMBO: ${combo.name}!`, this.playerX, this.playerY - 70, combo.color, true);
+          this.callbacks.onComboUnlocked?.(combo.name);
+        }
+      }
+    }
+  }
+
+  public getUpgradeChoices(n = 4): UpgradeChoice[] {
+    const pool: UpgradeChoice[] = [];
+    const owned = this.spells.filter((s) => !s.isCombo);
+    if (owned.length < 4) {
+      for (const id of BASE_SPELL_IDS) {
+        if (owned.some((s) => s.id === id)) continue;
+        const b = BASE_SPELLS[id];
+        pool.push({ id: `new:${id}`, kind: 'new', title: `New: ${b.name}`, desc: b.description, icon: b.icon, color: b.color, level: 1 });
+      }
+    }
+    for (const sp of owned) {
+      if (sp.level >= sp.maxLevel) continue;
+      const nxt = applySpellLevel({ ...sp, level: sp.level + 1 });
+      const gain =
+        sp.id === 'thunderstorm' ? `${sp.count} → ${nxt.count} bolts` :
+        sp.id === 'frost_nova' ? `${sp.count} → ${nxt.count} shards` :
+        sp.id === 'cataclysm' ? `${sp.count} → ${nxt.count} bursts, bigger blast` :
+        `${sp.count} → ${nxt.count} blades`;
+      pool.push({ id: `lvl:${sp.id}`, kind: 'level', title: `${sp.name} Lv ${sp.level + 1}`, desc: `${gain}, +25% dmg`, icon: sp.icon, color: sp.color, level: sp.level + 1 });
+    }
+    if (owned.length > 0 && this.fastCasting < 6) {
+      pool.push({ id: 'fast_cast', kind: 'fast', title: `Fast Casting ${this.fastCasting + 1}`, desc: '-25% cast gap, -10% cooldowns (stacks)', icon: 'Timer', color: '#facc15', level: this.fastCasting + 1 });
+    }
+    for (const [id, p] of Object.entries(PASSIVES)) {
+      pool.push({ id, kind: 'passive', title: p.title, desc: p.desc, icon: p.icon, color: '#a3e635' });
+    }
+    // Prefer magic options: shuffle magic & others separately, take up to n-1 magic first
+    const shuffle = <T,>(a: T[]) => a.map((v) => [Math.random(), v] as const).sort((x, y) => x[0] - y[0]).map((x) => x[1]);
+    const magic = shuffle(pool.filter((c) => c.kind !== 'passive'));
+    const pas = shuffle(pool.filter((c) => c.kind === 'passive'));
+    const out = magic.slice(0, n - 1);
+    while (out.length < n && pas.length) out.push(pas.shift()!);
+    while (out.length < n && magic.length > out.length) out.push(magic[out.length]);
+    return out;
+  }
+
+  public applyUpgrade(id: string) {
+    if (id.startsWith('new:')) this.learnSpell(id.slice(4));
+    else if (id.startsWith('lvl:')) this.levelSpell(id.slice(4));
+    else if (id === 'fast_cast') {
+      this.fastCasting++;
+      this.spawnFloatingText(`Fast Casting ${this.fastCasting}`, this.playerX, this.playerY - 50, '#facc15', true);
+      this.emitSpells();
+    } else if (id === 'pass_power') this.stats.spellPower += 15;
+    else if (id === 'pass_crit') this.stats.critChance += 5;
+    else if (id === 'pass_vitality') { this.stats.maxHp += 100; this.stats.hp = Math.min(this.stats.maxHp, this.stats.hp + 100); }
+    else if (id === 'pass_magnet') this.stats.pickupRadius += 50;
+    else if (id === 'pass_swift') this.stats.speed *= 1.1;
+    this.callbacks.onStatsUpdate({ ...this.stats });
+  }
+
+  private autoCast(spell: Spell) {
+    if (spell.isCombo) {
+      this.castCombo(spell);
+    } else if (spell.id === 'frost_nova') this.castFrostNova(spell);
+    else if (spell.id === 'thunderstorm') this.castThunderstorm(spell);
+    else if (spell.id === 'cataclysm') this.castCataclysm(spell);
+    else if (spell.id === 'arcane_missiles') this.castArcaneMissiles(spell);
+    this.castLog.push({ id: spell.id, t: this.gameTimeSeconds });
+    if (this.castLog.length > 60) this.castLog.shift();
+    spell.currentCooldown = spell.cooldown * Math.pow(0.9, this.fastCasting) * (1 - this.stats.cooldownReduction / 100);
+    this.castGapTimer = this.castGap();
+  }
+
+  private castCombo(spell: Spell) {
+    const recipe = COMBO_MAGIC_RECIPES.find((r) => r.id === spell.id);
+    if (!recipe) return;
+    const a = this.spells.find((s) => s.id === recipe.component1);
+    const b = this.spells.find((s) => s.id === recipe.component2);
+    this.comboLog.push(`cast:${spell.id}`);
+    FX.star(this.playerX, this.playerY, 300);
+    this.spawnFloatingText(recipe.name, this.playerX, this.playerY - 60, recipe.color, true);
+    for (const c of [a, b]) {
+      if (!c) continue;
+      const boosted = { ...c, damage: Math.round(c.damage * 1.5), count: c.count + 2, area: Math.round(c.area * 1.3) };
+      this.autoCastRaw(boosted);
+    }
+  }
+
+  private autoCastRaw(spell: Spell) {
+    if (spell.id === 'frost_nova') this.castFrostNova(spell);
+    else if (spell.id === 'thunderstorm') this.castThunderstorm(spell);
+    else if (spell.id === 'cataclysm') this.castCataclysm(spell);
+    else if (spell.id === 'arcane_missiles') this.castArcaneMissiles(spell);
+  }
+
   public triggerSpellManual(spellId: string) {
     const spell = this.spells.find((s) => s.id === spellId);
     if (!spell || spell.currentCooldown > 0) return;
@@ -303,8 +442,8 @@ export class GameEngine {
         vx: 0,
         vy: 0,
         radius: 65,
-        hp: 90000,
-        maxHp: 90000,
+        hp: 40000,
+        maxHp: 40000,
         speed: 1.2,
         damage: 190,
         xpValue: 900,
@@ -405,6 +544,10 @@ export class GameEngine {
       name = 'Void Knight';
     }
 
+    // Early-wave scaling so a level-1 mage can fight wave 1 (waves 7+ unchanged).
+    const waveScale = Math.min(1, 0.4 + 0.1 * (this.currentWave - 1));
+    hp = Math.round(hp * waveScale);
+    damage = Math.round(damage * waveScale * 0.7);
     this.enemies.push({
       id: `enemy_${Math.random()}`,
       name,
@@ -504,13 +647,19 @@ export class GameEngine {
     this.stats.hp = Math.min(this.stats.maxHp, this.stats.hp + 8 * dt);
 
     // Spells Update
-    this.spells.forEach((spell) => {
-      if (spell.currentCooldown > 0) {
-        spell.currentCooldown = Math.max(0, spell.currentCooldown - dt);
-      } else if (this.autoAim) {
-        this.triggerSpellManual(spell.id);
-      }
-    });
+    // Passive magic: every owned spell auto-fires when ready, staggered by a global cast gap.
+    this.castGapTimer = Math.max(0, this.castGapTimer - dt);
+    let ready: Spell | null = null;
+    for (const spell of this.spells) {
+      if (spell.currentCooldown > 0) spell.currentCooldown = Math.max(0, spell.currentCooldown - dt);
+      else if (!ready) ready = spell;
+    }
+    if (ready && this.castGapTimer <= 0) {
+      this.autoCast(ready);
+      // rotate so the next ready spell gets priority (fair alternation)
+      const i = this.spells.indexOf(ready);
+      this.spells.push(...this.spells.splice(i, 1));
+    }
 
     // Central Sigil Wave pulse
     this.centralSigilTimer += dt;
@@ -694,6 +843,7 @@ export class GameEngine {
           if (dist < p.radius + enemy.radius) {
             p.hitEnemies.add(enemy.id);
             this.damageEnemy(enemy, p.damage, p.color);
+            if (p.type === 'frost_shard') enemy.frozenUntil = performance.now() + 1500;
             p.pierce--;
 
             for (let k = 0; k < 8; k++) {
@@ -836,7 +986,7 @@ export class GameEngine {
 
   private castArcaneMissiles(spell: Spell) {
     sound.playArcaneCast();
-    const count = spell.count + (spell.evolved ? 2 : 0);
+    const count = spell.count;
     const nearest = this.findNearestEnemy(this.playerX, this.playerY, 520);
 
     for (let i = 0; i < count; i++) {
@@ -874,8 +1024,20 @@ export class GameEngine {
     const radius = spell.area;
     const damage = Math.round(spell.damage * (this.stats.spellPower / 100));
 
-    for (let i = 0; i < 50; i++) {
-      const ang = (i / 50) * Math.PI * 2;
+    const shards = spell.count;
+    const off = Math.random() * Math.PI * 2;
+    for (let i = 0; i < shards; i++) {
+      const a = off + (i / shards) * Math.PI * 2;
+      this.projectiles.push({
+        id: `proj_${Math.random()}`,
+        x: this.playerX, y: this.playerY,
+        vx: Math.cos(a) * 360, vy: Math.sin(a) * 360,
+        radius: 7, damage, color: '#bae6fd', trailColor: '#93c5fd',
+        duration: 0.9, life: 0, pierce: 1, hitEnemies: new Set(), type: 'frost_shard',
+      });
+    }
+    for (let i = 0; i < 24; i++) {
+      const ang = (i / 24) * Math.PI * 2;
       this.particles.push({
         x: this.playerX,
         y: this.playerY,
@@ -893,8 +1055,8 @@ export class GameEngine {
     this.enemies.forEach((e) => {
       const dist = Math.hypot(e.x - this.playerX, e.y - this.playerY);
       if (dist <= radius) {
-        e.frozenUntil = performance.now() + 2500;
-        this.damageEnemy(e, damage, '#93c5fd');
+        e.frozenUntil = performance.now() + 1200;
+        this.damageEnemy(e, Math.round(damage * 0.5), '#93c5fd');
       }
     });
   }
@@ -940,7 +1102,8 @@ export class GameEngine {
     this.screenShake = 18;
     const damage = Math.round(spell.damage * (this.stats.spellPower / 100));
 
-    const target = this.findDensestCluster(400);
+    for (let burst = 0; burst < Math.max(1, spell.count); burst++) {
+    const target = burst === 0 ? this.findDensestCluster(400) : this.enemies[Math.floor(Math.random() * this.enemies.length)];
     const tx = target ? target.x : this.playerX + (Math.random() - 0.5) * 320;
     const ty = target ? target.y : this.playerY + (Math.random() - 0.5) * 320;
     FX.fire(tx, ty, spell.area);
@@ -968,6 +1131,7 @@ export class GameEngine {
         this.damageEnemy(e, damage, '#f97316');
       }
     });
+    }
   }
 
   private damageEnemy(enemy: Enemy, baseDamage: number, color: string) {

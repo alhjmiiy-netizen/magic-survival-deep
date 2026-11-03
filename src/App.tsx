@@ -4,7 +4,6 @@ import {
   INITIAL_PLAYER_STATS,
   BOSS_TEST_PLAYER_STATS,
   BOSS_TEST_ENEMIES_LEFT,
-  INITIAL_SPELLS,
   INITIAL_BELT_ITEMS,
   INITIAL_QUESTS,
   INITIAL_EQUIPMENT,
@@ -23,7 +22,8 @@ import { HEROES_LIST } from './game/characters';
 import { ARENAS_LIST } from './game/arenas';
 import { MainMenu } from './components/MainMenu';
 import { HUD } from './components/HUD';
-import { LevelUpModal } from './components/LevelUpModal';
+import { LevelUpModal, StartSpellModal } from './components/LevelUpModal';
+import type { UpgradeChoice } from './game/spells';
 import { InventoryModal } from './components/InventoryModal';
 import { SkillsModal } from './components/SkillsModal';
 import { UpgradeModal } from './components/UpgradeModal';
@@ -53,7 +53,10 @@ export default function App() {
 
   // Game state
   const [stats, setStats] = useState<PlayerStats>(INITIAL_PLAYER_STATS);
-  const [spells, setSpells] = useState<Spell[]>(INITIAL_SPELLS);
+  const [spells, setSpells] = useState<Spell[]>([]);
+  const [pickingSpell, setPickingSpell] = useState(false);
+  const [upgradeChoices, setUpgradeChoices] = useState<UpgradeChoice[]>([]);
+  const [fastCasting, setFastCasting] = useState(0);
   const [beltItems, setBeltItems] = useState<QuickBeltItem[]>(INITIAL_BELT_ITEMS);
   const [quests, setQuests] = useState<GameQuest[]>(INITIAL_QUESTS);
   const [equipment] = useState<EquipmentItem[]>(INITIAL_EQUIPMENT);
@@ -110,7 +113,7 @@ export default function App() {
     const engine = new GameEngine(
       canvasRef.current,
       startWave === 8 ? BOSS_TEST_PLAYER_STATS : INITIAL_PLAYER_STATS,
-      INITIAL_SPELLS,
+      [],
       {
         onStatsUpdate: (newStats) => setStats(newStats),
         onQuestUpdate: (updater) => setQuests(updater),
@@ -120,7 +123,12 @@ export default function App() {
           setTimeStr(t);
         },
         onLevelUp: (newLevel) => {
+          setUpgradeChoices(engine.getUpgradeChoices(4));
           setLevelUpLevel(newLevel);
+        },
+        onSpellsUpdate: (sp) => {
+          setSpells(sp);
+          setFastCasting(engine.fastCasting);
         },
         onGameOver: (victory, summary) => {
           setGameOverData({ victory, summary });
@@ -149,6 +157,10 @@ export default function App() {
     engine.autoAim = autoAim;
 
     engine.start();
+    engine.pause(); // nothing runs until the starting magic is picked
+    setSpells([]);
+    setFastCasting(0);
+    setPickingSpell(true);
     engineRef.current = engine;
     (window as unknown as { __engine?: GameEngine }).__engine = engine;
   }, [gameView, startAtWave8, currentHero, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
@@ -254,36 +266,18 @@ export default function App() {
 
   const handleSelectUpgrade = (upgradeId: string) => {
     setLevelUpLevel(null);
+    engineRef.current?.applyUpgrade(upgradeId);
     engineRef.current?.resume();
-
-    if (upgradeId.startsWith('up_')) {
-      setSpells((prev) =>
-        prev.map((s) => {
-          if (upgradeId === 'up_missile_dmg' && s.id === 'arcane_missiles') {
-            return { ...s, damage: Math.round(s.damage * 1.25), count: s.count + 1, level: s.level + 1 };
-          }
-          if (upgradeId === 'up_frost_area' && s.id === 'frost_nova') {
-            return { ...s, area: Math.round(s.area * 1.3), cooldown: Math.max(1, s.cooldown - 0.8), level: s.level + 1 };
-          }
-          if (upgradeId === 'up_thunder_chain' && s.id === 'thunderstorm') {
-            return { ...s, count: s.count + 2, damage: Math.round(s.damage * 1.2), level: s.level + 1 };
-          }
-          if (upgradeId === 'up_cataclysm_evo' && s.id === 'cataclysm') {
-            return { ...s, evolved: true, evolutionName: 'Astral Singularity', damage: Math.round(s.damage * 1.4) };
-          }
-          return s;
-        })
-      );
-    } else if (upgradeId === 'pass_crit') {
-      setStats((prev) => ({ ...prev, critChance: prev.critChance + 12, critMultiplier: prev.critMultiplier + 0.35 }));
-    } else if (upgradeId === 'pass_haste') {
-      setStats((prev) => ({ ...prev, cooldownReduction: Math.min(60, prev.cooldownReduction + 15) }));
-    } else if (upgradeId === 'pass_vitality') {
-      setStats((prev) => ({ ...prev, maxHp: prev.maxHp + 200, hp: prev.hp + 200 }));
-    } else if (upgradeId === 'pass_magnet') {
-      setStats((prev) => ({ ...prev, pickupRadius: prev.pickupRadius + 80 }));
-    }
   };
+
+  const handlePickStartSpell = (spellId: string) => {
+    const e = engineRef.current;
+    if (!e) return;
+    e.learnSpell(spellId, startAtWave8 ? 5 : 1);
+    setPickingSpell(false);
+    e.resume();
+  };
+  (window as unknown as { __pickSpell?: (id: string) => void }).__pickSpell = handlePickStartSpell;
 
   const handleSelectHero = (hero: CharacterHero) => {
     setCurrentHero(hero);
@@ -323,7 +317,7 @@ export default function App() {
     setIsPaused(false);
     setLevelUpLevel(null);
     setStats(INITIAL_PLAYER_STATS);
-    setSpells(INITIAL_SPELLS);
+    setSpells([]);
     setBeltItems(INITIAL_BELT_ITEMS);
     setQuests(INITIAL_QUESTS);
     initializeEngine();
@@ -483,7 +477,7 @@ export default function App() {
               setIsSettingsOpen(true);
             }}
             onUseBeltItem={useBeltItem}
-            onTriggerSpell={(spellId) => engineRef.current?.triggerSpellManual(spellId)}
+            fastCasting={fastCasting}
             onTriggerDash={() => engineRef.current?.triggerDash()}
             onJoystickMove={(vx, vy) => engineRef.current?.setJoystickVector(vx, vy)}
           />
@@ -584,8 +578,11 @@ export default function App() {
 
       {/* 3. Global Modals (Accessible from both MainMenu and Gameplay) */}
       {/* Level Up Modal */}
+      {gameView === 'PLAYING' && pickingSpell && (
+        <StartSpellModal bossTest={startAtWave8} onPick={handlePickStartSpell} />
+      )}
       {levelUpLevel !== null && (
-        <LevelUpModal level={levelUpLevel} onSelectUpgrade={handleSelectUpgrade} />
+        <LevelUpModal level={levelUpLevel} choices={upgradeChoices} onSelectUpgrade={handleSelectUpgrade} />
       )}
 
       {/* Freestanding Character Selection Stage */}

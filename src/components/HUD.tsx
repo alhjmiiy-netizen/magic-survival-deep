@@ -35,7 +35,7 @@ interface HUDProps {
   onOpenUpgrades: () => void;
   onOpenSettings: () => void;
   onUseBeltItem: (id: string) => void;
-  onTriggerSpell: (spellId: string) => void;
+  fastCasting?: number;
   onTriggerDash: () => void;
   onJoystickMove: (x: number, y: number) => void;
   hero: CharacterHero;
@@ -58,7 +58,7 @@ export const HUD: React.FC<HUDProps> = ({
   onOpenUpgrades,
   onOpenSettings,
   onUseBeltItem,
-  onTriggerSpell,
+  fastCasting = 0,
   onTriggerDash,
   onJoystickMove,
 }) => {
@@ -308,6 +308,14 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         </div>
       ))}
+      {fastCasting > 0 && (
+        <div data-power="fast_cast" className="flex flex-col items-center w-9" title={`Fast Casting x${fastCasting}`}>
+          <div className="relative w-7 h-7 rounded-md flex items-center justify-center border border-yellow-400 text-yellow-300 bg-slate-950 text-[10px] font-black">
+            ≫<span className="absolute -bottom-1 -right-1.5 px-[3px] rounded bg-black border border-amber-400 text-[7px] leading-[10px] font-bold text-amber-300">x{fastCasting}</span>
+          </div>
+          <span className="text-[6px] text-yellow-300 mt-[2px]">FAST</span>
+        </div>
+      )}
     </div>
   );
 
