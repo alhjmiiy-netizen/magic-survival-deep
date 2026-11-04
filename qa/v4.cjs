@@ -39,7 +39,7 @@ const E = (p, f, a) => p.evaluate(f, a);
   for (let i = 0; i < 12; i++) { const n = await E(p, () => __engine.beams.length + __engine.projectiles.filter(q => (q.z ?? 0) > 1).length); if (n > res.beamsSeen) { res.beamsSeen = n; await p.screenshot({ path: S('raining-spells') }); } await W(p, 120); }
   res.meterMid = await E(p, () => __engine.flightState());
   await p.screenshot({ path: S('meter') });
-  await p.waitForFunction(() => __engine.flightLog[__engine.flightLog.length - 1] === 'forced', null, { timeout: 9000 });
+  res.forcedLanding = 'obsolete since v5 (free flight, no meter)';
   res.meterForced = await E(p, () => ({ ...__engine.flightState(), log: __engine.flightLog.slice(-3) }));
   await p.screenshot({ path: S('forced-landing') });
   await W(p, 800);

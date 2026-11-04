@@ -1227,7 +1227,7 @@ export class GameEngine {
         if (base.length) { const sp = base[Math.floor(Math.random() * base.length)]; const e = this.eff(sp); const before = this.enemies.reduce((a, q) => a + q.hp, 0); this.autoCastRaw({ ...e, damage: Math.round(e.damage * 0.8) }); hits += this.enemies.reduce((a, q) => a + q.hp, 0) < before ? 1 : 0; this.label('ECHO: ' + sp.name, this.playerX, this.playerY - 90, color); }
         for (const it of this.lootItems) if (Math.hypot(it.x - this.playerX, it.y - this.playerY) < 600) it.magnetized = true;
         FX.ring(this.playerX, this.playerY, r, 'rgba(196,181,253,1)', 0.5); FX.star(this.playerX, this.playerY, 90);
-        for (const e of inR(this.playerX, this.playerY, r * 0.6)) hit(e, dmg * 0.5, 'arcane', color);
+        for (const e of inR(this.playerX, this.playerY, r)) hit(e, dmg * 0.5, 'arcane', color);
         break;
       }
     }

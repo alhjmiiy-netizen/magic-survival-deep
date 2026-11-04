@@ -4,7 +4,7 @@
    "triggered": 1,
    "key": "fire+ice",
    "hits": 14,
-   "dmg": 2398,
+   "dmg": 2528,
    "meter": 30,
    "sound": true,
    "cd": 4,
@@ -20,7 +20,7 @@
    "triggered": 1,
    "key": "fire+lightning",
    "hits": 14,
-   "dmg": 2738,
+   "dmg": 2590,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -37,7 +37,7 @@
    "triggered": 1,
    "key": "ice+lightning",
    "hits": 20,
-   "dmg": 1774,
+   "dmg": 1674,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -45,8 +45,8 @@
    "beams": 6,
    "frozen": 14,
    "feed": [
-    "Steam Burst +22",
     "Plasma Nova +22",
+    "Steam Burst +22",
     "Frozen Spark +22"
    ],
    "repeatBlocked": true
@@ -55,7 +55,7 @@
    "triggered": 1,
    "key": "arcane+fire",
    "hits": 77,
-   "dmg": 9624,
+   "dmg": 9912,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -64,7 +64,7 @@
    "frozen": 0,
    "feed": [
     "Frozen Spark +22",
-    "Arc Storm +22",
+    "Steam Burst +22",
     "Hex Inferno +22"
    ],
    "repeatBlocked": true
@@ -73,7 +73,7 @@
    "triggered": 1,
    "key": "arcane+ice",
    "hits": 26,
-   "dmg": 2340,
+   "dmg": 2556,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -82,7 +82,7 @@
    "frozen": 13,
    "feed": [
     "Hex Inferno +22",
-    "Astral Echo +22",
+    "Arc Storm +22",
     "Prism Shatter +22"
    ],
    "repeatBlocked": true
@@ -90,8 +90,8 @@
   "arcane+lightning": {
    "triggered": 1,
    "key": "arcane+lightning",
-   "hits": 50,
-   "dmg": 4180,
+   "hits": 51,
+   "dmg": 4196,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -99,7 +99,7 @@
    "beams": 0,
    "frozen": 0,
    "feed": [
-    "Astral Echo +22",
+    "Arc Storm +22",
     "Prism Shatter +22",
     "Arc Storm +22"
    ],
@@ -108,8 +108,8 @@
   "fire+spirit": {
    "triggered": 1,
    "key": "fire+spirit",
-   "hits": 9,
-   "dmg": 873,
+   "hits": 12,
+   "dmg": 1242,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -117,8 +117,8 @@
    "beams": 0,
    "frozen": 0,
    "feed": [
-    "Prism Shatter +22",
     "Arc Storm +22",
+    "Astral Echo +22",
     "Soulfire +22"
    ],
    "repeatBlocked": true
@@ -127,7 +127,7 @@
    "triggered": 1,
    "key": "ice+spirit",
    "hits": 11,
-   "dmg": 1499,
+   "dmg": 1397,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -136,7 +136,7 @@
    "frozen": 11,
    "feed": [
     "Soulfire +22",
-    "Plasma Nova +22",
+    "Steam Burst +22",
     "Wraith Frost +22"
    ],
    "repeatBlocked": true
@@ -145,7 +145,7 @@
    "triggered": 1,
    "key": "lightning+spirit",
    "hits": 4,
-   "dmg": 336,
+   "dmg": 280,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -154,7 +154,7 @@
    "frozen": 0,
    "feed": [
     "Wraith Frost +22",
-    "Steam Burst +22",
+    "Frozen Spark +22",
     "Storm Wraiths +22"
    ],
    "repeatBlocked": true
@@ -162,8 +162,8 @@
   "arcane+spirit": {
    "triggered": 1,
    "key": "arcane+spirit",
-   "hits": 1,
-   "dmg": 714,
+   "hits": 12,
+   "dmg": 1695,
    "meter": 22,
    "sound": true,
    "cd": 4,
@@ -171,8 +171,8 @@
    "beams": 0,
    "frozen": 0,
    "feed": [
-    "Steam Burst +22",
     "Storm Wraiths +22",
+    "Arc Storm +22",
     "Astral Echo +22"
    ],
    "repeatBlocked": true
@@ -201,50 +201,50 @@
   }
  },
  "cdExpiry": {
-  "gameSeconds": 4.05,
+  "gameSeconds": 4.07,
   "retrigger": 1
  },
  "feedHud": 1,
  "sfx": {
   "fire+ice": {
-   "rms": 0.1291,
-   "zcr": 567
+   "rms": 0.1289,
+   "zcr": 516
   },
   "fire+lightning": {
-   "rms": 0.1301,
-   "zcr": 558
+   "rms": 0.129,
+   "zcr": 585
   },
   "ice+lightning": {
-   "rms": 0.1324,
-   "zcr": 725
+   "rms": 0.1311,
+   "zcr": 715
   },
   "arcane+fire": {
-   "rms": 0.1311,
-   "zcr": 269
+   "rms": 0.1295,
+   "zcr": 264
   },
   "arcane+ice": {
-   "rms": 0.1292,
-   "zcr": 578
+   "rms": 0.1273,
+   "zcr": 564
   },
   "arcane+lightning": {
-   "rms": 0.1318,
-   "zcr": 528
+   "rms": 0.1321,
+   "zcr": 557
   },
   "fire+spirit": {
-   "rms": 0.1287,
-   "zcr": 283
+   "rms": 0.1286,
+   "zcr": 300
   },
   "ice+spirit": {
-   "rms": 0.1304,
-   "zcr": 565
+   "rms": 0.1305,
+   "zcr": 582
   },
   "lightning+spirit": {
-   "rms": 0.1294,
-   "zcr": 535
+   "rms": 0.1307,
+   "zcr": 461
   },
   "arcane+spirit": {
-   "rms": 0.1291,
-   "zcr": 282
+   "rms": 0.1304,
+   "zcr": 289
   }
  },
  "screen": {

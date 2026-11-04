@@ -45,3 +45,12 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 - SFX (src/audio/sfx.ts + soundEngine buildChain w/ compressor+limiter): 24 synth recipes; dev-only window.__sfxm for offline renders (/tmp/sfx.cjs -> deploy/magic-deep-shots/sfx/*.wav).
 - Artifacts: 33, rarity-weighted 3-card chests, wooden ground chests, boss chest "SELECT ATTRIBUTE"; pause screen lists held artifacts.
 - QA: node qa/v5.cjs <url> <w> <h> <tag>.
+
+## v6 round (Nov 3 2026)
+- Perf: crowded LOD, glow/particle budgets, dynamic render scale, endless cap 150(+10). Endless m30 task 169→80 ms/frame (fps 2.7→7 headless swiftshader); regions m30 74.6→25.4 ms (5.3→15.3 fps). qa/results/perf-v6.md.
+- Encyclopedia: codex generated from tuning.ts constants (112+ entries, pair matrix). qa/codex.cjs.
+- Interactive background (toggle in settings). qa/ibg.cjs.
+- All-pairs combos: 10 element pairs (FUSIONS in tuning.ts), each its own effect, sound pair_<key>, 4 s per-pair cooldown (minus fusion_core), cataclysm meter +22, HUD cata-feed, Pair Combos screen with live cooldown rings. qa/combos.cjs.
+- Spirit roles (game/spiritRoles.ts, SPIRIT constants): guardians (block shots within 24px), hunters (dart at enemies within 280px every 1.1 s), Mender at 3+ (heal 0.6% max hp/s + loot magnet 240), Beacon at 5+ (170px aura, 45% slow, dmg ticks). Surge HUD button (18 s cd, x2.5, clear radius 260, cooldown ring). Buffs +4% dmg per 2 spirits, 3% DR per 3. Lethal-hit save at 4+ spirits (sacrifice one, 35% hp, 90 s cd, regrow 30 s). Wing formation while flying. Ascension I/II at 8/12 (dmg x1.25/x1.5, surge cd x0.8/x0.5). Level-up text names the unlock. qa/spirits.cjs (12 spirits + 120 enemies ≈ 28–33 fps headless).
+- qa/v4.cjs forced-landing check retired (free flight since v5 has no meter).
+- Final soak: qa/results/soak-v6-final.json (endless 20 min, 0 errors, heap 30→34 MB).
