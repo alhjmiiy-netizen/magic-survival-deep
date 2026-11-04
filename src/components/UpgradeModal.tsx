@@ -26,7 +26,7 @@ export const INITIAL_RESEARCH_ATTRIBUTES: ResearchAttribute[] = [
   // Row 1
   { id: 'growth', name: 'Growth', description: 'Increases EXP gained from all defeated enemies and mana orbs.', rank: 1, maxRank: 5, statKey: 'expMultiplier', bonusPerRank: 4, bonusUnit: '%' },
   { id: 'vitality', name: 'Vitality', description: 'Increases maximum Health capacity across all characters.', rank: 1, maxRank: 5, statKey: 'maxHp', bonusPerRank: 50, bonusUnit: ' HP' },
-  { id: 'bloodthirst', name: 'Regeneration', description: 'Restores health continuously every 5 seconds.', rank: 1, maxRank: 5, statKey: 'hpRegen', bonusPerRank: 3, bonusUnit: ' HP/s' },
+  { id: 'bloodthirst', name: 'Regeneration', description: 'Restores health continuously every second.', rank: 1, maxRank: 5, statKey: 'hpRegen', bonusPerRank: 3, bonusUnit: ' HP/s' },
   { id: 'might', name: 'Might', description: 'Increases base spell attack damage and explosion potency.', rank: 5, maxRank: 6, statKey: 'spellPower', bonusPerRank: 5, bonusUnit: '%' },
   { id: 'snipe', name: 'Snipe', description: 'Increases critical strike chance on all magic projectiles.', rank: 1, maxRank: 5, statKey: 'critChance', bonusPerRank: 2.5, bonusUnit: '%' },
 

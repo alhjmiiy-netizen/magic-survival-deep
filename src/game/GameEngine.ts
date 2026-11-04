@@ -34,12 +34,8 @@ interface EShot { x: number; y: number; vx: number; vy: number; dmg: number; col
 interface SpiritUnit { x: number; y: number; z: number; dash: number; tx: number; ty: number; target: Enemy | null; dmg: number }
 interface Label { text: string; x: number; y: number; color: string; life: number; max: number; big: boolean }
 interface Beam { x1: number; y1: number; x2: number; y2: number; color: string; life: number }
-export const FLIGHT_LIFT = 70, HOVER_SPEED = 1.2, SOAR_SPEED = 1.45, HOVER_DMG = 1.15, SOAR_DMG = 1.25, SOAR_H = 1.9, WORLD_MUL = 2.6, CATA_CD = 150, CATA_SCENE = 65, CHARGE_MAX = 1.5, FUSION_WINDOW = 1.2, FUSION_CD = 4;
-const FUSIONS: Record<string, { name: string; color: string }> = {
-  'fire+ice': { name: 'Steam Burst', color: '#e2e8f0' }, 'fire+lightning': { name: 'Plasma Nova', color: '#fb923c' }, 'ice+lightning': { name: 'Frozen Spark', color: '#7dd3fc' },
-  'arcane+fire': { name: 'Hex Inferno', color: '#f472b6' }, 'arcane+ice': { name: 'Prism Shatter', color: '#a5b4fc' }, 'arcane+lightning': { name: 'Arc Storm', color: '#93c5fd' },
-  'fire+spirit': { name: 'Soulfire', color: '#5eead4' }, 'ice+spirit': { name: 'Wraith Frost', color: '#99f6e4' }, 'lightning+spirit': { name: 'Storm Wraiths', color: '#67e8f9' }, 'arcane+spirit': { name: 'Astral Echo', color: '#c4b5fd' },
-};
+import { FLIGHT_LIFT, HOVER_SPEED, SOAR_SPEED, HOVER_DMG, SOAR_DMG, SOAR_H, WORLD_MUL, CATA_CD, CATA_SCENE, CHARGE_MAX, FUSION_WINDOW, FUSION_CD, FUSIONS, CATA_GAIN, ELITE_EVERY, ELITE_RANDOM_CHANCE, ELITE_HP, ELITE_DMG, PACK_EVERY_ENDLESS, PACK_EVERY_REGION } from './tuning';
+export { FLIGHT_LIFT, HOVER_SPEED, SOAR_SPEED, HOVER_DMG, SOAR_DMG, SOAR_H, WORLD_MUL, CATA_CD, CATA_SCENE, CHARGE_MAX, FUSION_WINDOW, FUSION_CD };
 export const FUSION_TABLE = FUSIONS;
 /** In-place stable compaction (no new array, no splice shifting). */
 export function compact<T>(a: T[], keep: (x: T) => boolean) { let j = 0; for (let i = 0; i < a.length; i++) { const x = a[i]; if (keep(x)) a[j++] = x; } a.length = j; }
@@ -616,7 +612,7 @@ export class GameEngine {
     for (const sy of SYNERGIES) {
       if (this.synergies.includes(sy.id)) continue;
       if ((lv[sy.a] ?? 0) >= SYNERGY_MIN_LEVEL && (lv[sy.b] ?? 0) >= SYNERGY_MIN_LEVEL) {
-        this.synergies.push(sy.id); this.addCata(15, 'synergy');
+        this.synergies.push(sy.id); this.addCata(CATA_GAIN.synergy, 'synergy');
         this.notice(`SYNERGY: ${sy.name} — ${sy.desc}`, sy.color, 'synergy');
         this.spawnFloatingText(`SYNERGY: ${sy.name}`, this.playerX, this.playerY - 90, sy.color, true);
         FX.ring(this.playerX, this.playerY, 200, 'rgba(255,255,255,1)', 0.6);
@@ -853,7 +849,7 @@ export class GameEngine {
   public cdMul(id: string) { return Math.pow(0.9, this.fastCasting) * (1 - this.stats.cooldownReduction / 100) * (1 - 0.07 * this.art('hourglass')) * (this.art('ether_arrow') && (id === 'arcane_missiles' || id === 'spirit') ? 0.8 : 1); }
   private autoCast(spell: Spell) {
     if (spell.isCombo) {
-      this.castCombo(spell); this.addCata(6, 'combo');
+      this.castCombo(spell); this.addCata(CATA_GAIN.combo, 'combo');
     } else this.autoCastRaw(this.eff(spell));
     this.castLog.push({ id: spell.id, t: this.gameTimeSeconds });
     if (!spell.isCombo) this.noteCastForFusion(spell.id);
@@ -1010,11 +1006,11 @@ export class GameEngine {
     const def = ENEMY_DEFS[type] ?? ENEMY_DEFS.crawler;
     const df = this.diff();
     if (!opts.force && this.enemies.length >= df.cap + GameEngine.CAP_SLACK) return null; // hard crowd cap
-    const elite = opts.elite ?? (!opts.small && Math.random() < 0.015);
+    const elite = opts.elite ?? (!opts.small && Math.random() < ELITE_RANDOM_CHANCE);
     let radius = def.r * (opts.small ? 0.6 : 1);
     let hp = Math.round(def.hp * df.hp * (opts.hpMul ?? 1));
     let damage = Math.round(def.dmg * df.dmg * 0.7);
-    if (elite) { hp *= 5; damage = Math.round(damage * 1.5); radius *= 1.25; }
+    if (elite) { hp *= ELITE_HP; damage = Math.round(damage * ELITE_DMG); radius *= 1.25; }
     const e: Enemy = {
       id: `enemy_${Math.random()}`, name: (elite ? 'Elite ' : '') + def.name, type, x, y, vx: 0, vy: 0, radius, hp, maxHp: hp,
       speed: def.speed * df.speed * (opts.small ? 1.25 : 1), damage, xpValue: Math.round(def.xp * (elite ? 6 : 1)), crystalDropChance: elite ? 1 : 0.18,
@@ -1136,7 +1132,7 @@ export class GameEngine {
   public triggerFusion(key: string, name: string, color: string) {
     this.fusionCd = FUSION_CD - this.art('fusion_core');
     this.fusionLog.push(name);
-    { const c = this.cata; const t = this.gameTimeSeconds; c.recent = c.recent.filter((r) => t - r.t <= 6); c.recent.push({ k: key, t }); this.addCata(22, 'fusion'); if (new Set(c.recent.map((r) => r.k)).size >= 3 && c.phase === 'idle') { this.addCata(100, 'triple-fusion'); } }
+    { const c = this.cata; const t = this.gameTimeSeconds; c.recent = c.recent.filter((r) => t - r.t <= 6); c.recent.push({ k: key, t }); this.addCata(CATA_GAIN.fusion, 'fusion'); if (new Set(c.recent.map((r) => r.k)).size >= 3 && c.phase === 'idle') { this.addCata(CATA_GAIN.tripleFusion, 'triple-fusion'); } }
     sound.play('fusion', 1.3);
     const tgt = this.findDensestCluster(220) ?? { x: this.playerX + Math.cos(this.playerAngle) * 160, y: this.playerY + Math.sin(this.playerAngle) * 160 };
     const base = this.spells.filter((s) => !s.isCombo); const avg = base.reduce((a, s) => a + s.damage, 0) / Math.max(1, base.length);
@@ -1161,7 +1157,7 @@ export class GameEngine {
     if (st.length >= 6) this.zones.splice(this.zones.indexOf(st[0]), 1);
     if (this.zones.length >= 24) this.zones.shift();
     this.zones.push({ x, y, r, t: 0, max: dur, dps: dps * (1 + 0.5 * this.art('thermal_coil')), color: '226,232,240', tick: 0, steam: true });
-    this.addCata(8, 'steam'); sound.play('steam', Math.min(1.5, 0.6 + r / 200));
+    this.addCata(CATA_GAIN.steam, 'steam'); sound.play('steam', Math.min(1.5, 0.6 + r / 200));
   }
 
   // ---------- charge-up ----------
@@ -1185,7 +1181,7 @@ export class GameEngine {
     sp.currentCooldown = sp.cooldown * (1 + 0.5 * k) * this.cdMul(sp.id);
     this.chargeLog.push({ id: sp.id, k });
     if (k > 0.25) {
-      this.addCata(6 + 12 * k, 'charge'); sound.play('charge_release', 0.8 + 0.8 * k);
+      this.addCata(CATA_GAIN.chargeMin + (CATA_GAIN.chargeMax - CATA_GAIN.chargeMin) * k, 'charge'); sound.play('charge_release', 0.8 + 0.8 * k);
       this.shake(8 + 18 * k); this.hitStop = Math.max(this.hitStop, 0.07 * k);
       FX.ring(this.playerX, this.playerY - this.casterZ(), 120 + 120 * k, 'rgba(255,240,180,1)', 0.45);
       this.label(k >= 1 ? `MAX CHARGE: ${sp.name}!` : `CHARGED ${Math.round(k * 100)}%`, this.playerX, this.playerY - this.casterZ() - 90, sp.color, true);
@@ -1476,10 +1472,10 @@ export class GameEngine {
       this.spawnEnemyAt(t2, sp2.x, sp2.y);
     }
     this.packTimer -= dt;
-    if (this.packTimer <= 0 && !this.currentBoss && cp === 'idle') { this.packTimer = this.inEndless ? 15 : 20; if (this.enemies.length < df.cap + 20) this.spawnPack(); }
+    if (this.packTimer <= 0 && !this.currentBoss && cp === 'idle') { this.packTimer = this.inEndless ? PACK_EVERY_ENDLESS : PACK_EVERY_REGION; if (this.enemies.length < df.cap + 20) this.spawnPack(); }
     this.eliteTimer -= dt;
     if (this.eliteTimer <= 0 && cp === 'idle') {
-      this.eliteTimer = 45;
+      this.eliteTimer = ELITE_EVERY;
       const roster = this.region.roster; const t = roster[Math.floor(Math.random() * roster.length)][0];
       const a = Math.random() * 6.28; const d = Math.min(this.arenaRadius - 60, 560);
       const ep = this.clampSpawn(this.playerX + Math.cos(a) * d, this.playerY + Math.sin(a) * d);
