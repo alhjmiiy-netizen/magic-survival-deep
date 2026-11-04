@@ -1,3 +1,11 @@
+/** Render quality: 0 full, 1 crowded (fewer glows), 2 heavy crowd (minimal glows). Set each frame by the engine. */
+export const Q = { lod: 0 };
+/** Dev profiler: when window.__prof is set, flushes the canvas and accumulates ms per labelled section. */
+let _pt = 0, _pk = '';
+export function profMark(ctx: CanvasRenderingContext2D, k: string) {
+  const prof = (window as unknown as { __prof?: Record<string, number> }).__prof; if (!prof) return;
+  ctx.getImageData(0, 0, 1, 1); const t = performance.now(); if (_pk) prof[_pk] = (prof[_pk] || 0) + t - _pt; _pt = t; _pk = k;
+}
 /** Shared low-cost canvas art helpers: seeded RNG, cached glow sprites, offscreen canvases. */
 export function mulberry32(seed: number) {
   let a = seed >>> 0;

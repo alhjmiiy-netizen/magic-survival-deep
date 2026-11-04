@@ -113,9 +113,11 @@ export const REGIONS: Region[] = [
 
 export const ENDLESS_BOSS_EVERY = 120;
 /** Endless difficulty at t seconds into endless. */
+/** Endless crowd cap (hard-enforced in spawnEnemyAt with +10 slack for splits/scene events). */
+export const ENDLESS_CAP = 150;
 export function endlessScale(t: number) {
   const m = t / 60;
-  return { hp: 0.5 * (1 + 0.45 * m + 0.02 * m * m), dmg: 0.4 + 0.1 * m, speed: Math.min(1.6, 1 + 0.04 * m), spawn: Math.max(0.12, 0.8 / (1 + 0.3 * m)), cap: Math.min(170, 75 + 9 * m) };
+  return { hp: 0.5 * (1 + 0.45 * m + 0.02 * m * m), dmg: 0.4 + 0.1 * m, speed: Math.min(1.6, 1 + 0.04 * m), spawn: Math.max(0.12, 0.8 / (1 + 0.3 * m)), cap: Math.min(ENDLESS_CAP, 75 + 9 * m) };
 }
 
 export interface BestRecord { endless: { time: number; kills: number; score: number }; regions: { best: number; time: number; cleared: number } }

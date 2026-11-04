@@ -10,6 +10,8 @@ import {
   ArenaRealm,
   CharacterHero,
 } from '../types/game';
+import { Q, profMark } from './ArtKit';
+import { GFX } from './gfxSettings';
 import { BOSS_TEST_TIME_SECONDS, BOSS_TEST_KILLS, BOSS_TEST_ENEMIES_LEFT } from './constants';
 import { sound } from '../audio/soundEngine';
 import { VisualRenderer } from './Visuals';
@@ -199,8 +201,14 @@ export class GameEngine {
   };
 
   private resizeCanvas() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    this.canvas.width = Math.round(window.innerWidth * this.renderScale);
+    this.canvas.height = Math.round(window.innerHeight * this.renderScale);
+  }
+  /** Dynamic resolution: crowded LOD renders the backbuffer smaller; CSS upscales it. */
+  public renderScale = 1;
+  private applyRenderScale() {
+    const rs = this.lod >= 2 ? 0.72 : this.lod === 1 ? 0.88 : 1;
+    if (rs !== this.renderScale) { this.renderScale = rs; this.resizeCanvas(); }
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -217,8 +225,8 @@ export class GameEngine {
 
   private onMouseMove = (e: MouseEvent) => {
     this.mouseAim = {
-      x: e.clientX - this.canvas.width / 2,
-      y: e.clientY - this.canvas.height / 2,
+      x: e.clientX - window.innerWidth / 2,
+      y: e.clientY - window.innerHeight / 2,
     };
   };
 
@@ -422,7 +430,7 @@ export class GameEngine {
       if (c.t >= 1.6) {
         const d = SCENES[c.kind!]; c.phase = 'scene'; c.t = 0; c.max = CATA_SCENE + 15 * this.art('cataclysm_shard'); c.left = c.max; c.log.push('scene:' + c.kind);
         this.notice(`${d.title} — ${d.name}`, d.color, 'cataclysm'); sound.startAmbience(c.kind); this.hazardTimer = 3;
-        if (c.kind === 'rift') { const a = Math.random() * 6.28; const el = this.spawnEnemyAt('void_knight', this.playerX + Math.cos(a) * 420, this.playerY + Math.sin(a) * 420, { elite: true, hpMul: 3 }); if (el) { el.name = 'Rift Sovereign'; el.radius *= 1.4; } c.log.push('sovereign'); }
+        if (c.kind === 'rift') { const a = Math.random() * 6.28; const el = this.spawnEnemyAt('void_knight', this.playerX + Math.cos(a) * 420, this.playerY + Math.sin(a) * 420, { elite: true, hpMul: 3, force: true }); if (el) { el.name = 'Rift Sovereign'; el.radius *= 1.4; } c.log.push('sovereign'); }
         for (let i = 0; i < 10; i++) this.spawnSceneEnemy();
       }
     } else if (c.phase === 'scene') {
@@ -710,7 +718,7 @@ export class GameEngine {
     for (let i = this.enemies.length - 1; i >= 0; i--) { const e = this.enemies[i]; if (!e.isBoss && !e.elite && Math.hypot(e.x - this.playerX, e.y - this.playerY) > 1700) { this.enemies.splice(i, 1); this.despawned++; } }
     if (this.amberT === undefined) this.amberT = 0;
     // perf caps
-    if (this.particles.length > this.MAX_PARTICLES) this.particles.splice(0, this.particles.length - this.MAX_PARTICLES);
+    { const pc = this.lod >= 2 ? 160 : this.lod === 1 ? 280 : this.MAX_PARTICLES; if (this.particles.length > pc) this.particles.splice(0, this.particles.length - pc); }
     if (this.damageNumbers.length > 60) this.damageNumbers.splice(0, this.damageNumbers.length - 60);
     if (this.projectiles.length > 220) this.projectiles.splice(0, this.projectiles.length - 220);
   }
@@ -996,9 +1004,12 @@ export class GameEngine {
     }
   }
 
-  private spawnEnemyAt(type: Enemy['type'], x: number, y: number, opts: { elite?: boolean; small?: boolean; hpMul?: number } = {}) {
+  public static CAP_SLACK = 10;
+  private spawnEnemyAt(type: Enemy['type'], x: number, y: number, opts: { elite?: boolean; small?: boolean; hpMul?: number; force?: boolean } = {}): Enemy | null {
+    void 0;
     const def = ENEMY_DEFS[type] ?? ENEMY_DEFS.crawler;
     const df = this.diff();
+    if (!opts.force && this.enemies.length >= df.cap + GameEngine.CAP_SLACK) return null; // hard crowd cap
     const elite = opts.elite ?? (!opts.small && Math.random() < 0.015);
     let radius = def.r * (opts.small ? 0.6 : 1);
     let hp = Math.round(def.hp * df.hp * (opts.hpMul ?? 1));
@@ -1308,8 +1319,23 @@ export class GameEngine {
     window.removeEventListener('mousemove', this.onMouseMove);
   }
 
+  /** 0/1/2 render LOD: driven by crowd size + smoothed real frame interval (includes raster time), with hysteresis. */
+  public lod = 0; public reducedEffects = false; private frameEma = 16; private lodHold = 0;
+  public static LOD_ENEMIES = [95, 140];
+  private updateLod(frameMs: number) {
+    this.frameEma += (Math.min(100, frameMs) - this.frameEma) * 0.05;
+    const n = this.enemies.length + this.particles.length * 0.15;
+    let want = n >= GameEngine.LOD_ENEMIES[1] ? 2 : n >= GameEngine.LOD_ENEMIES[0] ? 1 : 0;
+    if (this.frameEma > 26) want = Math.min(2, want + 1);
+    if (this.reducedEffects || GFX.reducedEffects) want = Math.max(1, want);
+    if (want > this.lod) { this.lod = want; this.lodHold = 2; } else if (want < this.lod && (this.lodHold -= frameMs / 1000) <= 0) { this.lod = want; this.lodHold = 2; }
+    Q.lod = this.lod;
+    this.applyRenderScale();
+  }
+  public setReducedEffects(v: boolean) { this.reducedEffects = v; }
   private loop = (time: number) => {
     if (!this.isRunning) return;
+    this.updateLod(time - this.lastTime);
     const dt = Math.min((time - this.lastTime) / 1000, 0.1);
     this.lastTime = time;
 
@@ -2155,28 +2181,37 @@ export class GameEngine {
     }
 
     // Enhanced 3D Isometric Viewport & Camera Tilt (Expansive POV)
-    const zoom = Math.min(1.0, Math.max(0.78, w / 1500)) * this.zoomK;
-    this.viewHalfW = w / 2 / zoom; this.viewHalfH = this.canvas.height / (window.devicePixelRatio || 1) / 2 / (zoom * 0.88);
-    ctx.translate(w / 2 + shakeX, h / 2 + shakeY);
-    ctx.scale(zoom, zoom * 0.88); // 3/4 Isometric Depth
+    const rs = this.renderScale, lw = w / rs, lh = h / rs;
+    const zoom = Math.min(1.0, Math.max(0.78, lw / 1500)) * this.zoomK;
+    this.viewHalfW = lw / 2 / zoom; this.viewHalfH = lh / (window.devicePixelRatio || 1) / 2 / (zoom * 0.88);
+    ctx.translate(w / 2 + shakeX * rs, h / 2 + shakeY * rs);
+    ctx.scale(zoom * rs, zoom * 0.88 * rs); // 3/4 Isometric Depth
     ctx.translate(-this.cameraX, -this.cameraY);
 
+    const P = (k: string) => profMark(ctx, k); P('pre');
+
+    P('1');
     // 1. Render Active Realm Arena Base
     this.renderBackdrop(ctx);
     this.renderDeepGround(ctx);
 
+    P('2');
     // 2. Obelisk Blue Laser Beams
     VisualRenderer.renderObeliskBeams(ctx, OBELISK_POSITIONS[0][0], OBELISK_POSITIONS[0][1] - 70);
 
+    P('3');
     // 3. Central 8-Directional Radiant Celestial Spear Wings (From Screenshot)
     VisualRenderer.renderCelestialSpearWings(ctx, this.playerX, this.playerY, this.playerAngle, 1.0);
 
+    P('4');
     // 4. Ground Loot
     this.renderLoot(ctx);
 
+    P('5');
     // 5. Living Demonic Enemies
     this.renderLivingEnemies(ctx);
 
+    P('6');
     // 6. Player Archmage
     for (const b of this.enemyShots) if (this.onScreen(b.x, b.y, 40)) renderShot(ctx, b);
     VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt, this.currentHero.id, this.flyH);
@@ -2187,21 +2222,27 @@ export class GameEngine {
     if (this.charging) { const k = Math.min(1, (this.gameTimeSeconds - this.charging.t0) / this.chargeMax()); const cz = this.casterZ(); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = k >= 1 ? '#fde68a' : 'rgba(255,240,180,0.8)'; ctx.lineWidth = 3 + 3 * k; ctx.beginPath(); ctx.arc(this.playerX, this.playerY - cz - 30, 30 + 26 * (1 - k), 0, Math.PI * 2 * k); ctx.stroke(); ctx.restore(); }
     for (const l of this.labels) { const k = l.life / l.max; ctx.save(); ctx.globalAlpha = Math.min(1, k * 2); ctx.font = `900 ${l.big ? 26 : 16}px Cinzel, Georgia, serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; const yy = l.y - (1 - k) * 40; ctx.strokeText(l.text, l.x, yy); ctx.fillStyle = l.color; ctx.fillText(l.text, l.x, yy); ctx.restore(); }
 
+    P('7');
     // 7. Projectiles (Arcane Missiles & Fused Magic)
     this.renderProjectiles(ctx);
 
+    P('8');
     // 8. Dynamic Weather Overlay System (Falling Snow, Embers, Rain, Stardust)
     this.weatherSystem.render(ctx);
 
+    P('9');
     // 9. Dynamic Particles & Shockwaves
     this.renderParticles(ctx);
 
+    P('9b');
     // 9b. Spell impact / burst effects (visual only)
     FX.render(ctx);
 
+    P('10');
     // 10. Floating Glowing Damage Numbers
     this.renderDamageNumbers(ctx);
 
+    P('end');
     ctx.restore();
   }
 
@@ -2211,9 +2252,9 @@ export class GameEngine {
     ctx.globalCompositeOperation = 'lighter';
     for (const z of this.zones) {
       const a = Math.max(0, 1 - z.t / z.max);
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.r);
-      g.addColorStop(0, `rgba(${z.color},${0.22 * a})`); g.addColorStop(0.7, `rgba(${z.color},${0.1 * a})`); g.addColorStop(1, `rgba(${z.color},0)`);
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (0.92 + 0.08 * Math.sin(now * 9 + z.x)), 0, Math.PI * 2); ctx.fill();      if (z.steam) for (let k = 0; k < 7; k++) { const pa = k * 0.9 + now * 0.6, pr = z.r * (0.25 + 0.5 * ((k * 37) % 10) / 10); const px = z.x + Math.cos(pa) * pr, py = z.y + Math.sin(pa) * pr * 0.7 - ((now * 30 + k * 13) % 30); ctx.fillStyle = `rgba(241,245,249,${0.28 * a})`; ctx.beginPath(); ctx.arc(px, py, 18 + (k % 3) * 8, 0, Math.PI * 2); ctx.fill(); }
+      if (!this.onScreen(z.x, z.y, z.r)) continue;
+      drawGlow(ctx, `rgb(${z.color})`, z.x, z.y, z.r * 1.15 * (0.92 + 0.08 * Math.sin(now * 9 + z.x)), 0.42 * a); // cached glow sprite instead of a per-frame gradient
+      if (z.steam) for (let k = 0; k < (this.lod >= 2 ? 3 : 7); k++) { const pa = k * 0.9 + now * 0.6, pr = z.r * (0.25 + 0.5 * ((k * 37) % 10) / 10); const px = z.x + Math.cos(pa) * pr, py = z.y + Math.sin(pa) * pr * 0.7 - ((now * 30 + k * 13) % 30); ctx.fillStyle = `rgba(241,245,249,${0.28 * a})`; ctx.beginPath(); ctx.arc(px, py, 18 + (k % 3) * 8, 0, Math.PI * 2); ctx.fill(); }
     }
     ctx.restore();
     for (const h of this.hazards) {
@@ -2229,7 +2270,7 @@ export class GameEngine {
   private renderBackdrop(ctx: CanvasRenderingContext2D) {
     const now = performance.now() / 1000, c = this.cata, R = this.arenaRadius;
     const hw = this.viewHalfW, hh = this.viewHalfH;
-    const beyond = () => renderBeyond(ctx, this.region.color, this.cameraX, this.cameraY, hw, hh, R, this.worldR, now);
+    const beyond = () => { profMark(ctx, '1beyond'); renderBeyond(ctx, this.region.color, this.cameraX, this.cameraY, hw, hh, R, this.worldR, now); profMark(ctx, '1platform'); };
     if (c.phase === 'scene' || c.phase === 'reform' || c.phase === 'collapse') {
       const kind = c.kind!;
       if (c.phase === 'collapse') {
@@ -2307,9 +2348,7 @@ export class GameEngine {
       } else if (item.type === 'chest') {
         // wooden treasure chest resting on the ground (no bob)
         ctx.translate(0, -bob);
-        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
-        g.addColorStop(0, 'rgba(250,204,21,0.35)'); g.addColorStop(1, 'rgba(250,204,21,0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.fill();
+        drawGlow(ctx, 'rgba(250,204,21,1)', 0, 0, 60, 0.35);
         ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(0, 14, 30, 9, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#7a4a22'; ctx.fillRect(-26, -8, 52, 22);
         ctx.fillStyle = '#8b5a2b'; ctx.beginPath(); ctx.moveTo(-26, -8); ctx.quadraticCurveTo(0, -30, 26, -8); ctx.closePath(); ctx.fill();
@@ -2340,12 +2379,13 @@ export class GameEngine {
   private renderParticles(ctx: CanvasRenderingContext2D) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (const part of this.particles) {
+    const lod = this.lod;
+    for (let i = 0; i < this.particles.length; i++) { const part = this.particles[i];
       if (!this.onScreen(part.x, part.y, 60)) continue;
       ctx.globalAlpha = Math.max(0, Math.min(1, part.alpha));
       ctx.fillStyle = part.color;
       if (part.shape === 'spark') {
-        drawGlow(ctx, part.color, part.x, part.y, part.size * 2.2, 0.6);
+        if (lod < 2) drawGlow(ctx, part.color, part.x, part.y, part.size * 2.2, 0.6);
         ctx.fillRect(part.x - part.size / 3, part.y - part.size / 3, part.size / 1.5, part.size / 1.5);
       } else if (part.shape === 'shard') {
         ctx.beginPath();
@@ -2354,7 +2394,7 @@ export class GameEngine {
         ctx.lineTo(part.x - part.size * 0.5, part.y + part.size);
         ctx.closePath();
         ctx.fill();
-      } else {
+      } else if (lod < 2 || (i & 1) === 0) {
         drawGlow(ctx, part.color, part.x, part.y, part.size * 1.8, 0.8);
       }
     }

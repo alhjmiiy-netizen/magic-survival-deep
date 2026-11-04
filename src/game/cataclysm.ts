@@ -1,5 +1,6 @@
 /** v5 Cataclysm scenes + beyond-the-circle world rendering. Pure render helpers + data. */
 import type { Enemy } from '../types/game';
+import { Q } from './ArtKit';
 
 export type SceneKind = 'sky' | 'abyss' | 'rift';
 export interface SceneDef {
@@ -30,6 +31,8 @@ export const SCENES: Record<SceneKind, SceneDef> = {
   },
 };
 
+const hazeCache = new Map<string, CanvasGradient>();
+const bgCache = new Map<string, CanvasGradient>();
 const hash = (x: number, y: number, s = 0) => { const h = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return h - Math.floor(h); };
 
 /** Beyond-the-circle world for normal regions: drifting cloud banks + floating rock islands tinted by region colour. */
@@ -39,8 +42,8 @@ export function renderBeyond(ctx: CanvasRenderingContext2D, color: string, camX:
   const y0 = Math.floor((camY - hh) / cell) - 1, y1 = Math.floor((camY + hh) / cell) + 1;
   ctx.save();
   // tinted haze so far space never reads as flat black
-  const g = ctx.createRadialGradient(0, 0, arenaR * 0.9, 0, 0, worldR * 1.05);
-  g.addColorStop(0, hexA(color, 0.20)); g.addColorStop(0.6, hexA(color, 0.10)); g.addColorStop(1, 'rgba(10,12,24,0.35)');
+  const gk = color + arenaR + '|' + worldR; let g = hazeCache.get(gk);
+  if (!g) { g = ctx.createRadialGradient(0, 0, arenaR * 0.9, 0, 0, worldR * 1.05); g.addColorStop(0, hexA(color, 0.20)); g.addColorStop(0.6, hexA(color, 0.10)); g.addColorStop(1, 'rgba(10,12,24,0.35)'); if (hazeCache.size > 24) hazeCache.clear(); hazeCache.set(gk, g); }
   ctx.fillStyle = g; ctx.fillRect(camX - hw - 50, camY - hh - 50, hw * 2 + 100, hh * 2 + 100);
   for (let cx = x0; cx <= x1; cx++) for (let cy = y0; cy <= y1; cy++) {
     const r1 = hash(cx, cy), r2 = hash(cx, cy, 1), r3 = hash(cx, cy, 2);
@@ -60,7 +63,7 @@ export function renderBeyond(ctx: CanvasRenderingContext2D, color: string, camX:
       // cloud bank
       const s = 80 + r2 * 140; const drift = ((now * 12 + r1 * 400) % 400) - 200;
       ctx.fillStyle = kind === 'abyss' ? 'rgba(90,20,10,0.25)' : `rgba(220,230,255,${0.08 + r1 * 0.08})`;
-      for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(wx + drift * 0.2 + (k - 1.5) * s * 0.45, wy + Math.sin(k * 2.1) * s * 0.12, s * 0.42, s * 0.2, 0, 0, Math.PI * 2); ctx.fill(); }
+      const nk = Q.lod >= 2 ? 2 : 4; for (let k = 0; k < nk; k++) { ctx.beginPath(); ctx.ellipse(wx + drift * 0.2 + (k - 1.5) * s * 0.45, wy + Math.sin(k * 2.1) * s * 0.12, s * 0.42, s * 0.2, 0, 0, Math.PI * 2); ctx.fill(); }
     } else {
       // star / ember sparkle
       ctx.fillStyle = kind === 'abyss' ? 'rgba(251,146,60,0.8)' : 'rgba(255,255,255,0.7)';
@@ -68,11 +71,14 @@ export function renderBeyond(ctx: CanvasRenderingContext2D, color: string, camX:
       ctx.beginPath(); ctx.arc(wx, wy, tw, 0, Math.PI * 2); ctx.fill();
     }
   }
-  // soft world edge: thick fog wall
+  // soft world edge: thick fog wall (only when the edge is actually on screen)
+  const camD = Math.hypot(camX, camY), diag = Math.hypot(hw, hh);
+  if (camD + diag > worldR - 200) {
   ctx.lineWidth = 260; ctx.strokeStyle = 'rgba(200,210,255,0.10)';
   ctx.beginPath(); ctx.arc(0, 0, worldR + 60, 0, Math.PI * 2); ctx.stroke();
   ctx.lineWidth = 8; ctx.strokeStyle = hexA(color, 0.35 + 0.15 * Math.sin(now * 2)); ctx.setLineDash([30, 26]);
   ctx.beginPath(); ctx.arc(0, 0, worldR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
   ctx.restore();
 }
 
@@ -118,7 +124,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, kind: SceneKind, R: n
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
-  const g = ctx.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, d.bg[0]); g.addColorStop(0.55, d.bg[1]); g.addColorStop(1, d.bg[2]);
+  const bk = kind + ch; let g = bgCache.get(bk); if (!g) { g = ctx.createLinearGradient(0, 0, 0, ch); g.addColorStop(0, d.bg[0]); g.addColorStop(0.55, d.bg[1]); g.addColorStop(1, d.bg[2]); bgCache.set(bk, g); }
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
   if (kind === 'sky' && Math.sin(now * 1.7) > 0.985) { ctx.fillStyle = 'rgba(220,235,255,0.35)'; ctx.fillRect(0, 0, cw, ch); }
   ctx.restore();

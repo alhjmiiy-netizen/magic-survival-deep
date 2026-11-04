@@ -1,5 +1,5 @@
 /** Flat 2D cached sprites for the v4 enemy roster + elite aura + enemy shots + spirits. */
-import { makeCanvas, drawGlow, tintSilhouette } from './ArtKit';
+import { makeCanvas, drawGlow, tintSilhouette, Q } from './ArtKit';
 import { ENEMY_DEFS } from './enemies';
 
 const RES = 2;
@@ -62,15 +62,15 @@ export function renderNewEnemy(ctx: CanvasRenderingContext2D, e: EnemyLike, isFr
   const r = e.radius; const sc = e.elite ? 1.25 : 1;
   const hover = e.flying ? 26 + Math.sin(t * 4 + phase) * 5 : 0;
   ctx.save(); ctx.translate(e.x, e.y);
-  if (e.flying) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, r * 0.6, r * 0.8, r * 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
+  if (e.flying && Q.lod < 2) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, r * 0.6, r * 0.8, r * 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
   // charger telegraph
   if (e.type === 'lava_charger' && e.state === 1 && e.dx !== undefined) {
     ctx.strokeStyle = `rgba(255,90,20,${0.4 + 0.4 * Math.sin(t * 30)})`; ctx.lineWidth = r * 1.2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo((e.dx ?? 0) * 420, (e.dy ?? 0) * 420); ctx.stroke();
   }
   if (e.type === 'magma_bomber' && e.state === 1) { ctx.strokeStyle = 'rgba(255,120,40,0.85)'; ctx.setLineDash([8, 6]); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 110, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
   ctx.globalCompositeOperation = 'lighter';
-  if (e.elite) drawGlow(ctx, auraColor ?? '#facc15', 0, -hover, r * 3.4, 0.55 + 0.15 * Math.sin(t * 6));
-  drawGlow(ctx, def.glow, 0, -hover, r * 2.2, 0.3);
+  if (e.elite) drawGlow(ctx, auraColor ?? '#facc15', 0, -hover, r * (Q.lod >= 2 ? 2.4 : 3.4), 0.55 + 0.15 * Math.sin(t * 6));
+  if (Q.lod === 0) drawGlow(ctx, def.glow, 0, -hover, r * 2.2, 0.3);
   if (e.type === 'magma_bomber' && e.state === 1) drawGlow(ctx, '#fff', 0, 0, r * 2.5, 0.5 + 0.5 * Math.sin(t * 40));
   ctx.globalCompositeOperation = 'source-over';
   ctx.save(); ctx.translate(0, -hover - (e.flying ? 0 : r * 0.1));
@@ -106,7 +106,7 @@ export function renderShot(ctx: CanvasRenderingContext2D, s: ShotLike) {
   const l = Math.hypot(s.vx, s.vy) || 1;
   ctx.strokeStyle = s.color; ctx.globalAlpha = 0.6; ctx.lineWidth = s.r; ctx.beginPath(); ctx.moveTo(s.x, s.y - z); ctx.lineTo(s.x - (s.vx / l) * 26, s.y - z - (s.vy / l) * 26); ctx.stroke();
   ctx.globalAlpha = 1;
-  drawGlow(ctx, s.color, s.x, s.y - z, s.r * 3, 0.9);
+  drawGlow(ctx, s.color, s.x, s.y - z, s.r * (Q.lod >= 2 ? 2 : 3), 0.9);
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y - z, s.r * 0.5, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }

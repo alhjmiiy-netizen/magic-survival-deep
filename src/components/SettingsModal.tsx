@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Volume2, VolumeX, Eye, ShieldAlert, Sparkles } from 'lucide-react';
 import { sound } from '../audio/soundEngine';
+import { GFX, setGfx } from '../game/gfxSettings';
 
 interface SettingsModalProps {
   showDamageNumbers: boolean;
@@ -25,6 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [sfxOn, setSfxOn] = useState(sound.sfxOn);
   const [musicVol, setMusicVol] = useState(40);
   const [muted, setMuted] = useState(false);
+  const [reduced, setReduced] = useState(GFX.reducedEffects);
+  const [ibg, setIbg] = useState(GFX.interactiveBg);
 
   const handleSfxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -170,6 +173,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) => onToggleAutoAim(e.target.checked)}
                   className="w-4 h-4 accent-sky-500 cursor-pointer"
                 />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer" data-testid="opt-reduced">
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Eye className="w-4 h-4 text-emerald-400" />
+                  <span>Reduced Effects (fewer glows, lower render scale)</span>
+                </div>
+                <input type="checkbox" checked={reduced}
+                  onChange={(e) => { setReduced(e.target.checked); setGfx('reducedEffects', e.target.checked); }}
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer" />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer" data-testid="opt-ibg">
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Sparkles className="w-4 h-4 text-violet-400" />
+                  <span>Interactive Background (parallax, breakable scenery, ripples)</span>
+                </div>
+                <input type="checkbox" checked={ibg}
+                  onChange={(e) => { setIbg(e.target.checked); setGfx('interactiveBg', e.target.checked); }}
+                  className="w-4 h-4 accent-violet-500 cursor-pointer" />
               </label>
             </div>
           </div>

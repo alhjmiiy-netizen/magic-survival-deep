@@ -1,5 +1,5 @@
 import { ArenaRealm } from '../types/game';
-import { mulberry32, makeCanvas, drawGlow, glowStroke } from './ArtKit';
+import { Q, profMark, mulberry32, makeCanvas, drawGlow, glowStroke } from './ArtKit';
 
 export const ARENAS_LIST: ArenaRealm[] = [
   {
@@ -743,6 +743,7 @@ export class ArenaRenderer {
     ctx.drawImage(c.sky, px, py);
     ctx.restore();
 
+    profMark(ctx, '1ruins');
     // 1. far floating ruins (behind platform: upper half)
     this.drawRuins(ctx, c, radius, cameraX, cameraY, now, true);
     beforePlatform?.();
@@ -751,6 +752,7 @@ export class ArenaRenderer {
     const e = c.floorExtent;
     ctx.drawImage(c.floor, -e, -e, e * 2, e * 2);
 
+    profMark(ctx, '1runes');
     // 3. Animated rune circle (2 pre-rendered layers, rotated + pulsed)
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -766,8 +768,9 @@ export class ArenaRenderer {
     ctx.drawImage(c.runeInner, -rr, -rr, rr * 2, rr * 2);
     ctx.restore();
     ctx.globalAlpha = 1;
-    drawGlow(ctx, `rgba(${t.rune},1)`, 0, 0, 360, 0.1 + pulse * 0.08);
+    if (Q.lod < 2) drawGlow(ctx, `rgba(${t.rune},1)`, 0, 0, 360, 0.1 + pulse * 0.08);
 
+    profMark(ctx, '1obel');
     // 4. Crystal obelisks
     for (let i = 0; i < OBELISK_POSITIONS.length; i++) {
       const [ox, oy] = OBELISK_POSITIONS[i];
@@ -780,6 +783,7 @@ export class ArenaRenderer {
       drawGlow(ctx, `rgba(${t.rune},1)`, ox, oy + 10, 60, 0.5);
     }
 
+    profMark(ctx, '1embers');
     // 5. Ember motes rising near the rim
     ctx.fillStyle = `rgba(${t.ember},0.9)`;
     const em = c.embers;
@@ -794,6 +798,7 @@ export class ArenaRenderer {
     this.drawBolts(ctx, t, radius, now);
     ctx.restore();
 
+    profMark(ctx, '1ruins2');
     // 7. near floating ruins (lower half, still behind actors)
     this.drawRuins(ctx, c, radius, cameraX, cameraY, now, false);
   }

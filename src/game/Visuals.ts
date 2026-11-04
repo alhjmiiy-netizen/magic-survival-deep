@@ -5,7 +5,7 @@
  * add cheap additive glow sprites and a few animated strokes.
  */
 import { EnemyType, Projectile } from '../types/game';
-import { makeCanvas, drawGlow, tintSilhouette, glowStroke } from './ArtKit';
+import { Q, makeCanvas, drawGlow, tintSilhouette, glowStroke } from './ArtKit';
 import { renderFlightWings } from './EnemyArt';
 
 const RES = 2; // sprite supersampling
@@ -841,7 +841,7 @@ export class VisualRenderer {
     ctx.translate(x, y);
     ctx.globalCompositeOperation = 'lighter';
     const auraCol = type === 'void_knight' ? 'rgba(255,40,90,1)' : 'rgba(255,60,20,1)';
-    drawGlow(ctx, auraCol, 0, -r * 0.3, r * 2.4, 0.28 + 0.06 * Math.sin(t * 5 + phase));
+    if (Q.lod === 0) drawGlow(ctx, auraCol, 0, -r * 0.3, r * 2.4, 0.28 + 0.06 * Math.sin(t * 5 + phase));
     ctx.globalCompositeOperation = 'source-over';
     ctx.save();
     ctx.translate(0, isFrozen ? 0 : step * 1.2);
@@ -852,7 +852,7 @@ export class VisualRenderer {
     ctx.restore();
     // ember eyes glow
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, 'rgba(255,190,80,1)', facing * r * 0.1, -r * (type === 'hellhound' ? 0.4 : type === 'crawler' ? 0.7 : 1.2), r * 0.45, 0.8);
+    if (Q.lod < 2) drawGlow(ctx, 'rgba(255,190,80,1)', facing * r * 0.1, -r * (type === 'hellhound' ? 0.4 : type === 'crawler' ? 0.7 : 1.2), r * 0.45, 0.8);
     ctx.globalCompositeOperation = 'source-over';
     if (hp < maxHp) {
       const bw = r * 1.8;
@@ -887,7 +887,7 @@ export class VisualRenderer {
       ctx.strokeStyle = 'rgba(180,220,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x, p.y - z - 30); ctx.lineTo(p.x, p.y - z); ctx.stroke();
     }
     ctx.translate(p.x, p.y - z);
-    drawGlow(ctx, p.type === 'meteor' || p.type === 'fire_wave' ? 'rgba(255,120,30,1)' : p.type === 'spirit_bolt' ? 'rgba(45,212,191,1)' : 'rgba(80,180,255,1)', 0, 0, 26, 0.75);
+    if (Q.lod < 2) drawGlow(ctx, p.type === 'meteor' || p.type === 'fire_wave' ? 'rgba(255,120,30,1)' : p.type === 'spirit_bolt' ? 'rgba(45,212,191,1)' : 'rgba(80,180,255,1)', 0, 0, 26, 0.75);
     ctx.rotate(ang);
     ctx.drawImage(img, -70, -12, 96, 24);
     ctx.restore();

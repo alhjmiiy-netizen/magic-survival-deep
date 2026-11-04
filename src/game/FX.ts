@@ -1,5 +1,5 @@
 /** Lightweight visual-only spell effects (pooled, no gameplay impact). */
-import { drawGlow } from './ArtKit';
+import { drawGlow, Q } from './ArtKit';
 
 type Kind = 0 | 1 | 2 | 3 | 4; // ring, flash, bolt, star, fire
 interface Fx { kind: Kind; x: number; y: number; size: number; life: number; max: number; color: string; pts: Float32Array; }
@@ -10,6 +10,7 @@ for (let i = 0; i < MAX; i++) pool.push({ kind: 0, x: 0, y: 0, size: 0, life: 0,
 let last = 0;
 
 function spawn(kind: Kind, x: number, y: number, size: number, max: number, color: string): Fx | null {
+  if (Q.lod >= 1) { let n = 0; for (const f of pool) if (f.life > 0) n++; if (n >= (Q.lod >= 2 ? 30 : 55)) return null; }
   for (const f of pool) if (f.life <= 0) { f.kind = kind; f.x = x; f.y = y; f.size = size; f.life = max; f.max = max; f.color = color; return f; }
   return null;
 }
@@ -89,7 +90,7 @@ export const FX = {
         drawGlow(ctx, f.color, f.x, f.y, R * 0.6, k * 0.25);
       } else {
         drawGlow(ctx, f.color, f.x, f.y, f.size * (0.5 + p * 0.9), k);
-        drawGlow(ctx, 'rgba(255,230,150,1)', f.x, f.y, f.size * 0.4 * (1 - p * 0.5), k);
+        if (Q.lod < 2) drawGlow(ctx, 'rgba(255,230,150,1)', f.x, f.y, f.size * 0.4 * (1 - p * 0.5), k);
       }
     }
     ctx.restore();
