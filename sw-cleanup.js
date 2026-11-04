@@ -1,1 +1,1 @@
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>(k.startsWith('msdeep-')||k.startsWith('magic-survival-deep-'))&&k.indexOf('202611040042')<0).map(k=>caches.delete(k)))))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>(k.startsWith('msdeep-')||k.startsWith('magic-survival-deep-'))&&k.indexOf('202611040131')<0).map(k=>caches.delete(k)))))});
