@@ -90,12 +90,13 @@ export const HUD: React.FC<HUDProps> = ({
   const joyPointer = useRef<number | null>(null);
   const [joy, setJoy] = useState<{ x: number; y: number; dx: number; dy: number } | null>(null);
   const joyStart = useRef({ x: 0, y: 0 });
+  const tapT0 = useRef(0); const tapMoved = useRef(0);
   const onPadDown = (e: React.PointerEvent) => {
     if (joyPointer.current !== null) return;
     joyPointer.current = e.pointerId;
     try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* ignore */ }
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    joyStart.current = { x: e.clientX, y: e.clientY };
+    joyStart.current = { x: e.clientX, y: e.clientY }; tapT0.current = performance.now(); tapMoved.current = 0;
     setJoy({ x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
     onJoystickMove(0, 0);
   };
@@ -103,7 +104,7 @@ export const HUD: React.FC<HUDProps> = ({
     if (joyPointer.current !== e.pointerId) return;
     let dx = e.clientX - joyStart.current.x;
     let dy = e.clientY - joyStart.current.y;
-    const d = Math.hypot(dx, dy);
+    const d = Math.hypot(dx, dy); tapMoved.current = Math.max(tapMoved.current, d);
     if (d > JOY_R) { dx = (dx / d) * JOY_R; dy = (dy / d) * JOY_R; }
     setJoy({ x: joyStart.current.x, y: joyStart.current.y, dx, dy });
     const vx = dx / JOY_R, vy = dy / JOY_R;
@@ -114,6 +115,8 @@ export const HUD: React.FC<HUDProps> = ({
   const onPadUp = (e: React.PointerEvent) => {
     if (joyPointer.current !== e.pointerId) return;
     joyPointer.current = null;
+    // a quick, still tap (not a joystick drag) makes a background ripple; purely visual, input is untouched
+    if (performance.now() - tapT0.current < 260 && tapMoved.current < 12) window.dispatchEvent(new CustomEvent('msd:tap', { detail: { x: e.clientX, y: e.clientY } }));
     setJoy(null);
     onJoystickMove(0, 0);
   };

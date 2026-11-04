@@ -30,7 +30,7 @@ export function buildChain(ac: BaseAudioContext, vol = 0.8): Chain {
   return { input, master, out: master };
 }
 
-const THROTTLE: Record<string, number> = { kill: 45, pickup: 50, coin: 70, hurt: 120, arcane: 90, ice: 120, thunder: 110, fire: 140, spirit: 160, boss_hit: 160, click: 40, dash: 120 };
+const THROTTLE: Record<string, number> = { kill: 45, pickup: 50, coin: 70, hurt: 120, arcane: 90, ice: 120, thunder: 110, fire: 140, spirit: 160, boss_hit: 160, click: 40, dash: 120, chime: 90, shatter: 80 };
 const MAX_VOICES = 18;
 const STORE = 'msdeep_audio_v1';
 

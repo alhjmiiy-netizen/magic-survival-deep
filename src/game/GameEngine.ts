@@ -12,6 +12,7 @@ import {
 } from '../types/game';
 import { Q, profMark } from './ArtKit';
 import { GFX } from './gfxSettings';
+import { InteractiveBg, IBG } from './interactiveBg';
 import { BOSS_TEST_TIME_SECONDS, BOSS_TEST_KILLS, BOSS_TEST_ENEMIES_LEFT } from './constants';
 import { sound } from '../audio/soundEngine';
 import { VisualRenderer } from './Visuals';
@@ -80,6 +81,8 @@ export interface RunSummary {
   newBest?: boolean;
   bestText?: string;
 }
+
+const IBG_EL_COLOR: Record<string, string> = { fire: '#fb923c', ice: '#7dd3fc', lightning: '#fde047', arcane: '#c084fc', spirit: '#5eead4' };
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -188,6 +191,7 @@ export class GameEngine {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('mousemove', this.onMouseMove);
+    window.addEventListener('msd:tap', this.onTap as EventListener);
 
     this.seedInitialBattlefield();
   }
@@ -851,6 +855,7 @@ export class GameEngine {
     if (spell.isCombo) {
       this.castCombo(spell); this.addCata(CATA_GAIN.combo, 'combo');
     } else this.autoCastRaw(this.eff(spell));
+    if (this.ibg.enabled) { const el = spell.id === 'spirit' ? 'spirit' : ELEMENT_OF[spell.id]; this.ibg.magic(IBG_EL_COLOR[el as string] ?? '#a78bfa', this.playerX, this.playerY); }
     this.castLog.push({ id: spell.id, t: this.gameTimeSeconds });
     if (!spell.isCombo) this.noteCastForFusion(spell.id);
     if (this.castLog.length > 60) this.castLog.shift();
@@ -1313,9 +1318,18 @@ export class GameEngine {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('msd:tap', this.onTap as EventListener);
   }
 
   /** 0/1/2 render LOD: driven by crowd size + smoothed real frame interval (includes raster time), with hysteresis. */
+  /** v6 interactive background */
+  public ibg = new InteractiveBg(); private lastZoom = 1;
+  private onTap = (e: CustomEvent<{ x: number; y: number }>) => { const w = this.screenToWorld(e.detail.x, e.detail.y); this.ibg.tap(w.x, w.y); };
+  public screenToWorld(sx: number, sy: number) { const z = this.lastZoom; return { x: this.cameraX + (sx - window.innerWidth / 2) / z, y: this.cameraY + (sy - window.innerHeight / 2) / (z * 0.88) }; }
+  private ibgReward = (x: number, y: number, kind: 'xp' | 'gold') => { this.lootItems.push({ id: `ibg_${Math.random()}`, x, y, type: kind, value: kind === 'xp' ? IBG.REWARD_XP : IBG.REWARD_GOLD, color: kind === 'xp' ? '#818cf8' : '#eab308', bobOffset: Math.random() * 6.28 }); };
+  private ibgSfx = (n: string) => sound.play(n, 0.7);
+  private ibgSceneId() { const c = this.cata; return (c.phase === 'scene' || c.phase === 'collapse') && c.kind ? c.kind : this.region.id; }
+  public ibgState() { return { ...this.ibg.state(), gfx: GFX.interactiveBg }; }
   public lod = 0; public reducedEffects = false; private frameEma = 16; private lodHold = 0;
   public static LOD_ENEMIES = [95, 140];
   private updateLod(frameMs: number) {
@@ -1450,6 +1464,8 @@ export class GameEngine {
     }
 
     this.updateDeep(dt);
+    this.ibg.enabled = GFX.interactiveBg;
+    if (this.ibg.enabled) { this.ibg.setScene(this.ibgSceneId()); this.ibg.update(dt, this.gameTimeSeconds, this.playerX, this.playerY, this.worldR, this.ibgReward, this.ibgSfx); }
     if (this.stats.hp <= 0) { this.handlePlayerDeath(); if (this.stats.hp <= 0) return; }
 
     // Spawn regular hordes (region roster / endless scaling)
@@ -1927,6 +1943,7 @@ export class GameEngine {
     if (!fx) { enemy.hp -= finalDamage; this.totalDamageDealt += finalDamage; return; }
 
     enemy.hp -= finalDamage;
+    if (this.ibg.enabled) this.ibg.hitAt(enemy.x, enemy.y, 50, this.gameTimeSeconds, this.ibgReward, this.ibgSfx);
     if (enemy.isBoss) sound.play('boss_hit', isCrit ? 1.3 : 0.9);
     FX.flash(enemy.x, enemy.y - enemy.radius * 0.5, enemy.radius * (isCrit ? 2.4 : 1.6), color);
     enemy.hitFlash = performance.now() + 100;
@@ -2179,7 +2196,7 @@ export class GameEngine {
     // Enhanced 3D Isometric Viewport & Camera Tilt (Expansive POV)
     const rs = this.renderScale, lw = w / rs, lh = h / rs;
     const zoom = Math.min(1.0, Math.max(0.78, lw / 1500)) * this.zoomK;
-    this.viewHalfW = lw / 2 / zoom; this.viewHalfH = lh / (window.devicePixelRatio || 1) / 2 / (zoom * 0.88);
+    this.lastZoom = zoom; this.viewHalfW = lw / 2 / zoom; this.viewHalfH = lh / (window.devicePixelRatio || 1) / 2 / (zoom * 0.88);
     ctx.translate(w / 2 + shakeX * rs, h / 2 + shakeY * rs);
     ctx.scale(zoom * rs, zoom * 0.88 * rs); // 3/4 Isometric Depth
     ctx.translate(-this.cameraX, -this.cameraY);
@@ -2189,7 +2206,9 @@ export class GameEngine {
     P('1');
     // 1. Render Active Realm Arena Base
     this.renderBackdrop(ctx);
+    this.ibg.renderFar(ctx, this.cameraX, this.cameraY, this.flyH, performance.now() / 1000);
     this.renderDeepGround(ctx);
+    this.ibg.renderProps(ctx, performance.now() / 1000, (x, y, m) => this.onScreen(x, y, m));
 
     P('2');
     // 2. Obelisk Blue Laser Beams

@@ -177,7 +177,17 @@ export const SFX: Record<string, (ac: Ctx, out: AudioNode, t: number, s: number)
     for (let i = 0; i < 8; i++) noise(ac, o, t, { delay: 0.3 + Math.random() * 2, dur: R(0.1, 0.3), type: 'bandpass', f0: R(300, 1200), q: 2, gain: 0.4 * s, curve: 3 });
     rumble(ac, o, t, 1.4 * s, 0.1, 4.5);
   },
+  /** interactive scenery: soft crystalline touch chime */
+  chime(ac, o, t, s) {
+    for (const [f, d] of [[1318, 0], [1975, 0.05], [2637, 0.1]] as const) tone(ac, o, t, { delay: d, dur: 0.7, type: 'sine', f0: f * R(0.98, 1.02), gain: 0.16 * s, curve: 4 });
+  },
+  /** interactive scenery: prop shattered by a spell */
+  shatter(ac, o, t, s) {
+    noise(ac, o, t, { dur: 0.25, type: 'highpass', f0: 3000, gain: 0.35 * s, curve: 2.5 });
+    for (let i = 0; i < 5; i++) tone(ac, o, t, { delay: i * 0.03, dur: 0.3, type: 'triangle', f0: R(900, 2400), gain: 0.1 * s, curve: 3 });
+    tone(ac, o, t, { dur: 0.25, f0: 160, f1: 60, gain: 0.3 * s, curve: 3 });
+  },
 };
 export const SFX_NAMES = Object.keys(SFX);
 /** Nominal tail length per sound (for offline render + voice accounting). */
-export const SFX_LEN: Record<string, number> = { thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5 };
+export const SFX_LEN: Record<string, number> = { chime: 0.9, shatter: 0.5, thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5 };

@@ -7,6 +7,7 @@ import { ARTIFACTS, ELEMENT_OF, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVE
 import { ENEMY_DEFS, REGION_PACKS } from './enemies';
 import { SCENES } from './cataclysm';
 import * as T from './tuning';
+import { IBG, IBG_SETS } from './interactiveBg';
 import { INITIAL_RESEARCH_ATTRIBUTES } from '../components/UpgradeModal';
 
 export type CodexTab = 'guide' | 'magics' | 'fusions' | 'spirits' | 'artifacts' | 'bestiary' | 'world' | 'research';
@@ -99,6 +100,13 @@ export function buildCodex(): CodexEntry[] {
     `${s.sub}.`, `Lasts ${T.CATA_SCENE} s. Hazard: ${s.hazard.name.toLowerCase()} every ${s.hazard.every} s (${s.hazard.dmg} dmg).`,
     `Reached by: ${s.kind === 'sky' ? 'soaring' : s.kind === 'rift' ? 'hovering' : 'standing on the ground'} when the meter fills.`,
     `Demons: ${s.roster.map(([t]) => ENEMY_DEFS[t]?.name ?? t).join(', ')}.`,
+  ] });
+  add({ id: 'world:ibg', tab: 'world', name: 'Living Background', tag: 'Interactive', icon: 'glyph:pass_magnet', lines: [
+    'Far star-motes drift against your movement (parallax) and spread out as you fly higher.',
+    `Walk into scenery to ring it (+${IBG.REWARD_XP} XP); hit it with spells to shatter it (+${IBG.REWARD_GOLD} gold). Props regrow after ${IBG.REGROW} s.`,
+    `Rewards are capped at ${IBG.REWARD_CAP_PER_MIN} per minute. Every cast sends a tinted wave through the background.`,
+    'A quick tap on the field makes a ripple; dragging still moves the joystick. Toggle in Settings → Interactive Background.',
+    `Sets: ${Object.values(IBG_SETS).map((b) => `${b.name} (${b.props.map((p) => p.name).join(', ')})`).join('; ')}.`,
   ] });
   // ---------- Research ----------
   for (const a of INITIAL_RESEARCH_ATTRIBUTES) add({ id: 'research:' + a.id, tab: 'research', name: a.name, tag: 'Altar', icon: 'glyph:pass_power', lines: [a.description, `+${a.bonusPerRank}${a.bonusUnit} per rank, up to ${a.maxRank} ranks.`], stats: [['Per rank', `+${a.bonusPerRank}${a.bonusUnit}`], ['Max', `${a.maxRank}`]] });
