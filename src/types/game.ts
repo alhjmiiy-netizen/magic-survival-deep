@@ -10,6 +10,7 @@ export interface Enemy {
   vx: number;
   vy: number;
   radius: number;
+  beaconUntil?: number;
   hp: number;
   maxHp: number;
   speed: number;

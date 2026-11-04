@@ -24,6 +24,7 @@ import { HEROES_LIST } from './characters';
 import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
 import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
 import { ENEMY_DEFS, NEW_ENEMY_TYPES, REGION_PACKS, ELITE_AURA } from './enemies';
+import { SPIRIT, spiritRole, ascension, spiritBuffs, spiritUnlockText, ROLE_COLOR, SpiritRole } from './spiritRoles';
 import { renderNewEnemy, renderEliteAura, renderShot, renderSpirit, hasNewArt } from './EnemyArt';
 import { SCENES, SceneKind, renderBeyond, renderScene, makeCracks, renderCracks } from './cataclysm';
 import { RARITY_WEIGHT } from './deep';
@@ -32,7 +33,7 @@ import { ARTIFACTS, ELEMENT_OF, ENDLESS_BOSS_EVERY, EVOLUTIONS, REGIONS, SYNERGI
 export type GameMode = 'regions' | 'endless';
 interface Zone { x: number; y: number; r: number; t: number; max: number; dps: number; color: string; tick: number; steam?: boolean }
 interface EShot { x: number; y: number; vx: number; vy: number; dmg: number; color: string; ground: boolean; slow?: boolean; life: number; r: number; src: string }
-interface SpiritUnit { x: number; y: number; z: number; dash: number; tx: number; ty: number; target: Enemy | null; dmg: number }
+interface SpiritUnit { x: number; y: number; z: number; dash: number; tx: number; ty: number; target: Enemy | null; dmg: number; role?: SpiritRole; hcd?: number }
 interface Label { text: string; x: number; y: number; color: string; life: number; max: number; big: boolean }
 interface Beam { x1: number; y1: number; x2: number; y2: number; color: string; life: number }
 import { FLIGHT_LIFT, HOVER_SPEED, SOAR_SPEED, HOVER_DMG, SOAR_DMG, SOAR_H, WORLD_MUL, CATA_CD, CATA_SCENE, CHARGE_MAX, FUSION_WINDOW, FUSION_CD, FUSIONS, CATA_GAIN, ELITE_EVERY, ELITE_RANDOM_CHANCE, ELITE_HP, ELITE_DMG, PACK_EVERY_ENDLESS, PACK_EVERY_REGION } from './tuning';
@@ -385,7 +386,7 @@ export class GameEngine {
     return { x, y };
   }
   /** Central player damage (iron skin). */
-  private hurt(d: number) { this.stats.hp -= d * (1 - 0.1 * this.art('iron_skin')); }
+  private hurt(d: number) { this.stats.hp -= d * (1 - 0.1 * this.art('iron_skin')) * (1 - spiritBuffs(this.spirits.length).dr); }
   // ---- v5: cataclysm ----
   public cata = { meter: 0, phase: 'idle' as 'idle' | 'crack' | 'collapse' | 'scene' | 'reform', t: 0, kind: null as SceneKind | null, forced: null as SceneKind | null, left: 0, max: 0, cdUntil: 0, pending: false, cracks: [] as number[][], log: [] as string[], recent: [] as { k: string; t: number }[], gains: [] as string[], blocked: '' };
   public addCata(n: number, why: string) {
@@ -546,7 +547,8 @@ export class GameEngine {
     if (sp.id === 'frost_nova') area *= 1 + 0.2 * this.art('frost_ring');
     if (sp.id === 'cataclysm') dmg *= 1 + 0.15 * this.art('ember_seed');
     if (sp.id === 'arcane_missiles') count += this.art('whetstone');
-    if (sp.id === 'spirit') dmg *= this.art('twin_soul') ? 1.3 : 1;
+    if (sp.id === 'spirit') dmg *= (this.art('twin_soul') ? 1.3 : 1) * SPIRIT.ASC_DMG[ascension(this.spirits.length)];
+    dmg *= spiritBuffs(this.spirits.length).dmg;
     return { ...sp, damage: Math.round(sp.damage * dmg), area: Math.round(sp.area * area), count: sp.count + count };
   }
 
@@ -812,13 +814,13 @@ export class GameEngine {
       for (const id of BASE_SPELL_IDS) {
         if (owned.some((s) => s.id === id)) continue;
         const b = BASE_SPELLS[id];
-        pool.push({ id: `new:${id}`, kind: 'new', title: `${b.name} Lv 1`, desc: spellEffectText(makeSpell(id, 1)), icon: b.icon, color: b.color, level: 1 });
+        pool.push({ id: `new:${id}`, kind: 'new', title: `${b.name} Lv 1`, desc: spellEffectText(makeSpell(id, 1)) + (id === 'spirit' ? ' · ' + spiritUnlockText(this.spiritTotal(1)) : ''), icon: b.icon, color: b.color, level: 1 });
       }
     }
     for (const sp of owned) {
       if (sp.level >= sp.maxLevel) continue;
       const nxt = applySpellLevel({ ...sp, level: sp.level + 1 });
-      pool.push({ id: `lvl:${sp.id}`, kind: 'level', title: `${sp.name} Lv ${sp.level + 1}`, desc: `${spellEffectText(nxt)} (was ${sp.count}), +25% damage`, icon: sp.icon, color: sp.color, level: sp.level + 1 });
+      pool.push({ id: `lvl:${sp.id}`, kind: 'level', title: `${sp.name} Lv ${sp.level + 1}`, desc: `${spellEffectText(nxt)} (was ${sp.count}), +25% damage${sp.id === 'spirit' ? ' · ' + spiritUnlockText(this.spiritTotal(nxt.count)) : ''}`, icon: sp.icon, color: sp.color, level: sp.level + 1 });
     }
     if (owned.length > 0 && this.fastCasting < 6) {
       pool.push({ id: 'fast_cast', kind: 'fast', title: `Fast Casting ${this.fastCasting + 1}`, desc: '-25% cast gap, -10% cooldowns (stacks)', icon: 'Timer', color: '#facc15', level: this.fastCasting + 1 });
@@ -1058,7 +1060,7 @@ export class GameEngine {
   /** Behaviour-driven movement for non-boss enemies. */
   private moveEnemy(e: Enemy, dx: number, dy: number, dist: number, dt: number, slowK: number) {
     const def = ENEMY_DEFS[e.type] ?? ENEMY_DEFS.crawler;
-    const sp = e.speed * 60 * dt * slowK;
+    const sp = e.speed * 60 * dt * slowK * ((e.beaconUntil ?? 0) > this.gameTimeSeconds ? 1 - SPIRIT.BEACON_SLOW : 1);
     const ux = dx / dist, uy = dy / dist;
     let mx = ux, my = uy;
     e.ai = (e.ai ?? 0) - dt;
@@ -1271,35 +1273,105 @@ export class GameEngine {
   }
 
   // ---------- spirits ----------
+  private spiritTotal(spellCount: number) { return Math.min(18, Math.min(12, spellCount) + 2 * this.art('firefly') + (this.art('twin_soul') ? 4 : 0)); }
+  public spiritLost: number[] = []; // regrow times of spirits sacrificed by the lethal-hit save
+  public spiritSave = { readyAt: 0, saves: 0 };
+  public surge = { readyAt: 0, uses: 0, until: 0 };
+  public spiritStats = { blocked: 0, healed: 0, magnet: 0, hunts: 0, beaconTicks: 0, surgeHits: 0, ascension: 0 };
+  private beaconTick = 0;
   private syncSpirits() {
     const sp = this.spells.find((s) => s.id === 'spirit');
-    const n = Math.min(18, (sp ? Math.min(12, sp.count) : 0) + 2 * this.art('firefly') + (this.art('twin_soul') ? 4 : 0));
+    const t = this.gameTimeSeconds; this.spiritLost = this.spiritLost.filter((r) => r > t);
+    const n = Math.max(0, this.spiritTotal(sp ? sp.count : 0) - this.spiritLost.length);
     while (this.spirits.length < n) { const a = Math.random() * 6.28; this.spirits.push({ x: this.playerX + Math.cos(a) * 60, y: this.playerY + Math.sin(a) * 60, z: 0, dash: 0, tx: 0, ty: 0, target: null, dmg: 0 }); FX.flash(this.playerX, this.playerY, 40, '#5eead4'); }
     if (this.spirits.length > n) this.spirits.length = n;
+    const asc = ascension(n);
+    if (asc > this.spiritStats.ascension) { this.spiritStats.ascension = asc; this.notice(asc === 2 ? 'SPIRIT ASCENSION II — the swarm burns gold' : 'SPIRIT ASCENSION I — your spirits awaken', '#fde68a', 'spirit'); FX.star(this.playerX, this.playerY, 160); sound.play('levelup', 1.2); }
+    for (let i = 0; i < n; i++) this.spirits[i].role = spiritRole(i, n);
+  }
+  public spiritState() {
+    const n = this.spirits.length; const t = this.gameTimeSeconds; const asc = ascension(n);
+    const roles: Record<string, number> = { guardian: 0, hunter: 0, mender: 0, beacon: 0 };
+    for (const s of this.spirits) roles[s.role ?? 'guardian']++;
+    const cdMax = SPIRIT.SURGE_CD * SPIRIT.ASC_SURGE_CD[asc];
+    return { n, roles, asc, buffs: spiritBuffs(n), surgeCd: Math.max(0, this.surge.readyAt - t), surgeMax: cdMax, saveCd: Math.max(0, this.spiritSave.readyAt - t), saveReady: n >= SPIRIT.SAVE_MIN && t >= this.spiritSave.readyAt, lost: this.spiritLost.length, stats: { ...this.spiritStats, saves: this.spiritSave.saves, surges: this.surge.uses }, formation: this.airborne ? 'wing' : 'orbit' };
+  }
+  /** HUD button: every spirit dashes at a demon with boosted damage; guardians blast away nearby shots. */
+  public spiritSurge() {
+    const n = this.spirits.length; const t = this.gameTimeSeconds;
+    if (!n || t < this.surge.readyAt || this.isPaused) return false;
+    const asc = ascension(n); this.surge.readyAt = t + SPIRIT.SURGE_CD * SPIRIT.ASC_SURGE_CD[asc]; this.surge.uses++; this.surge.until = t + 0.8;
+    const base = this.eff(this.spells.find((x) => x.id === 'spirit') ?? makeSpell('spirit', 1));
+    const dmg = Math.round(base.damage * SPIRIT.SURGE_MUL * (this.stats.spellPower / 100));
+    const used = new Set<Enemy>();
+    for (const s of this.spirits) { const tg = this.enemies.filter((e) => !used.has(e) && Math.hypot(e.x - s.x, e.y - s.y) < 520).sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y))[0] ?? this.findNearestEnemy(s.x, s.y, 520); if (tg) { used.add(tg); s.target = tg; s.dash = 0.7; s.dmg = dmg; this.spiritStats.surgeHits++; } }
+    const before = this.enemyShots.length; this.enemyShots = this.enemyShots.filter((b) => Math.hypot(b.x - this.playerX, b.y - this.playerY) > SPIRIT.SURGE_CLEAR_R); this.spiritStats.blocked += before - this.enemyShots.length;
+    FX.ring(this.playerX, this.playerY, SPIRIT.SURGE_CLEAR_R, 'rgba(94,234,212,1)', 0.6); FX.star(this.playerX, this.playerY, 120);
+    this.label('SPIRIT SURGE!', this.playerX, this.playerY - 110, '#5eead4', true); sound.play('spirit', 1.8); sound.play('wings', 1);
+    return true;
+  }
+  /** Lethal-hit save: a spirit dies instead of you (needs SAVE_MIN spirits, SAVE_CD cooldown). */
+  private trySpiritSave(): boolean {
+    const t = this.gameTimeSeconds;
+    if (this.spirits.length < SPIRIT.SAVE_MIN || t < this.spiritSave.readyAt) return false;
+    this.spiritSave.readyAt = t + SPIRIT.SAVE_CD; this.spiritSave.saves++;
+    this.spiritLost.push(t + SPIRIT.SAVE_REGROW); const s = this.spirits.pop()!;
+    this.stats.hp = Math.max(1, Math.round(this.stats.maxHp * SPIRIT.SAVE_HP));
+    this.enemyShots = this.enemyShots.filter((b) => Math.hypot(b.x - this.playerX, b.y - this.playerY) > 300);
+    for (const e of this.enemies) { const dx = e.x - this.playerX, dy = e.y - this.playerY, d = Math.hypot(dx, dy) || 1; if (d < 220) { e.x += (dx / d) * (220 - d); e.y += (dy / d) * (220 - d); } }
+    FX.flash(s.x, s.y, 80, '#ffffff'); FX.ring(this.playerX, this.playerY, 220, 'rgba(153,246,228,1)', 0.7);
+    this.label('A SPIRIT SAVED YOU', this.playerX, this.playerY - 120, '#99f6e4', true); this.notice(`A spirit sacrificed itself — it returns in ${SPIRIT.SAVE_REGROW}s`, '#99f6e4', 'spirit'); sound.play('spirit', 2);
+    this.syncSpirits(); return true;
   }
   private updateSpirits(dt: number) {
     this.syncSpirits();
     const n = this.spirits.length; if (!n) return;
     if (!this.spells.some((x) => x.id === 'spirit')) { this.spiritAuto -= dt; if (this.spiritAuto <= 0) { this.spiritAuto = 1.6; this.castSpirits(makeSpell('spirit', 1)); } }
-    const R = 58 + n * 4; const t = this.gameTimeSeconds;
+    const t = this.gameTimeSeconds; const asc = ascension(n); const fly = this.airborne;
+    const guards = this.spirits.filter((s) => s.role === 'guardian'); const hunters = this.spirits.filter((s) => s.role === 'hunter');
+    const base = this.eff(this.spells.find((x) => x.id === 'spirit') ?? makeSpell('spirit', 1)); const sdmg = base.damage * (this.stats.spellPower / 100);
+    const pz = this.casterZ() + 10;
+    // facing for the flying wing formation
+    const fa = this.playerAngle;
     for (let i = 0; i < n; i++) {
       const s = this.spirits[i];
       if (s.dash > 0 && s.target && s.target.hp > 0) {
         s.dash -= dt;
         const dx = s.target.x - s.x, dy = s.target.y - s.y, d = Math.hypot(dx, dy) || 1;
-        const st = Math.min(d, 900 * dt); s.x += (dx / d) * st; s.y += (dy / d) * st; s.z += (0 - s.z) * Math.min(1, dt * 10);
+        const st = Math.min(d, (t < this.surge.until ? 1400 : 900) * dt); s.x += (dx / d) * st; s.y += (dy / d) * st; s.z += (0 - s.z) * Math.min(1, dt * 10);
         if (d < s.target.radius + 10) {
-          this.damageEnemy(s.target, Math.round(s.dmg || 40), '#5eead4', 'arcane');
+          this.damageEnemy(s.target, Math.round(s.dmg || 40), asc === 2 ? '#fde68a' : '#5eead4', 'arcane');
           FX.flash(s.target.x, s.target.y, 26, '#99f6e4'); this.spiritLog.strikes++; s.dash = 0; s.target = null;
         }
         continue;
       }
       s.dash = 0;
-      const a = t * 1.6 + (i / n) * Math.PI * 2;
-      const ox = this.playerX + Math.cos(a) * R, oy = this.playerY + Math.sin(a) * R * 0.8;
-      const lag = Math.min(1, dt * 5);
+      let ox: number, oy: number;
+      if (fly) { // wing formation: V behind the caster, mirrored left/right
+        const k = Math.floor(i / 2) + 1; const side = i % 2 ? 1 : -1;
+        const back = 34 + k * 26, spread = 30 + k * 30;
+        ox = this.playerX - Math.cos(fa) * back + Math.cos(fa + Math.PI / 2) * spread * side;
+        oy = this.playerY - Math.sin(fa) * back + Math.sin(fa + Math.PI / 2) * spread * side;
+      } else if (s.role === 'guardian') { const gi = guards.indexOf(s); const a = t * 2.4 + (gi / Math.max(1, guards.length)) * Math.PI * 2; ox = this.playerX + Math.cos(a) * SPIRIT.GUARD_R; oy = this.playerY + Math.sin(a) * SPIRIT.GUARD_R * 0.8; }
+      else if (s.role === 'hunter') { const hi = hunters.indexOf(s); const a = -t * 1.2 + (hi / Math.max(1, hunters.length)) * Math.PI * 2; ox = this.playerX + Math.cos(a) * SPIRIT.HUNT_R; oy = this.playerY + Math.sin(a) * SPIRIT.HUNT_R * 0.8; }
+      else if (s.role === 'mender') { ox = this.playerX; oy = this.playerY - 44; }
+      else { ox = this.playerX + Math.cos(t) * 12; oy = this.playerY + 30; }
+      const lag = Math.min(1, dt * (fly ? 7 : 5));
       s.x += (ox - s.x) * lag; s.y += (oy - s.y) * lag;
-      s.z += (this.casterZ() + 10 - s.z) * lag;
+      s.z += (pz + (fly ? 6 : 0) - s.z) * lag;
+      // role behaviour
+      if (s.role === 'hunter') { s.hcd = (s.hcd ?? Math.random()) - dt; if (s.hcd <= 0) { s.hcd = SPIRIT.HUNT_EVERY; const tg = this.findNearestEnemy(s.x, s.y, SPIRIT.HUNT_RANGE); if (tg) { s.target = tg; s.dash = 0.6; s.dmg = Math.round(sdmg); this.spiritStats.hunts++; } } }
+      else if (s.role === 'guardian') {
+        for (let j = this.enemyShots.length - 1; j >= 0; j--) { const b = this.enemyShots[j]; if (Math.hypot(b.x - s.x, b.y - s.y) < SPIRIT.BLOCK_R + b.r) { FX.flash(b.x, b.y, 24, '#93c5fd'); this.enemyShots.splice(j, 1); this.spiritStats.blocked++; } }
+      } else if (s.role === 'mender') {
+        if (this.stats.hp < this.stats.maxHp) { const h = Math.min(this.stats.maxHp - this.stats.hp, this.stats.maxHp * SPIRIT.MENDER_HPS * dt * (1 + 0.5 * asc)); this.stats.hp += h; this.spiritStats.healed += h; }
+        for (const it of this.lootItems) if (!it.magnetized && Math.hypot(it.x - this.playerX, it.y - this.playerY) < SPIRIT.MENDER_MAGNET * (1 + 0.25 * asc)) { it.magnetized = true; this.spiritStats.magnet++; }
+      }
+    }
+    if (n >= SPIRIT.BEACON_AT) {
+      this.beaconTick -= dt; const R = SPIRIT.BEACON_R * (1 + 0.25 * asc);
+      for (const e of this.enemies) { const dx = e.x - this.playerX, dy = e.y - this.playerY; if (dx * dx + dy * dy < R * R) { e.beaconUntil = t + 0.25; } }
+      if (this.beaconTick <= 0) { this.beaconTick = 0.5; this.spiritStats.beaconTicks++; for (const e of this.enemies) if ((e.beaconUntil ?? 0) > t) this.damageEnemy(e, Math.max(1, Math.round(sdmg * SPIRIT.BEACON_DPS * 0.5)), '#facc15', 'arcane'); }
     }
   }
   private castSpirits(spell: Spell) {
@@ -2230,6 +2302,7 @@ export class GameEngine {
   }
 
   private handlePlayerDeath() {
+    if (this.trySpiritSave()) return;
     this.resetFlight(); this.charging = null;
     const lives = this.art('phoenix') + this.art('second_heart');
     if (this.revives < lives) {
@@ -2307,7 +2380,10 @@ export class GameEngine {
     // 6. Player Archmage
     for (const b of this.enemyShots) if (this.onScreen(b.x, b.y, 40)) renderShot(ctx, b);
     VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt, this.currentHero.id, this.flyH);
-    for (let i = 0; i < this.spirits.length; i++) { const sp = this.spirits[i]; renderSpirit(ctx, sp.x, sp.y, sp.z, this.gameTimeSeconds * 3 + i, sp.dash > 0); }
+    if (this.spirits.length >= SPIRIT.BEACON_AT) { const R = SPIRIT.BEACON_R * (1 + 0.25 * ascension(this.spirits.length)); ctx.save(); ctx.globalAlpha = 0.16 + 0.05 * Math.sin(this.gameTimeSeconds * 3); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.ellipse(this.playerX, this.playerY, R, R * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+    { const asc = ascension(this.spirits.length); for (let i = 0; i < this.spirits.length; i++) { const sp = this.spirits[i]; renderSpirit(ctx, sp.x, sp.y, sp.z, this.gameTimeSeconds * 3 + i, sp.dash > 0);
+      const rc = ROLE_COLOR[sp.role ?? 'guardian']; ctx.save(); ctx.globalAlpha = 0.85; ctx.strokeStyle = asc === 2 ? '#fde68a' : rc; ctx.lineWidth = asc ? 3 : 2; ctx.beginPath(); ctx.arc(sp.x, sp.y - sp.z, 15 + asc * 3, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = rc; ctx.beginPath(); ctx.arc(sp.x, sp.y - sp.z - 20, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } }
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     for (const b of this.beams) { const k = b.life / 0.22; ctx.strokeStyle = b.color; ctx.globalAlpha = k; ctx.lineWidth = 2 + 8 * k; ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     ctx.restore();

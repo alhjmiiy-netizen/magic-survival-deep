@@ -244,13 +244,14 @@ export const HUD: React.FC<HUDProps> = ({
   // v4 flight + charge state, polled at ~15Hz
   const [fl8, setFl8] = useState({ flying: false, alt: 'ground', h: 0 });
   const [cata, setCata] = useState<any>(null);
+  const [spS, setSpS] = useState<any>(null);
   const [charge, setCharge] = useState<{ id: string; k: number } | null>(null);
   const [spiritN, setSpiritN] = useState(0);
   const [hint, setHint] = useState(true);
   useEffect(() => { const t = setTimeout(() => setHint(false), 7000); return () => clearTimeout(t); }, []);
   useEffect(() => {
     if (!getEngine) return;
-    const id = setInterval(() => { const e = getEngine(); if (!e) return; const f = e.flightState(); setFl8({ flying: f.flying, alt: f.alt, h: f.h }); setCata(e.cataclysmState()); setCharge(e.chargeProgress()); setSpiritN(e.spirits.length); }, 66);
+    const id = setInterval(() => { const e = getEngine(); if (!e) return; const f = e.flightState(); setFl8({ flying: f.flying, alt: f.alt, h: f.h }); setCata(e.cataclysmState()); setCharge(e.chargeProgress()); setSpiritN(e.spirits.length); setSpS(e.spiritState()); }, 66);
     return () => clearInterval(id);
   }, [getEngine]);
   const chargeDown = useRef<{ id: string; t: number } | null>(null);
@@ -578,6 +579,18 @@ export const HUD: React.FC<HUDProps> = ({
         </svg>
         <span className="text-[9px] font-black tracking-wider">{fl8.flying ? (fl8.alt === 'soar' ? 'SOAR' : 'LAND') : 'FLY'}</span>
       </button>
+      {spS && spS.n > 0 && (() => { const k = spS.surgeMax ? spS.surgeCd / spS.surgeMax : 0; const C = 2 * Math.PI * 25; const gold = spS.asc === 2;
+        return (
+          <button data-hud="surge" data-ready={k <= 0 ? '1' : '0'} data-asc={spS.asc} aria-label="Spirit Surge"
+            onPointerDown={(e) => { e.stopPropagation(); getEngine?.()?.spiritSurge(); }}
+            className="absolute rounded-full flex flex-col items-center justify-center pointer-events-auto cursor-pointer bg-slate-900/85 text-teal-100"
+            style={{ ...(portrait ? { bottom: 44, right: 188, width: 60, height: 60 } : { bottom: 14, right: 164, width: 58, height: 58 }), boxShadow: k <= 0 ? `0 0 18px ${gold ? '#fde68a' : '#5eead4'}` : undefined }}>
+            <svg className="absolute inset-0" viewBox="0 0 58 58" width="100%" height="100%"><circle cx="29" cy="29" r="25" fill="none" stroke="#134e4a" strokeWidth="4" /><circle data-ring={k.toFixed(2)} cx="29" cy="29" r="25" fill="none" stroke={gold ? '#fde68a' : '#5eead4'} strokeWidth="4" strokeDasharray={`${C * (1 - k)} ${C}`} transform="rotate(-90 29 29)" strokeLinecap="round" /></svg>
+            <svg viewBox="-12 -12 24 24" width="22" height="22"><path d="M0,-10 C7,-10 8,0 5,4 C4,7 6,10 0,9 C-6,10 -4,7 -5,4 C-8,0 -7,-10 0,-10 Z" fill={gold ? '#fde68a' : '#5eead4'} /><circle cx="-2.5" cy="-2" r="1.5" fill="#0f172a" /><circle cx="2.5" cy="-2" r="1.5" fill="#0f172a" /></svg>
+            <span className="text-[8px] font-black tracking-wider relative">{k > 0 ? `${Math.ceil(spS.surgeCd)}s` : 'SURGE'}</span>
+            <span data-hud="spirit-count" className="absolute -top-1 -right-1 text-[9px] font-black rounded-full px-1 bg-teal-700 text-white">{spS.n}{spS.asc ? ['', ' I', ' II'][spS.asc] : ''}</span>
+          </button>
+        ); })()}
       {hint && (
         <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { top: 150, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : { bottom: 100, right: 80 }}>
           🪽 Tap the wings to fly freely

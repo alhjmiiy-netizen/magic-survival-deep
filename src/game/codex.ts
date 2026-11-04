@@ -2,6 +2,7 @@
  * Encyclopedia content generated from the game's data constants (no hand-written numbers).
  * Every number shown in the Encyclopedia comes from here; qa/codex.cjs checks the text against the constants.
  */
+import { SPIRIT } from './spiritRoles';
 import { BASE_SPELLS, BASE_SPELL_IDS, MAX_SPIRITS, PASSIVES } from './spells';
 import { ARTIFACTS, ELEMENT_OF, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVEL, ENDLESS_BOSS_EVERY, ENDLESS_CAP, RARITY_WEIGHT, evoUnlockLevel } from './deep';
 import { ENEMY_DEFS, REGION_PACKS } from './enemies';
@@ -83,6 +84,19 @@ export function buildCodex(): CodexEntry[] {
       `Cast ${BASE_SPELLS[spellOfEl[a]].name} and ${BASE_SPELLS[spellOfEl[b]].name} within ${T.FUSION_WINDOW} s.`, ...(f as { desc?: string }).desc ? [(f as { desc?: string }).desc!] : [] ] });
   }
   for (const s of SYNERGIES) add({ id: 'syn:' + s.id, tab: 'fusions', name: s.name, tag: `Synergy ${ELEMENT_NAME[s.a]}+${ELEMENT_NAME[s.b]}`, icon: 'glyph:' + spellOfEl[s.a], lines: [`${s.desc}.`, `Active while both magics are Lv${SYNERGY_MIN_LEVEL}+.`] });
+  // ---------- Spirits ----------
+  { const S = SPIRIT; const sp = (id: string, name: string, tag: string, lines: string[]) => add({ id: 'spirit:' + id, tab: 'spirits', name, tag, icon: 'glyph:spirit', lines });
+    sp('roles', 'Spirit Roles', 'Rules', [`Each Spirit pick adds a spirit (max ${MAX_SPIRITS} from the magic; artifacts add more). Spirits take roles by order: Guardian, Hunter, Guardian, Hunter…`, `At ${S.MENDER_AT}+ spirits the first becomes a Mender; at ${S.BEACON_AT}+ the second becomes a Beacon.`]);
+    sp('guardian', 'Guardian', 'Role', [`Orbits close (${S.GUARD_R}px) and destroys enemy projectiles that touch it (${S.BLOCK_R}px).`]);
+    sp('hunter', 'Hunter', 'Role', [`Orbits wide (${S.HUNT_R}px) and dives at a demon within ${S.HUNT_RANGE}px every ${S.HUNT_EVERY}s.`]);
+    sp('mender', 'Mender', `Role · ${S.MENDER_AT}+ spirits`, [`Heals ${(S.MENDER_HPS * 100).toFixed(1)}% of max HP per second while hurt and pulls loot within ${S.MENDER_MAGNET}px.`]);
+    sp('beacon', 'Beacon', `Role · ${S.BEACON_AT}+ spirits`, [`Projects a ${S.BEACON_R}px aura: demons inside move ${Math.round(S.BEACON_SLOW * 100)}% slower and take ${Math.round(S.BEACON_DPS * 100)}% of spirit damage per second.`]);
+    sp('surge', 'Spirit Surge', 'HUD button', [`Every spirit dives at a different demon for ×${S.SURGE_MUL} damage and clears enemy shots within ${S.SURGE_CLEAR_R}px.`, `Cooldown ${S.SURGE_CD}s (×${S.ASC_SURGE_CD[1]} at Ascension I, ×${S.ASC_SURGE_CD[2]} at Ascension II); the ring on the button shows it.`]);
+    sp('buffs', 'Swarm Blessings', 'Passive', [`+${Math.round(S.BUFF_DMG_PER2 * 100)}% damage to all magic per 2 spirits.`, `-${Math.round(S.BUFF_DR_PER3 * 100)}% damage taken per 3 spirits (max 30%).`]);
+    sp('save', 'Spirit Save', `Passive · ${S.SAVE_MIN}+ spirits`, [`A lethal hit is taken by a spirit instead: you return at ${Math.round(S.SAVE_HP * 100)}% HP and nearby demons are pushed away.`, `Once every ${S.SAVE_CD}s; the lost spirit regrows after ${S.SAVE_REGROW}s.`]);
+    sp('formation', 'Wing Formation', 'Flight', ['While you fly, spirits hold a V of wings behind you instead of orbiting.']);
+    sp('ascension', 'Ascension', `${S.ASCEND_1} & ${S.ASCEND_2} spirits`, [`Ascension I at ${S.ASCEND_1} spirits: spirit damage ×${S.ASC_DMG[1]}, bigger Mender/Beacon effects.`, `Ascension II at ${S.ASCEND_2} spirits: spirit damage ×${S.ASC_DMG[2]}, golden swarm, Surge cooldown halved.`]);
+  }
   // ---------- Artifacts ----------
   for (const a of ARTIFACTS) add({ id: 'art:' + a.id, tab: 'artifacts', name: a.name, tag: a.rarity, icon: 'art:' + a.id, lines: Array.from({ length: a.max }, (_, i) => `Lv${i + 1}: ${a.desc(i + 1)}`), stats: [['Rarity', a.rarity], ['Max', `${a.max}`]] });
   // ---------- Bestiary ----------
