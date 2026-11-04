@@ -1,4 +1,6 @@
-export type EnemyType = 'crawler' | 'shadow_fiend' | 'hellhound' | 'void_knight' | 'colossus_boss';
+export type EnemyType = 'crawler' | 'shadow_fiend' | 'hellhound' | 'void_knight' | 'colossus_boss'
+  | 'astral_wisp' | 'star_archer' | 'ice_golem' | 'frost_spitter' | 'magma_bomber' | 'fire_imp' | 'lava_charger'
+  | 'crypt_phantom' | 'bone_summoner' | 'void_ooze' | 'sun_seraph' | 'radiant_sentinel';
 
 export interface Enemy {
   id: string;
@@ -23,6 +25,15 @@ export interface Enemy {
   hitFlash?: number;
   attackCooldown?: number;
   name: string;
+  flying?: boolean;
+  elite?: boolean;
+  small?: boolean;
+  /** AI timers/state */
+  ai?: number;
+  ai2?: number;
+  state?: number;
+  dx?: number;
+  dy?: number;
 }
 
 export interface Projectile {
@@ -40,11 +51,14 @@ export interface Projectile {
   pierce: number;
   hitEnemies: Set<string>;
   split?: boolean;
-  type: 'arcane_missile' | 'frost_shard' | 'lightning_arc' | 'meteor' | 'fire_wave' | 'combo_singularity' | 'combo_superconductor' | 'combo_blizzard';
+  type: 'spirit_bolt' | 'arcane_missile' | 'frost_shard' | 'lightning_arc' | 'meteor' | 'fire_wave' | 'combo_singularity' | 'combo_superconductor' | 'combo_blizzard';
   homingTarget?: Enemy | null;
   areaOfEffect?: number;
   orbitAngle?: number;
   orbitRadius?: number;
+  /** visual height above ground (cast from a flying hero); decays to 0 */
+  z?: number;
+  z0?: number;
 }
 
 export interface Particle {

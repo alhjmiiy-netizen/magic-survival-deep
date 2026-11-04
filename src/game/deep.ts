@@ -58,33 +58,33 @@ export type EnemyType = Enemy['type'];
 export interface Region {
   id: string; name: string; arena: string; duration: number; color: string;
   roster: [EnemyType, number][]; hp: number; dmg: number; spawn: number;
-  hazard: { name: string; every: number; radius: number; dmg: number; color: string; slow?: boolean };
+  hazard: { name: string; every: number; radius: number; dmg: number; color: string; slow?: boolean; air?: boolean };
   boss: { name: string; hp: number };
 }
 export const REGION_DURATION = 180;
 export const REGIONS: Region[] = [
   { id: 'r1', name: 'Astral Sanctuary', arena: 'astral_sanctuary', duration: REGION_DURATION, color: '#38bdf8',
-    roster: [['crawler', 0.75], ['shadow_fiend', 0.25]], hp: 0.45, dmg: 0.35, spawn: 0.8,
+    roster: [['crawler', 0.5], ['shadow_fiend', 0.18], ['astral_wisp', 0.2], ['star_archer', 0.12]], hp: 0.45, dmg: 0.35, spawn: 0.8,
     hazard: { name: 'Void Rifts', every: 14, radius: 110, dmg: 60, color: '80,200,255' }, boss: { name: 'Rift Warden', hp: 9000 } },
   { id: 'r2', name: 'Glacial Citadel', arena: 'glacial_citadel', duration: REGION_DURATION, color: '#7dd3fc',
-    roster: [['crawler', 0.4], ['shadow_fiend', 0.4], ['hellhound', 0.2]], hp: 0.8, dmg: 0.5, spawn: 0.65,
+    roster: [['crawler', 0.25], ['shadow_fiend', 0.25], ['hellhound', 0.15], ['ice_golem', 0.1], ['frost_spitter', 0.15], ['astral_wisp', 0.1]], hp: 0.8, dmg: 0.5, spawn: 0.65,
     hazard: { name: 'Frost Fields (slow)', every: 11, radius: 130, dmg: 50, color: '170,230,255', slow: true }, boss: { name: 'Frost Behemoth', hp: 20000 } },
   { id: 'r3', name: 'Infernal Abyss', arena: 'infernal_abyss', duration: REGION_DURATION, color: '#f97316',
-    roster: [['shadow_fiend', 0.35], ['hellhound', 0.5], ['void_knight', 0.15]], hp: 1.25, dmg: 0.7, spawn: 0.55,
+    roster: [['shadow_fiend', 0.2], ['hellhound', 0.3], ['void_knight', 0.1], ['magma_bomber', 0.17], ['fire_imp', 0.13], ['lava_charger', 0.1]], hp: 1.25, dmg: 0.7, spawn: 0.55,
     hazard: { name: 'Magma Eruptions', every: 8, radius: 120, dmg: 110, color: '255,110,30' }, boss: { name: 'Magma Tyrant', hp: 38000 } },
   { id: 'r4', name: 'Void Crypt', arena: 'void_crypt', duration: REGION_DURATION, color: '#c084fc',
-    roster: [['crawler', 0.3], ['hellhound', 0.35], ['void_knight', 0.35]], hp: 1.8, dmg: 0.85, spawn: 0.48,
-    hazard: { name: 'Blood Rain Sigils', every: 7, radius: 125, dmg: 140, color: '200,80,255' }, boss: { name: 'Crypt Lich', hp: 60000 } },
+    roster: [['crawler', 0.2], ['hellhound', 0.2], ['void_knight', 0.2], ['crypt_phantom', 0.15], ['bone_summoner', 0.1], ['void_ooze', 0.15]], hp: 1.8, dmg: 0.85, spawn: 0.48,
+    hazard: { name: 'Blood Rain Sigils', every: 7, radius: 125, dmg: 140, color: '200,80,255', air: true }, boss: { name: 'Crypt Lich', hp: 60000 } },
   { id: 'r5', name: 'Celestial Throne', arena: 'celestial_throne', duration: REGION_DURATION, color: '#facc15',
-    roster: [['shadow_fiend', 0.3], ['hellhound', 0.3], ['void_knight', 0.4]], hp: 2.5, dmg: 1.0, spawn: 0.42,
-    hazard: { name: 'Solar Flares', every: 6, radius: 130, dmg: 170, color: '255,210,80' }, boss: { name: 'Void Colossus Titan', hp: 95000 } },
+    roster: [['shadow_fiend', 0.15], ['hellhound', 0.15], ['void_knight', 0.2], ['sun_seraph', 0.17], ['radiant_sentinel', 0.13], ['lava_charger', 0.1], ['void_ooze', 0.1]], hp: 2.5, dmg: 1.0, spawn: 0.42,
+    hazard: { name: 'Solar Flares', every: 6, radius: 130, dmg: 170, color: '255,210,80', air: true }, boss: { name: 'Void Colossus Titan', hp: 95000 } },
 ];
 
 export const ENDLESS_BOSS_EVERY = 120;
 /** Endless difficulty at t seconds into endless. */
 export function endlessScale(t: number) {
   const m = t / 60;
-  return { hp: 0.5 * (1 + 0.45 * m + 0.02 * m * m), dmg: 0.4 + 0.1 * m, speed: Math.min(1.6, 1 + 0.04 * m), spawn: Math.max(0.12, 0.8 / (1 + 0.3 * m)), cap: Math.min(160, 70 + 8 * m) };
+  return { hp: 0.5 * (1 + 0.45 * m + 0.02 * m * m), dmg: 0.4 + 0.1 * m, speed: Math.min(1.6, 1 + 0.04 * m), spawn: Math.max(0.12, 0.8 / (1 + 0.3 * m)), cap: Math.min(170, 75 + 9 * m) };
 }
 
 export interface BestRecord { endless: { time: number; kills: number; score: number }; regions: { best: number; time: number; cleared: number } }
