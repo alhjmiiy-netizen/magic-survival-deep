@@ -544,6 +544,11 @@ export const HUD: React.FC<HUDProps> = ({
           <div className="h-full" style={{ width: `${cata.phase === 'idle' ? cata.meter : 100}%`, background: 'linear-gradient(90deg,#f97316,#f43f5e,#e879f9)', boxShadow: cata.meter >= 100 ? '0 0 8px #f43f5e' : undefined }} />
         </div>
       </div>
+      {cata.feed && cata.feed.length > 0 && (
+        <div data-hud="cata-feed" className="absolute pointer-events-none flex flex-col gap-[1px]" style={portrait ? { top: 148, left: 8 } : { top: 70, left: 10 }}>
+          {cata.feed.map((f: { txt: string; color: string; t: number }) => <span key={f.t + f.txt} className="text-[9px] font-bold" style={{ color: f.color, textShadow: '0 1px 2px #000' }}>⚡ {f.txt} → Cataclysm</span>)}
+        </div>
+      )}
       {cata.phase === 'scene' && (
         <div data-hud="scene-timer" className="absolute pointer-events-none flex flex-col items-center" style={{ top: portrait ? 112 : 70, left: '50%', transform: 'translateX(-50%)' }}>
           <span className="text-[10px] font-black tracking-[0.2em]" style={{ color: cata.color, textShadow: '0 1px 3px #000' }}>{cata.name.toUpperCase()} · {Math.ceil(cata.left)}s</span>

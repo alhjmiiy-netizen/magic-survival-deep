@@ -74,12 +74,12 @@ export function buildCodex(): CodexEntry[] {
   // ---------- Fusions ----------
   add({ id: 'fusion:rules', tab: 'fusions', name: 'How Fusions Work', tag: 'Rules', icon: 'glyph:combo_singularity', lines: [
     `Cast two different elements within ${T.FUSION_WINDOW} s of each other to trigger their fusion burst on the densest pack.`,
-    `Each fusion has a ${T.FUSION_CD} s cooldown. Every fusion adds +${T.CATA_GAIN.fusion} to the Cataclysm meter.`,
+    `Each pair has its own ${T.FUSION_CD} s cooldown, effect and sound, so different pairs chain. Every fusion adds +${T.CATA_GAIN.fusion} to the Cataclysm meter.`,
     `Synergies: owning two element magics at Lv${SYNERGY_MIN_LEVEL}+ unlocks a permanent bonus.`,
   ] });
   for (const [key, f] of Object.entries(T.FUSIONS)) {
     const [a, b] = key.split('+');
-    add({ id: 'fusion:' + key, tab: 'fusions', name: f.name, tag: `${ELEMENT_NAME[a]} + ${ELEMENT_NAME[b]}`, icon: 'glyph:' + spellOfEl[a], lines: [
+    add({ id: 'fusion:' + key, tab: 'fusions', name: f.name, tag: `${ELEMENT_NAME[a]} + ${ELEMENT_NAME[b]}`, icon: 'pair:' + key, lines: [
       `Cast ${BASE_SPELLS[spellOfEl[a]].name} and ${BASE_SPELLS[spellOfEl[b]].name} within ${T.FUSION_WINDOW} s.`, ...(f as { desc?: string }).desc ? [(f as { desc?: string }).desc!] : [] ] });
   }
   for (const s of SYNERGIES) add({ id: 'syn:' + s.id, tab: 'fusions', name: s.name, tag: `Synergy ${ELEMENT_NAME[s.a]}+${ELEMENT_NAME[s.b]}`, icon: 'glyph:' + spellOfEl[s.a], lines: [`${s.desc}.`, `Active while both magics are Lv${SYNERGY_MIN_LEVEL}+.`] });

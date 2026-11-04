@@ -1,3 +1,4 @@
+import { PairIcon } from './PairIcon';
 import React, { useMemo, useState } from 'react';
 import { X, Circle, Gem, BookOpen, Flame, Sparkles, Ghost, Layers, Skull, Globe, Award } from 'lucide-react';
 import { sound } from '../audio/soundEngine';
@@ -29,6 +30,7 @@ const TABS: { id: CodexTab; label: string; Icon: React.FC<{ className?: string }
 ];
 
 function EntryIcon({ icon, size }: { icon: string; size: number }) {
+  if (icon.startsWith('pair:')) return <PairIcon pair={icon.slice(5)} size={size + 6} />;
   if (icon.startsWith('glyph:')) return <MagicGlyph k={icon.slice(6)} size={size} />;
   if (icon.startsWith('art:')) return <MagicGlyph k={icon} size={size} />;
   if (icon.startsWith('enemy:')) return <img data-enemy={icon.slice(6)} src={enemyIcon(icon.slice(6))} width={size + 8} height={size + 8} alt="" />;

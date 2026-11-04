@@ -669,6 +669,7 @@ export default function App() {
           spells={spells}
           gold={stats.gold}
           crystals={stats.crystals}
+          getEngine={() => engineRef.current as never}
           onClose={() => {
             setIsComboOpen(false);
             if (gameView === 'PLAYING' && !isPaused) engineRef.current?.resume();

@@ -188,6 +188,20 @@ export const SFX: Record<string, (ac: Ctx, out: AudioNode, t: number, s: number)
     tone(ac, o, t, { dur: 0.25, f0: 160, f1: 60, gain: 0.3 * s, curve: 3 });
   },
 };
+/** Element signature layers for pair-combo sounds; each pair = its two layers + a pitched pair-specific root. */
+const EL_LAYER: Record<string, (ac: Ctx, o: AudioNode, t: number, s: number, root: number) => void> = {
+  fire: (ac, o, t, s) => { noise(ac, o, t, { dur: 1.2, type: 'lowpass', f0: 2200, f1: 300, gain: 0.5 * s, curve: 3 }); crackle(ac, o, t, 0.9, 14, 0.25 * s); },
+  ice: (ac, o, t, s, r) => { for (let i = 0; i < 4; i++) tone(ac, o, t, { delay: i * 0.06, dur: 0.6, f0: r * 6 * (1 + i * 0.25), gain: 0.12 * s, curve: 4 }); noise(ac, o, t, { dur: 0.3, type: 'highpass', f0: 5000, gain: 0.25 * s, curve: 2 }); },
+  lightning: (ac, o, t, s) => { noise(ac, o, t, { dur: 0.12, type: 'highpass', f0: 2500, gain: 0.7 * s, curve: 2 }); noise(ac, o, t, { delay: 0.08, dur: 0.9, type: 'bandpass', f0: 1200, f1: 200, q: 1.5, gain: 0.4 * s, curve: 3 }); },
+  arcane: (ac, o, t, s, r) => { chord(ac, o, t, [r * 2, r * 2.5, r * 3], 0.07, 0.12 * s, 1.0, 'sine'); tone(ac, o, t, { dur: 0.8, type: 'sawtooth', f0: r * 4, f1: r * 1.5, gain: 0.06 * s, curve: 3 }); },
+  spirit: (ac, o, t, s, r) => { chord(ac, o, t, [r * 1.5, r * 2.25, r * 3.375], 0.12, 0.1 * s, 1.3, 'triangle'); tone(ac, o, t, { dur: 1.1, f0: r * 3, f1: r * 4, gain: 0.08 * s, attack: 0.1, curve: 3 }); },
+};
+const PAIR_ROOT: Record<string, number> = { 'fire+ice': 196, 'fire+lightning': 110, 'ice+lightning': 247, 'arcane+fire': 147, 'arcane+ice': 294, 'arcane+lightning': 165, 'fire+spirit': 131, 'ice+spirit': 262, 'lightning+spirit': 175, 'arcane+spirit': 220 };
+export const PAIR_SFX_KEYS = Object.keys(PAIR_ROOT);
+for (const k of PAIR_SFX_KEYS) {
+  const [a, b] = k.split('+'); const root = PAIR_ROOT[k];
+  SFX['pair_' + k] = (ac, o, t, s) => { boom(ac, o, t, 0.55 * s, 0, root * 0.5); EL_LAYER[a](ac, o, t, s, root); EL_LAYER[b](ac, o, t, s, root); tone(ac, o, t, { dur: 0.9, type: 'triangle', f0: root, f1: root * (a === 'spirit' || b === 'spirit' ? 1.5 : 0.75), gain: 0.2 * s, curve: 3 }); };
+}
 export const SFX_NAMES = Object.keys(SFX);
 /** Nominal tail length per sound (for offline render + voice accounting). */
-export const SFX_LEN: Record<string, number> = { chime: 0.9, shatter: 0.5, thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5 };
+export const SFX_LEN: Record<string, number> = { chime: 0.9, shatter: 0.5, thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5, ...Object.fromEntries(PAIR_SFX_KEYS.map((k) => ['pair_' + k, 2.4])) };

@@ -474,7 +474,7 @@ export class GameEngine {
   get inScene() { return this.cata.phase === 'scene'; }
   public cataclysmState() {
     const c = this.cata; const d = c.kind ? SCENES[c.kind] : null;
-    return { meter: Math.round(c.meter), phase: c.phase, t: c.t, kind: c.kind, name: d?.name ?? '', title: d?.title ?? '', sub: d?.sub ?? '', color: d?.color ?? '#f43f5e', left: Math.max(0, c.left), max: c.max, cooldown: Math.max(0, c.cdUntil - this.gameTimeSeconds), pending: c.pending, blocked: c.blocked, log: c.log.slice(-20), gains: c.gains.slice(-20) };
+    return { feed: this.cataFeed.filter((f) => this.gameTimeSeconds - f.t < 4).slice(-3), meter: Math.round(c.meter), phase: c.phase, t: c.t, kind: c.kind, name: d?.name ?? '', title: d?.title ?? '', sub: d?.sub ?? '', color: d?.color ?? '#f43f5e', left: Math.max(0, c.left), max: c.max, cooldown: Math.max(0, c.cdUntil - this.gameTimeSeconds), pending: c.pending, blocked: c.blocked, log: c.log.slice(-20), gains: c.gains.slice(-20) };
   }
   /** World-space height of the caster (for spells raining down). */
   private casterZ() { return FLIGHT_LIFT * this.flyH; }
@@ -502,6 +502,10 @@ export class GameEngine {
   // ---- v4: fusion / steam / charge / spirits ----
   private lastCast: { el: string; id: string; t: number } | null = null;
   private fusionCd = 0;
+  /** Per-pair cooldowns (s left) and last cast time per element. */
+  public pairCd: Record<string, number> = {};
+  private lastByEl: Record<string, { id: string; t: number }> = {};
+  public pairLog: { key: string; t: number; hits: number; fx: string }[] = [];
   public fusionLog: string[] = [];
   private charging: { id: string; t0: number } | null = null;
   public chargeLog: { id: string; k: number }[] = [];
@@ -591,7 +595,7 @@ export class GameEngine {
     else if (id === 'titan') { st.maxHp += 150; st.hp += 150; }
     else if (id === 'second_heart') { const add = Math.round(st.maxHp * 0.5); st.maxHp += add; st.hp += add; }
     else if (id === 'hermes') st.speed *= 1.1;
-    else if (id === 'fusion_core') this.fusionCd = Math.min(this.fusionCd, FUSION_CD - this.art('fusion_core'));
+    else if (id === 'fusion_core') { const m = FUSION_CD - this.art('fusion_core'); for (const k in this.pairCd) this.pairCd[k] = Math.min(this.pairCd[k], m); }
     this.syncSpirits();
     sound.play('artifact', a.rarity === 'epic' ? 1.4 : 1);
     this.notice(`ARTIFACT: ${a.name} — ${a.desc(this.artifacts[id])}`, a.color, 'artifact');
@@ -1126,37 +1130,109 @@ export class GameEngine {
     const el = id === 'spirit' ? 'spirit' : ELEMENT_OF[id];
     if (!el) return;
     const t = this.gameTimeSeconds;
-    const lc = this.lastCast;
-    if (lc && lc.el !== el && t - lc.t <= FUSION_WINDOW && this.fusionCd <= 0) {
-      const key = [lc.el, el].sort().join('+');
-      const f = FUSIONS[key];
-      if (f) { this.triggerFusion(key, f.name, f.color); this.lastCast = null; return; }
+    // pair with the most recent cast of any OTHER element whose pair is off cooldown
+    let best: string | null = null; let bt = -1;
+    for (const [o, r] of Object.entries(this.lastByEl)) {
+      if (o === el || t - r.t > FUSION_WINDOW) continue;
+      const key = [o, el].sort().join('+');
+      if (!FUSIONS[key] || (this.pairCd[key] ?? 0) > 0) continue;
+      if (r.t > bt) { bt = r.t; best = key; }
     }
     this.lastCast = { el, id, t };
+    if (best) { const f = FUSIONS[best]; const other = best.split('+').find((x) => x !== el)!; delete this.lastByEl[other]; this.triggerFusion(best, f.name, f.color); return; }
+    this.lastByEl[el] = { id, t };
+  }
+  public pairState() {
+    return Object.keys(FUSIONS).map((k) => ({ key: k, name: FUSIONS[k].name, cd: Math.max(0, this.pairCd[k] ?? 0), max: FUSION_CD - this.art('fusion_core'), count: this.pairLog.filter((p) => p.key === k).length }));
   }
   public triggerFusion(key: string, name: string, color: string) {
-    this.fusionCd = FUSION_CD - this.art('fusion_core');
+    const cdMax = FUSION_CD - this.art('fusion_core');
+    this.pairCd[key] = cdMax; this.fusionCd = cdMax;
     this.fusionLog.push(name);
-    { const c = this.cata; const t = this.gameTimeSeconds; c.recent = c.recent.filter((r) => t - r.t <= 6); c.recent.push({ k: key, t }); this.addCata(CATA_GAIN.fusion, 'fusion'); if (new Set(c.recent.map((r) => r.k)).size >= 3 && c.phase === 'idle') { this.addCata(CATA_GAIN.tripleFusion, 'triple-fusion'); } }
-    sound.play('fusion', 1.3);
+    const def = FUSIONS[key];
+    { const c = this.cata; const t = this.gameTimeSeconds; c.recent = c.recent.filter((r) => t - r.t <= 6); c.recent.push({ k: key, t }); const before = c.meter; this.addCata(CATA_GAIN.fusion, 'fusion:' + key); let gain = c.meter - before; if (new Set(c.recent.map((r) => r.k)).size >= 3 && c.phase === 'idle') { const b2 = c.meter; this.addCata(CATA_GAIN.tripleFusion, 'triple-fusion'); gain += c.meter - b2; } this.cataFeedPush(`${name} +${Math.round(gain)}`, color); }
+    sound.play('pair_' + key, 1.2);
     const tgt = this.findDensestCluster(220) ?? { x: this.playerX + Math.cos(this.playerAngle) * 160, y: this.playerY + Math.sin(this.playerAngle) * 160 };
     const base = this.spells.filter((s) => !s.isCombo); const avg = base.reduce((a, s) => a + s.damage, 0) / Math.max(1, base.length);
-    const dmg = Math.round(avg * 1.6 * (this.stats.spellPower / 100) * (1 + 0.25 * this.art('fusion_core')));
-    const r = 200;
+    const dmg = Math.round(avg * def.dmgMul * (this.stats.spellPower / 100) * (1 + 0.25 * this.art('fusion_core')));
     this.label(name.toUpperCase() + '!', tgt.x, tgt.y - 120, color, true);
-    FX.star(tgt.x, tgt.y, r); FX.ring(tgt.x, tgt.y, r, 'rgba(255,255,255,1)', 0.5); this.shake(12); this.hitStop = Math.max(this.hitStop, 0.05);
-    this.skyStrike(tgt.x, tgt.y, color);
-    const els = key.split('+');
-    for (const e of this.enemies) {
-      if (Math.hypot(e.x - tgt.x, e.y - tgt.y) > r + e.radius) continue;
-      this.damageEnemy(e, dmg, color, (els.includes('fire') ? 'fire' : els.includes('lightning') ? 'lightning' : els.includes('ice') ? 'ice' : 'arcane') as Element);
-      if (els.includes('ice')) e.frozenUntil = performance.now() + 1200;
-    }
-    if (els.includes('fire') && els.includes('ice')) this.addSteam(tgt.x, tgt.y, 150, 4.5, dmg * 0.3);
-    else if (els.includes('fire')) this.addZone(tgt.x, tgt.y, 120, 3, dmg * 0.4, '251,146,60');
-    if (els.includes('lightning')) for (let k = 0; k < 4 && this.enemies.length; k++) { const e = this.enemies[Math.floor(Math.random() * this.enemies.length)]; FX.bolt(e.x, e.y); this.damageEnemy(e, Math.round(dmg * 0.6), '#93c5fd', 'lightning'); }
-    if (els.includes('spirit')) for (const sp of this.spirits) { sp.dash = 0.3; sp.target = this.findNearestEnemy(tgt.x, tgt.y, 300); }
+    this.shake(10); this.hitStop = Math.max(this.hitStop, 0.04);
+    const hits = this.pairEffect(key, tgt, dmg, color, def.radius);
+    this.pairLog.push({ key, t: this.gameTimeSeconds, hits, fx: key }); if (this.pairLog.length > 200) this.pairLog.shift();
   }
+  /** Each pair has its own distinct effect. Returns number of enemies hit. */
+  private pairEffect(key: string, tgt: { x: number; y: number }, dmg: number, color: string, r: number): number {
+    let hits = 0; const now = performance.now();
+    const inR = (x: number, y: number, rr: number) => this.enemies.filter((e) => Math.hypot(e.x - x, e.y - y) <= rr + e.radius);
+    const hit = (e: Enemy, d: number, el: Element, c = color) => { this.damageEnemy(e, Math.round(d), c, el); hits++; };
+    const nearest = (x: number, y: number, n: number, maxD: number) => this.enemies.map((e) => ({ e, d: Math.hypot(e.x - x, e.y - y) })).filter((q) => q.d <= maxD).sort((p, q) => p.d - q.d).slice(0, n).map((q) => q.e);
+    switch (key) {
+      case 'fire+ice': { // thermal shock + steam cloud
+        FX.ring(tgt.x, tgt.y, r, 'rgba(226,232,240,1)', 0.5); FX.flash(tgt.x, tgt.y, r * 0.8, '#ffffff');
+        for (const e of inR(tgt.x, tgt.y, r)) hit(e, dmg * ((e.frozenUntil ?? 0) > now ? 1.6 : 1), 'fire');
+        this.addSteam(tgt.x, tgt.y, 150, 4.5, dmg * 0.3); break;
+      }
+      case 'fire+lightning': { // plasma nova + 6 burning patches
+        FX.star(tgt.x, tgt.y, r); FX.ring(tgt.x, tgt.y, r, 'rgba(251,146,60,1)', 0.6); this.skyStrike(tgt.x, tgt.y, color);
+        for (const e of inR(tgt.x, tgt.y, r)) hit(e, dmg, 'fire');
+        for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; this.addZone(tgt.x + Math.cos(a) * r * 0.75, tgt.y + Math.sin(a) * r * 0.75, 60, 3, dmg * 0.25, '251,146,60'); }
+        break;
+      }
+      case 'ice+lightning': { // freeze then chain sparks
+        FX.ring(tgt.x, tgt.y, r, 'rgba(125,211,252,1)', 0.5);
+        const fr = inR(tgt.x, tgt.y, r); for (const e of fr) { e.frozenUntil = now + 2000; hit(e, dmg * 0.5, 'ice'); }
+        let prev = tgt; const pool = [...fr];
+        for (let k = 0; k < 6 && pool.length; k++) { let bi = 0, bd = 1e9; pool.forEach((e, i) => { const d = Math.hypot(e.x - prev.x, e.y - prev.y); if (d < bd) { bd = d; bi = i; } }); const e = pool.splice(bi, 1)[0]; this.beams.push({ x1: prev.x, y1: prev.y, x2: e.x, y2: e.y, color: '#bae6fd', life: 0.22 }); FX.bolt(e.x, e.y); hit(e, dmg * 0.7, 'lightning', '#bae6fd'); prev = e; }
+        break;
+      }
+      case 'arcane+fire': { // hex the 6 densest -> fire pillars
+        const marks = nearest(tgt.x, tgt.y, 6, 400);
+        if (!marks.length) this.addZone(tgt.x, tgt.y, r, 2.5, dmg * 0.4, '244,114,182');
+        for (const m of marks) { FX.fire(m.x, m.y, r); FX.ring(m.x, m.y, r, 'rgba(244,114,182,1)', 0.45); for (const e of inR(m.x, m.y, r)) hit(e, dmg * 0.8, 'fire'); this.addZone(m.x, m.y, r * 0.8, 2.5, dmg * 0.2, '244,114,182'); }
+        break;
+      }
+      case 'arcane+ice': { // 8 prism lances piercing along lines
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2; const x2 = tgt.x + Math.cos(a) * r, y2 = tgt.y + Math.sin(a) * r;
+          this.beams.push({ x1: tgt.x, y1: tgt.y, x2, y2, color: '#c7d2fe', life: 0.22 });
+          for (const e of this.enemies) { const dx = e.x - tgt.x, dy = e.y - tgt.y; const along = dx * Math.cos(a) + dy * Math.sin(a); if (along < 0 || along > r) continue; const perp = Math.abs(-dx * Math.sin(a) + dy * Math.cos(a)); if (perp <= 18 + e.radius) { hit(e, dmg * 0.6, 'ice', '#c7d2fe'); e.frozenUntil = Math.max(e.frozenUntil ?? 0, now + 700); } }
+        }
+        FX.flash(tgt.x, tgt.y, 90, '#a5b4fc'); break;
+      }
+      case 'arcane+lightning': { // 9 arc bolts around the player
+        const pool = this.enemies.filter((e) => Math.hypot(e.x - this.playerX, e.y - this.playerY) < 520);
+        for (let k = 0; k < 9 && pool.length; k++) { const e = pool[Math.floor(Math.random() * pool.length)]; FX.bolt(e.x, e.y); FX.ring(e.x, e.y, 40, 'rgba(147,197,253,1)', 0.3); for (const q of inR(e.x, e.y, 40)) hit(q, dmg * 0.7, 'lightning', '#93c5fd'); }
+        break;
+      }
+      case 'fire+spirit': { // spirits dive -> soulfire pillars
+        const pts = this.spirits.length ? this.spirits.map((sp) => { const t = this.findNearestEnemy(sp.x, sp.y, 320); sp.dash = 0.3; sp.target = t; return t ? { x: t.x, y: t.y } : { x: sp.x, y: sp.y }; }) : [tgt];
+        for (const p of pts.slice(0, 12)) { FX.fire(p.x, p.y, r); for (const e of inR(p.x, p.y, r)) hit(e, dmg * 0.7, 'fire', '#5eead4'); this.addZone(p.x, p.y, r, 2, dmg * 0.2, '94,234,212'); }
+        break;
+      }
+      case 'ice+spirit': { // wraith ring around the player
+        const px = this.playerX, py = this.playerY;
+        FX.ring(px, py, r, 'rgba(153,246,228,1)', 0.6); FX.ring(px, py, r * 0.6, 'rgba(153,246,228,1)', 0.45);
+        for (const e of inR(px, py, r)) { hit(e, dmg, 'ice', '#99f6e4'); e.frozenUntil = now + 1500; }
+        break;
+      }
+      case 'lightning+spirit': { // each spirit (and you) arcs into the 2 nearest
+        const srcs = [{ x: this.playerX, y: this.playerY }, ...this.spirits.slice(0, 12).map((s) => ({ x: s.x, y: s.y }))];
+        for (const s0 of srcs) for (const e of nearest(s0.x, s0.y, 2, r)) { this.beams.push({ x1: s0.x, y1: s0.y, x2: e.x, y2: e.y, color: '#67e8f9', life: 0.22 }); hit(e, dmg * 0.6, 'lightning', '#67e8f9'); }
+        break;
+      }
+      case 'arcane+spirit': { // echo a magic for free + loot pull
+        const base = this.spells.filter((s) => !s.isCombo && s.id !== 'spirit');
+        if (base.length) { const sp = base[Math.floor(Math.random() * base.length)]; const e = this.eff(sp); const before = this.enemies.reduce((a, q) => a + q.hp, 0); this.autoCastRaw({ ...e, damage: Math.round(e.damage * 0.8) }); hits += this.enemies.reduce((a, q) => a + q.hp, 0) < before ? 1 : 0; this.label('ECHO: ' + sp.name, this.playerX, this.playerY - 90, color); }
+        for (const it of this.lootItems) if (Math.hypot(it.x - this.playerX, it.y - this.playerY) < 600) it.magnetized = true;
+        FX.ring(this.playerX, this.playerY, r, 'rgba(196,181,253,1)', 0.5); FX.star(this.playerX, this.playerY, 90);
+        for (const e of inR(this.playerX, this.playerY, r * 0.6)) hit(e, dmg * 0.5, 'arcane', color);
+        break;
+      }
+    }
+    return hits;
+  }
+  public cataFeed: { txt: string; color: string; t: number }[] = [];
+  private cataFeedPush(txt: string, color: string) { this.cataFeed.push({ txt, color, t: this.gameTimeSeconds }); if (this.cataFeed.length > 4) this.cataFeed.shift(); }
   private addSteam(x: number, y: number, r: number, dur: number, dps: number) {
     const st = this.zones.filter((z) => z.steam);
     if (st.length >= 6) this.zones.splice(this.zones.indexOf(st[0]), 1);
@@ -1365,6 +1441,7 @@ export class GameEngine {
     this.gameTimeSeconds += dt;
     this.updateFlight(dt);
     this.fusionCd = Math.max(0, this.fusionCd - dt);
+    for (const k in this.pairCd) if (this.pairCd[k] > 0) this.pairCd[k] = Math.max(0, this.pairCd[k] - dt);
     for (const l of this.labels) l.life -= dt; compact(this.labels, (q) => q.life > 0); if (this.labels.length > 24) this.labels.splice(0, this.labels.length - 24);
     for (const b of this.beams) b.life -= dt; compact(this.beams, (q) => q.life > 0);
 
