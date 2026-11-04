@@ -38,3 +38,10 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 - Fusions (10) when spells of different elements are cast within 1.2 s (4 s cooldown); steam zones; hold a spell tile to charge it (up to 1.5 s).
 - Spirit is a level-up spell (up to 12 spirits). Etched MagicGlyph icons everywhere (qa/icons.html sheet). Bestiary tab.
 - QA: qa/v4.cjs <url> <vw> <vh> <tag>.
+
+## Round 5 (Nov 3 2026)
+- Free flight: Ground/Hover/Soar (FLY/SOAR/LAND button, F key), no meter; soar zooms out (~0.87); beyond-circle world to 2.6x arena radius; landing outside eases back to R-90 ("PULLED BACK TO THE CIRCLE"); far enemies (>1700px) despawn; shots die >1400px.
+- Cataclysm (src/game/cataclysm.ts): meter from fusions/steam/synergy/combo/charge -> crack -> collapse -> scene by altitude (ground=Abyss, hover=Rift w/ Rift Sovereign elite, soar=Sky), 65s, reward chest, re-form, 150s cooldown; blocked during bosses/modals. Debug: __engine.triggerCataclysm(kind?).
+- SFX (src/audio/sfx.ts + soundEngine buildChain w/ compressor+limiter): 24 synth recipes; dev-only window.__sfxm for offline renders (/tmp/sfx.cjs -> deploy/magic-deep-shots/sfx/*.wav).
+- Artifacts: 33, rarity-weighted 3-card chests, wooden ground chests, boss chest "SELECT ATTRIBUTE"; pause screen lists held artifacts.
+- QA: node qa/v5.cjs <url> <w> <h> <tag>.

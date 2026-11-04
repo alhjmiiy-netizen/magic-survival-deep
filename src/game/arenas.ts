@@ -721,7 +721,8 @@ export class ArenaRenderer {
     arena: ArenaRealm,
     radius: number,
     cameraX = 0,
-    cameraY = 0
+    cameraY = 0,
+    beforePlatform?: () => void
   ) {
     const t = themeFor(arena);
     const c = getCache(arena, radius);
@@ -744,6 +745,7 @@ export class ArenaRenderer {
 
     // 1. far floating ruins (behind platform: upper half)
     this.drawRuins(ctx, c, radius, cameraX, cameraY, now, true);
+    beforePlatform?.();
 
     // 2. Static stone platform
     const e = c.floorExtent;

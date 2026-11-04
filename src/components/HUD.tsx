@@ -239,14 +239,15 @@ export const HUD: React.FC<HUDProps> = ({
   const questsDone = quests.filter((q) => q.completed || q.current >= q.target).length;
   const dashReady = stats.dashCurrentCooldown <= 0;
   // v4 flight + charge state, polled at ~15Hz
-  const [fl8, setFl8] = useState({ flying: false, meter: 6, max: 6, lock: 0, h: 0 });
+  const [fl8, setFl8] = useState({ flying: false, alt: 'ground', h: 0 });
+  const [cata, setCata] = useState<any>(null);
   const [charge, setCharge] = useState<{ id: string; k: number } | null>(null);
   const [spiritN, setSpiritN] = useState(0);
   const [hint, setHint] = useState(true);
   useEffect(() => { const t = setTimeout(() => setHint(false), 7000); return () => clearTimeout(t); }, []);
   useEffect(() => {
     if (!getEngine) return;
-    const id = setInterval(() => { const e = getEngine(); if (!e) return; const f = e.flightState(); setFl8({ flying: f.flying, meter: f.meter, max: f.max, lock: f.lock, h: f.h }); setCharge(e.chargeProgress()); setSpiritN(e.spirits.length); }, 66);
+    const id = setInterval(() => { const e = getEngine(); if (!e) return; const f = e.flightState(); setFl8({ flying: f.flying, alt: f.alt, h: f.h }); setCata(e.cataclysmState()); setCharge(e.chargeProgress()); setSpiritN(e.spirits.length); }, 66);
     return () => clearInterval(id);
   }, [getEngine]);
   const chargeDown = useRef<{ id: string; t: number } | null>(null);
@@ -401,7 +402,7 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       )}
       {toast && (
-        <div key={toast.k} className="magic-toast absolute left-1/2 bottom-full mb-3 px-3 py-1 rounded-lg glass-panel text-[12px] font-black whitespace-nowrap" style={{ color: toast.color, borderColor: toast.color }}>
+        <div key={toast.k} data-hud="magic-toast" className="magic-toast absolute left-1/2 bottom-full px-3 py-1 rounded-lg glass-panel text-[12px] font-black whitespace-nowrap pointer-events-none" style={{ color: toast.color, borderColor: toast.color, marginBottom: portrait ? 270 : 12 }}>
           ✦ {toast.text}
         </div>
       )}
@@ -437,9 +438,9 @@ export const HUD: React.FC<HUDProps> = ({
     <div data-hud="artifacts" className="absolute flex items-center gap-1 px-1 py-0.5 rounded-lg bg-slate-950/75 border border-amber-500/40 pointer-events-auto"
       style={portrait ? { top: 100, left: 6, maxWidth: 230, flexWrap: 'wrap' } : { top: 58, left: 104, maxWidth: 230, flexWrap: 'wrap' }}>
       <span className="text-[7px] font-bold tracking-widest text-amber-300/90 pr-0.5">RELICS</span>
-      {deep.artifacts.map((a) => { const I = ART_ICON[a.icon] ?? Sparkles; return (
+      {deep.artifacts.map((a) => { return (
         <div key={a.id} data-artifact={a.id} className="relative w-6 h-6 rounded-md flex items-center justify-center bg-slate-900" style={{ border: `1px solid ${a.color}`, boxShadow: `0 0 6px ${a.color}88` }} onClick={() => setArtTip(artTip === a.id ? null : a.id)}>
-          <I className="w-3.5 h-3.5" style={{ color: a.color }} />
+          <MagicGlyph k={`art:${a.id}`} size={20} color={a.color} />
           <span className="absolute -bottom-1 -right-1 min-w-[11px] h-[11px] rounded-full bg-black border border-amber-400 text-[7px] leading-[9px] font-black text-amber-300 text-center">{a.level}</span>
           {artTip === a.id && <div className="absolute top-full mt-1 left-0 px-2 py-1 rounded-md glass-panel text-[10px] text-white whitespace-nowrap z-20"><b style={{ color: a.color }}>{a.name}</b> Lv{a.level}: {a.desc}</div>}
         </div>); })}
@@ -532,35 +533,46 @@ export const HUD: React.FC<HUDProps> = ({
     </button>
   );
 
-  const fk = fl8.meter / fl8.max;
-  const wingsReady = fl8.lock <= 0 && (fl8.flying || fl8.meter >= 1);
+  const cataBlock = cata && (
+    <>
+      <div data-hud="cataclysm" data-meter={cata.meter} data-phase={cata.phase} className="absolute pointer-events-none flex items-center gap-1" style={portrait ? { top: 136, left: 8 } : { top: 58, left: 10 }}>
+        <span className="text-[8px] font-black tracking-wider" style={{ color: cata.pending ? '#fda4af' : '#fecdd3' }}>{cata.cooldown > 0 && cata.phase === 'idle' ? `CATACLYSM ${Math.ceil(cata.cooldown)}s` : 'CATACLYSM'}</span>
+        <div className="w-[88px] h-[7px] rounded-full bg-slate-950/90 border border-rose-900 overflow-hidden">
+          <div className="h-full" style={{ width: `${cata.phase === 'idle' ? cata.meter : 100}%`, background: 'linear-gradient(90deg,#f97316,#f43f5e,#e879f9)', boxShadow: cata.meter >= 100 ? '0 0 8px #f43f5e' : undefined }} />
+        </div>
+      </div>
+      {cata.phase === 'scene' && (
+        <div data-hud="scene-timer" className="absolute pointer-events-none flex flex-col items-center" style={{ top: portrait ? 112 : 70, left: '50%', transform: 'translateX(-50%)' }}>
+          <span className="text-[10px] font-black tracking-[0.2em]" style={{ color: cata.color, textShadow: '0 1px 3px #000' }}>{cata.name.toUpperCase()} · {Math.ceil(cata.left)}s</span>
+          <div className="w-[180px] h-[6px] rounded-full bg-slate-950/90 border border-slate-700 overflow-hidden"><div className="h-full" style={{ width: `${(cata.left / cata.max) * 100}%`, background: cata.color }} /></div>
+        </div>
+      )}
+      {((cata.phase === 'scene' && cata.t < 3.2) || cata.phase === 'collapse') && (
+        <div data-hud="scene-title" className="absolute inset-x-0 pointer-events-none flex flex-col items-center" style={{ top: '30%', opacity: cata.phase === 'collapse' ? Math.min(1, cata.t / 1.2) : Math.min(1, (3.2 - cata.t) / 0.8) }}>
+          <div className="font-black tracking-[0.25em] text-center" style={{ fontFamily: 'Cinzel, Georgia, serif', fontSize: portrait ? 22 : 34, color: '#fff', textShadow: `0 0 18px ${cata.color}, 0 2px 4px #000` }}>{cata.title}</div>
+          <div className="text-[12px] font-bold tracking-[0.3em] mt-1" style={{ color: cata.color, textShadow: '0 1px 3px #000' }}>{cata.name.toUpperCase()}</div>
+          <div className="text-[10px] italic text-slate-200 mt-1">{cata.sub}</div>
+        </div>
+      )}
+      {cata.phase === 'crack' && <div data-hud="crack-flash" className="absolute inset-0 pointer-events-none" style={{ boxShadow: `inset 0 0 ${80 + 120 * Math.min(1, cata.t / 2)}px rgba(244,63,94,0.6)` }} />}
+    </>
+  );
   const flightBlock = (
     <>
       <button
         data-hud="flight" data-flying={fl8.flying ? '1' : '0'}
         onPointerDown={(e) => { e.stopPropagation(); getEngine?.()?.toggleFlight(); setHint(false); }}
-        className={`absolute rounded-full flex flex-col items-center justify-center border-2 pointer-events-auto cursor-pointer ${fl8.flying ? 'border-cyan-200 bg-cyan-700/85 text-white' : wingsReady ? 'border-cyan-300 bg-slate-900/85 text-cyan-100' : 'border-slate-600 bg-slate-900/80 text-slate-500'}`}
+        className={`absolute rounded-full flex flex-col items-center justify-center border-2 pointer-events-auto cursor-pointer ${fl8.flying ? 'border-cyan-200 bg-cyan-700/85 text-white' : 'border-cyan-300 bg-slate-900/85 text-cyan-100'}`}
         style={{ ...(portrait ? { bottom: 36, right: 102, width: 76, height: 76 } : { bottom: 10, right: 86, width: 70, height: 70 }), boxShadow: fl8.flying ? '0 0 22px rgba(103,232,249,0.8)' : undefined }}
       >
-        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" width="100%" height="100%">
-          <circle cx="40" cy="40" r="37" fill="none" stroke="#0b1220" strokeWidth="4" opacity="0.7" />
-          <circle data-flight-ring cx="40" cy="40" r="37" fill="none" stroke={fl8.lock > 0 ? '#f87171' : fk < 0.3 ? '#fbbf24' : '#67e8f9'} strokeWidth="4" strokeDasharray="232.5" strokeDashoffset={232.5 * (1 - fk)} strokeLinecap="round" />
-        </svg>
         <svg viewBox="0 0 48 28" width="40" height="24" style={{ filter: 'drop-shadow(0 0 4px #67e8f9)' }}>
           <path d="M24 20 C18 6 8 2 1 4 C6 8 6 12 3 14 C8 14 10 17 8 20 C13 19 17 21 24 22 Z M24 20 C30 6 40 2 47 4 C42 8 42 12 45 14 C40 14 38 17 40 20 C35 19 31 21 24 22 Z" fill="currentColor" />
         </svg>
-        <span className="text-[9px] font-black tracking-wider">{fl8.lock > 0 ? fl8.lock.toFixed(1) : fl8.flying ? 'LAND' : 'FLY'}</span>
+        <span className="text-[9px] font-black tracking-wider">{fl8.flying ? (fl8.alt === 'soar' ? 'SOAR' : 'LAND') : 'FLY'}</span>
       </button>
-      <div data-hud="flight-meter" className="absolute pointer-events-none flex items-center gap-1" style={portrait ? { bottom: 116, right: 104 } : { bottom: 84, right: 80 }}>
-        <span className="text-[8px] font-black text-cyan-200">WINGS</span>
-        <div className="w-[64px] h-[6px] rounded-full bg-slate-900/90 border border-cyan-900 overflow-hidden">
-          <div className="h-full" style={{ width: `${fk * 100}%`, background: fl8.lock > 0 ? '#f87171' : 'linear-gradient(90deg,#22d3ee,#a5f3fc)' }} />
-        </div>
-        <span className="text-[8px] font-bold text-cyan-100 w-6">{fl8.meter.toFixed(1)}s</span>
-      </div>
       {hint && (
         <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { top: 150, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : { bottom: 100, right: 80 }}>
-          🪽 Tap the wings to fly and rain magic from above
+          🪽 Tap the wings to fly freely
         </div>
       )}
     </>
@@ -592,6 +604,7 @@ export const HUD: React.FC<HUDProps> = ({
       {joystickBlock}
       {dashBlock}
       {flightBlock}
+      {cataBlock}
     </div>
   );
 };

@@ -71,7 +71,7 @@ define(['./workbox-2e588c67'], (function (workbox) { 'use strict';
 
   importScripts("sw-cleanup.js");
   workbox.setCacheNameDetails({
-    prefix: "msdeep-202611040044"
+    prefix: "msdeep-202611040117"
   });
   self.skipWaiting();
   workbox.clientsClaim();
@@ -88,12 +88,12 @@ define(['./workbox-2e588c67'], (function (workbox) { 'use strict';
   workbox.registerRoute(({
     request
   }) => request.mode === "navigate", new workbox.NetworkFirst({
-    "cacheName": "msdeep-pages-202611040044",
+    "cacheName": "msdeep-pages-202611040117",
     "networkTimeoutSeconds": 4,
     plugins: []
   }), 'GET');
   workbox.registerRoute(/\/assets\/.*-[A-Za-z0-9_-]{8}\.(js|css)$/, new workbox.CacheFirst({
-    "cacheName": "msdeep-assets-202611040044",
+    "cacheName": "msdeep-assets-202611040117",
     plugins: [new workbox.ExpirationPlugin({
       maxEntries: 80
     })]

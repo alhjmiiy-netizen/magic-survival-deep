@@ -37,6 +37,7 @@ import { ComboModal } from './components/ComboModal';
 import { EncyclopediaModal } from './components/EncyclopediaModal';
 import { ResearchLetterModal } from './components/ResearchLetterModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { MagicGlyph } from './components/MagicIcons';
 import { sound } from './audio/soundEngine';
 import { Play, RotateCcw, BookMarked, User, MapPin, Sparkles, Home, LogOut, BookOpen } from 'lucide-react';
 import { Settings as SettingsIcon, X } from 'lucide-react';
@@ -590,6 +591,15 @@ export default function App() {
                     <div key={k} className="ps-row"><span>{k}</span><b style={{ color: c }}>{v}</b></div>
                   ))}
                 </div>
+                {(() => { const arts = engineRef.current?.deepState().artifacts ?? []; return (
+                  <div className="ms-card" data-pause="artifacts" style={{ maxWidth: 420, padding: '8px 10px', margin: '8px auto' }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 2, color: '#fbbf24', marginBottom: 4 }}>ARTIFACTS ({arts.length})</div>
+                    {arts.length === 0 ? <div style={{ fontSize: 11, color: '#94a3b8' }}>None yet — open treasure chests to collect relics.</div> :
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{arts.map((a) => (
+                        <div key={a.id} data-pause-artifact={a.id} title={a.desc} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#e2e8f0', border: `1px solid ${a.color}`, borderRadius: 6, padding: '2px 6px' }}>
+                          <MagicGlyph k={`art:${a.id}`} size={18} color={a.color} /><b style={{ color: a.color }}>{a.name}</b>{a.level > 1 ? ` ${a.level}` : ''}
+                        </div>))}</div>}
+                  </div>); })()}
                 <button className="ms-glowtext" data-action="resume" onClick={togglePause}>Resume Game</button>
                 <div className="ps-icons">
                   <button className="ms-ibtn" aria-label="Story" onClick={() => setIsStoryOpen(true)}><BookMarked /></button>

@@ -1,3 +1,4 @@
+import { RARITY_COLOR } from '../game/deep';
 import React from 'react';
 import { sound } from '../audio/soundEngine';
 import type { UpgradeChoice } from '../game/spells';
@@ -25,16 +26,17 @@ function Card({ c, onPick }: { c: UpgradeChoice; onPick: (id: string) => void })
   const evo = c.kind === 'evolve';
   const key = glyphKeyFor(c.id, c.level, c.kind);
   const tag = ELEMENT_TAG[spellId];
-  const accent = evo ? '#ffd700' : tag?.[1] ?? GLYPHS[key]?.c ?? c.color;
+  const rc = c.rarity ? RARITY_COLOR[c.rarity] : null;
+  const accent = rc ?? (evo ? '#ffd700' : tag?.[1] ?? GLYPHS[key]?.c ?? c.color);
   const [name, lvl] = c.title.includes(' Lv ') ? c.title.split(' Lv ') : [c.title, ''];
   const max = maxFor(c, spellId);
   const cur = c.level ?? (lvl ? Number(lvl) : 0);
   return (
     <div data-choice={c.id} role="button" data-kind={c.kind} onClick={() => { sound.playItemUse(); onPick(c.id); }}
-      className={`ms-card lv-card ${evo ? 'evo evo-card' : ''}`} style={{ ['--acc' as string]: accent }}>
+      data-rarity={c.rarity} className={`ms-card lv-card ${evo ? 'evo evo-card' : ''} ${c.rarity ? 'rar-' + c.rarity : ''}`} style={{ ['--acc' as string]: accent, ...(rc ? { borderColor: rc, boxShadow: `0 0 ${c.rarity === 'epic' ? 18 : 10}px ${rc}88` } : {}) }}>
       <div className="lv-ic"><MagicGlyph k={key} size={40} /></div>
       <div className="lv-body">
-        <div className="lv-kind"><span style={{ color: accent }}>{evo ? `★ EVOLVE${c.level === 2 ? ' · FINAL' : ''}` : KIND_LABEL[c.kind]}</span>{tag && <span className="lv-tag" style={{ color: tag[1], borderColor: tag[1] }}>{tag[0]}</span>}</div>
+        <div className="lv-kind"><span style={{ color: accent }}>{evo ? `★ EVOLVE${c.level === 2 ? ' · FINAL' : ''}` : KIND_LABEL[c.kind]}</span>{c.rarity && <span className="lv-tag" data-rarity-badge style={{ color: rc!, borderColor: rc! }}>{c.rarity.toUpperCase()}</span>}{tag && <span className="lv-tag" style={{ color: tag[1], borderColor: tag[1] }}>{tag[0]}</span>}</div>
         <div className="lv-row"><span className="lv-name">{name}</span>{lvl && <span className="lv-lvl">Lv {lvl}</span>}</div>
         <div className="lv-desc">{c.desc}</div>
         {max > 1 && max <= 12 && <div className="lv-pips">{Array.from({ length: max }, (_, i) => <i key={i} className={i < cur ? 'on' : ''} />)}</div>}

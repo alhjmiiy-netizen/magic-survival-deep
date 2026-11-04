@@ -40,17 +40,48 @@ export const SYNERGIES: Synergy[] = [
 ];
 export const SYNERGY_MIN_LEVEL = 3;
 
-export interface Artifact { id: string; name: string; icon: string; color: string; max: number; desc: (lv: number) => string; }
+export type Rarity = 'normal' | 'rare' | 'epic';
+export const RARITY_COLOR: Record<Rarity, string> = { normal: '#cbd5e1', rare: '#38bdf8', epic: '#c084fc' };
+export const RARITY_WEIGHT: Record<Rarity, number> = { normal: 60, rare: 30, epic: 10 };
+export interface Artifact { id: string; name: string; icon: string; color: string; max: number; rarity: Rarity; tags?: string[]; desc: (lv: number) => string; }
+const A = (rarity: Rarity, id: string, name: string, color: string, max: number, desc: (l: number) => string, tags?: string[]): Artifact => ({ id, name, icon: id, color, max, rarity, desc, tags });
 export const ARTIFACTS: Artifact[] = [
-  { id: 'eye', name: 'Eye of Ruin', icon: 'Eye', color: '#f87171', max: 3, desc: (l) => `+${8 * l}% critical chance` },
-  { id: 'hourglass', name: 'Hourglass of Ages', icon: 'Hourglass', color: '#facc15', max: 3, desc: (l) => `-${7 * l}% spell cooldowns` },
-  { id: 'lodestone', name: 'Lodestone Heart', icon: 'Magnet', color: '#38bdf8', max: 3, desc: (l) => `+${60 * l} pickup (magnet) range` },
-  { id: 'titan', name: "Titan's Blood", icon: 'Heart', color: '#ef4444', max: 3, desc: (l) => `+${150 * l} max HP` },
-  { id: 'phoenix', name: 'Phoenix Feather', icon: 'Feather', color: '#fb923c', max: 1, desc: () => 'Revive once at 60% HP' },
-  { id: 'prism', name: 'Split Prism', icon: 'Triangle', color: '#a78bfa', max: 2, desc: (l) => `+${l} projectile/bolt per cast` },
-  { id: 'sigil', name: "Giant's Sigil", icon: 'Hexagon', color: '#34d399', max: 3, desc: (l) => `+${15 * l}% spell area` },
-  { id: 'slayer', name: "Slayer's Brand", icon: 'Sword', color: '#e879f9', max: 3, desc: (l) => `+${35 * l}% damage vs elites & bosses` },
-  { id: 'crown', name: 'Ember Crown', icon: 'Crown', color: '#fbbf24', max: 3, desc: (l) => `+${12 * l}% spell damage` },
+  // ---- Normal ----
+  A('normal', 'eye', 'Eye of Ruin', '#f87171', 3, (l) => `+${8 * l}% critical chance`),
+  A('normal', 'lodestone', 'Lodestone Heart', '#38bdf8', 3, (l) => `+${60 * l} pickup (magnet) range`),
+  A('normal', 'titan', "Titan's Blood", '#ef4444', 3, (l) => `+${150 * l} max HP`),
+  A('normal', 'firefly', 'Firefly', '#a3e635', 3, (l) => `+${2 * l} Spirits orbiting you`, ['spirit']),
+  A('normal', 'hermes', 'Hermes Sandal', '#fde68a', 3, (l) => `+${10 * l}% move speed`),
+  A('normal', 'amber', 'Amber Heart', '#f59e0b', 3, (l) => `Regenerate ${3 * l} HP per second`),
+  A('normal', 'wing_feather', 'Wing Feather', '#e0f2fe', 3, (l) => `+${12 * l}% flight speed`, ['flight']),
+  A('normal', 'storm_rod', 'Storm Rod', '#fde047', 3, (l) => `Thunder: +${l} extra strike`, ['thunder']),
+  A('normal', 'frost_ring', 'Frost Ring', '#a5f3fc', 3, (l) => `Frost Nova: +${20 * l}% area`, ['ice']),
+  A('normal', 'ember_seed', 'Ember Seed', '#fb923c', 3, (l) => `Meteor: +${15 * l}% damage`, ['fire']),
+  A('normal', 'whetstone', 'Whetstone', '#c4b5fd', 3, (l) => `Arcane Blades: +${l} blade`, ['arcane']),
+  A('normal', 'golden_idol', 'Golden Idol', '#facc15', 3, (l) => `+${30 * l}% gold gained`),
+  A('normal', 'scholar_lens', "Scholar's Lens", '#5eead4', 3, (l) => `+${15 * l}% experience gained`),
+  // ---- Rare ----
+  A('rare', 'hourglass', 'Hourglass of Ages', '#facc15', 3, (l) => `-${7 * l}% spell cooldowns`),
+  A('rare', 'prism', 'Split Prism', '#a78bfa', 2, (l) => `+${l} projectile/bolt per cast`),
+  A('rare', 'sigil', "Giant's Sigil", '#34d399', 3, (l) => `+${15 * l}% spell area`),
+  A('rare', 'slayer', "Slayer's Brand", '#e879f9', 3, (l) => `+${35 * l}% damage vs elites & bosses`),
+  A('rare', 'crown', 'Ember Crown', '#fbbf24', 3, (l) => `+${12 * l}% spell damage`),
+  A('rare', 'storm_heart', 'Storm Heart', '#f472b6', 2, (l) => `Cataclysm meter fills ${30 * l}% faster`, ['cataclysm']),
+  A('rare', 'sky_talon', 'Sky Talon', '#7dd3fc', 3, (l) => `+${20 * l}% damage while soaring`, ['flight']),
+  A('rare', 'gale_wings', 'Gale Wings', '#bae6fd', 1, () => 'Takeoff releases a knockback shockwave', ['flight']),
+  A('rare', 'thermal_coil', 'Thermal Coil', '#fdba74', 2, (l) => `Steam clouds +${50 * l}% damage`),
+  A('rare', 'fusion_core', 'Fusion Core', '#f0abfc', 2, (l) => `Fusions: -${l}s cooldown, +${25 * l}% damage`),
+  A('rare', 'charge_battery', 'Charge Battery', '#fef08a', 2, (l) => `Charged blasts charge ${30 * l}% faster`),
+  A('rare', 'vampire_fang', 'Vampire Fang', '#dc2626', 3, (l) => `Heal ${2 * l} HP per kill`),
+  A('rare', 'iron_skin', 'Iron Skin', '#94a3b8', 3, (l) => `-${10 * l}% damage taken`),
+  // ---- Epic ----
+  A('epic', 'phoenix', 'Phoenix Feather', '#fb923c', 1, () => 'Revive once at 60% HP'),
+  A('epic', 'second_heart', 'Second Heart', '#fb7185', 1, () => 'Revive 1 more time, +50% max HP'),
+  A('epic', 'ether_arrow', 'Ether Arrow', '#67e8f9', 1, () => '-20% Arcane Blades (magic bolt) & Spirit cooldown', ['arcane', 'spirit']),
+  A('epic', 'cataclysm_shard', 'Cataclysm Shard', '#f43f5e', 1, () => 'Cataclysm scenes +15s and drop an extra chest', ['cataclysm']),
+  A('epic', 'archmage_tome', "Archmage's Tome", '#818cf8', 1, () => '+25% spell damage, +10% area'),
+  A('epic', 'eye_of_storm', 'Eye of the Storm', '#fde047', 1, () => 'While flying, call lightning every 8s', ['flight']),
+  A('epic', 'twin_soul', 'Twin Soul', '#2dd4bf', 1, () => '+4 Spirits, +30% Spirit damage', ['spirit']),
 ];
 export const artifactById = (id: string) => ARTIFACTS.find((a) => a.id === id)!;
 

@@ -725,10 +725,12 @@ export class VisualRenderer {
     ctx.save();
     ctx.translate(x, y);
     // soft ground shadow (shrinks as the mage rises)
-    const sh = (1 - (baseLift - 11) / 30) * (1 - 0.6 * flyH);
-    ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`;
+    // hover: shadow shrinks; soar (flyH > 1): shadow fades but stretches long behind the flight path
+    const sh = Math.max(0.2, (1 - (baseLift - 11) / 30) * (1 - 0.45 * Math.min(1, flyH)));
+    const soarK = Math.max(0, flyH - 1);
+    ctx.fillStyle = `rgba(0,0,0,${Math.max(0.08, 0.42 * sh - 0.1 * soarK)})`;
     ctx.beginPath();
-    ctx.ellipse(0, 22, 20 * sh, 6.5 * sh, 0, 0, Math.PI * 2);
+    ctx.ellipse(-Math.cos(angle) * 30 * soarK, 22 - Math.sin(angle) * 10 * soarK, 20 * sh * (1 + 1.6 * soarK), 6.5 * sh, soarK > 0 ? angle : 0, 0, Math.PI * 2);
     ctx.fill();
     // runic ground circle + aura
     ctx.globalCompositeOperation = 'lighter';

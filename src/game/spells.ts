@@ -71,6 +71,7 @@ export interface UpgradeChoice {
   icon: string;
   color: string;
   level?: number; // resulting level
+  rarity?: 'normal' | 'rare' | 'epic';
 }
 
 export const PASSIVES: Record<string, { title: string; desc: string; icon: string }> = {

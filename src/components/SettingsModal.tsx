@@ -21,14 +21,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onToggleAutoAim,
   onClose,
 }) => {
-  const [sfxVol, setSfxVol] = useState(70);
+  const [sfxVol, setSfxVol] = useState(Math.round(sound.masterVolume * 100));
+  const [sfxOn, setSfxOn] = useState(sound.sfxOn);
   const [musicVol, setMusicVol] = useState(40);
   const [muted, setMuted] = useState(false);
 
   const handleSfxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     setSfxVol(val);
-    sound.setSfxVolume(val / 100);
+    sound.setMasterVolume(val / 100);
   };
 
   const handleMusicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +83,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="space-y-3 bg-slate-900/70 p-4 rounded-xl border border-slate-800 text-xs">
               <div>
                 <div className="flex justify-between mb-1 text-slate-300">
-                  <span>Spell & Combat SFX</span>
+                  <span>Master Volume</span>
                   <span className="font-mono font-bold text-amber-400">{sfxVol}%</span>
                 </div>
                 <input
@@ -110,9 +111,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
 
+              <label data-setting="sfx" className="flex items-center justify-between text-slate-300 cursor-pointer">
+                <span>Sound Effects</span>
+                <input type="checkbox" checked={sfxOn} onChange={(e) => { setSfxOn(e.target.checked); sound.setSfxEnabled(e.target.checked); }} className="accent-amber-500 w-4 h-4" />
+              </label>
               <div className="pt-2 flex justify-end">
                 <button
-                  onClick={() => sound.playLevelUp()}
+                  onClick={() => { sound.unlock(); sound.play('thunder', 1); }}
                   className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-cinzel text-amber-300 border border-slate-700 cursor-pointer"
                 >
                   Test Audio Chime
