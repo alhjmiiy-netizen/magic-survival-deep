@@ -22,6 +22,8 @@ export interface Enemy {
   glowColor: string;
   isBoss?: boolean;
   frozenUntil?: number;
+  /** v7: game-time seconds until which the demon moves at half speed */
+  slowUntil?: number;
   burnUntil?: number;
   hitFlash?: number;
   attackCooldown?: number;

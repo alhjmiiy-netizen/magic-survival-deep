@@ -1,0 +1,1065 @@
+{
+ "pairs": {
+  "fire+ice": {
+   "triggered": 1,
+   "key": "fire+ice",
+   "hits": 14,
+   "dmg": 2366,
+   "meter": 30,
+   "sound": true,
+   "cd": 4,
+   "zones": 1,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Steam Burst +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+lightning": {
+   "triggered": 1,
+   "key": "fire+lightning",
+   "hits": 14,
+   "dmg": 2856,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 6,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Steam Burst +22",
+    "Plasma Nova +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+lightning": {
+   "triggered": 1,
+   "key": "ice+lightning",
+   "hits": 20,
+   "dmg": 1692,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 6,
+   "frozen": 14,
+   "feed": [
+    "Plasma Nova +22",
+    "Steam Burst +22",
+    "Frozen Spark +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+fire": {
+   "triggered": 1,
+   "key": "arcane+fire",
+   "hits": 77,
+   "dmg": 10106,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 6,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Frozen Spark +22",
+    "Steam Burst +22",
+    "Hex Inferno +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+ice": {
+   "triggered": 1,
+   "key": "arcane+ice",
+   "hits": 26,
+   "dmg": 2444,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 8,
+   "frozen": 13,
+   "feed": [
+    "Hex Inferno +22",
+    "Arc Storm +22",
+    "Prism Shatter +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+lightning": {
+   "triggered": 1,
+   "key": "arcane+lightning",
+   "hits": 53,
+   "dmg": 4641,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Arc Storm +22",
+    "Prism Shatter +22",
+    "Arc Storm +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+spirit": {
+   "triggered": 1,
+   "key": "fire+spirit",
+   "hits": 12,
+   "dmg": 1224,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 1,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Arc Storm +22",
+    "Astral Echo +22",
+    "Soulfire +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+spirit": {
+   "triggered": 1,
+   "key": "ice+spirit",
+   "hits": 11,
+   "dmg": 1463,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 11,
+   "feed": [
+    "Soulfire +22",
+    "Toxic Blaze +22",
+    "Wraith Frost +22"
+   ],
+   "repeatBlocked": true
+  },
+  "lightning+spirit": {
+   "triggered": 1,
+   "key": "lightning+spirit",
+   "hits": 4,
+   "dmg": 292,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 4,
+   "frozen": 0,
+   "feed": [
+    "Wraith Frost +22",
+    "Blizzard Gale +22",
+    "Storm Wraiths +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+spirit": {
+   "triggered": 1,
+   "key": "arcane+spirit",
+   "hits": 11,
+   "dmg": 671,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Storm Wraiths +22",
+    "Magnet Quake +22",
+    "Astral Echo +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+poison": {
+   "triggered": 1,
+   "key": "fire+poison",
+   "hits": 14,
+   "dmg": 1106,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 5,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Astral Echo +22",
+    "Mana Tide +22",
+    "Toxic Blaze +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+wind": {
+   "triggered": 1,
+   "key": "fire+wind",
+   "hits": 28,
+   "dmg": 3398,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 2,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Toxic Blaze +22",
+    "Solar Flare +22",
+    "Firestorm +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+fire": {
+   "triggered": 1,
+   "key": "earth+fire",
+   "hits": 85,
+   "dmg": 12441,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 7,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Firestorm +22",
+    "Steam Burst +22",
+    "Magma Eruption +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+water": {
+   "triggered": 1,
+   "key": "fire+water",
+   "hits": 28,
+   "dmg": 3256,
+   "meter": 54,
+   "sound": true,
+   "cd": 4,
+   "zones": 2,
+   "beams": 8,
+   "frozen": 0,
+   "feed": [
+    "Magma Eruption +22",
+    "Magnet Quake +22",
+    "Scald Geyser +22"
+   ],
+   "repeatBlocked": true
+  },
+  "fire+light": {
+   "triggered": 1,
+   "key": "fire+light",
+   "hits": 14,
+   "dmg": 3010,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Scald Geyser +22",
+    "Hex Inferno +22",
+    "Solar Flare +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+poison": {
+   "triggered": 1,
+   "key": "ice+poison",
+   "hits": 29,
+   "dmg": 2593,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 10,
+   "frozen": 0,
+   "feed": [
+    "Solar Flare +22",
+    "Soulfire +22",
+    "Venom Frost +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+wind": {
+   "triggered": 1,
+   "key": "ice+wind",
+   "hits": 14,
+   "dmg": 1903,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 14,
+   "feed": [
+    "Soulfire +22",
+    "Venom Frost +22",
+    "Blizzard Gale +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+ice": {
+   "triggered": 1,
+   "key": "earth+ice",
+   "hits": 94,
+   "dmg": 12147,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 14,
+   "feed": [
+    "Venom Frost +22",
+    "Blizzard Gale +22",
+    "Permafrost Spikes +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+water": {
+   "triggered": 1,
+   "key": "ice+water",
+   "hits": 14,
+   "dmg": 1764,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Blizzard Gale +22",
+    "Permafrost Spikes +22",
+    "Glacier Tide +22"
+   ],
+   "repeatBlocked": true
+  },
+  "ice+light": {
+   "triggered": 1,
+   "key": "ice+light",
+   "hits": 17,
+   "dmg": 1655,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 14,
+   "frozen": 10,
+   "feed": [
+    "Permafrost Spikes +22",
+    "Glacier Tide +22",
+    "Diamond Dust +22"
+   ],
+   "repeatBlocked": true
+  },
+  "lightning+poison": {
+   "triggered": 1,
+   "key": "lightning+poison",
+   "hits": 10,
+   "dmg": 1000,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 10,
+   "frozen": 0,
+   "feed": [
+    "Glacier Tide +22",
+    "Diamond Dust +22",
+    "Neurotoxin Arc +22"
+   ],
+   "repeatBlocked": true
+  },
+  "lightning+wind": {
+   "triggered": 1,
+   "key": "lightning+wind",
+   "hits": 14,
+   "dmg": 1716,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Neurotoxin Arc +22",
+    "Frozen Spark +22",
+    "Thunder Squall +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+lightning": {
+   "triggered": 1,
+   "key": "earth+lightning",
+   "hits": 14,
+   "dmg": 2198,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Thunder Squall +22",
+    "Plasma Nova +22",
+    "Magnet Quake +22"
+   ],
+   "repeatBlocked": true
+  },
+  "lightning+water": {
+   "triggered": 1,
+   "key": "lightning+water",
+   "hits": 14,
+   "dmg": 1526,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 14,
+   "frozen": 0,
+   "feed": [
+    "Magnet Quake +22",
+    "Arc Storm +22",
+    "Electrified Tide +22"
+   ],
+   "repeatBlocked": true
+  },
+  "light+lightning": {
+   "triggered": 1,
+   "key": "light+lightning",
+   "hits": 24,
+   "dmg": 2832,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 10,
+   "frozen": 0,
+   "feed": [
+    "Electrified Tide +22",
+    "Storm Wraiths +22",
+    "Divine Thunder +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+poison": {
+   "triggered": 1,
+   "key": "arcane+poison",
+   "hits": 14,
+   "dmg": 1080,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 4,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Divine Thunder +22",
+    "Purge +22",
+    "Hex Miasma +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+wind": {
+   "triggered": 1,
+   "key": "arcane+wind",
+   "hits": 21,
+   "dmg": 1872,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 8,
+   "frozen": 0,
+   "feed": [
+    "Purge +22",
+    "Hex Miasma +22",
+    "Astral Gust +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+earth": {
+   "triggered": 1,
+   "key": "arcane+earth",
+   "hits": 32,
+   "dmg": 4644,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Astral Gust +22",
+    "Sandstorm +22",
+    "Runic Monolith +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+water": {
+   "triggered": 1,
+   "key": "arcane+water",
+   "hits": 14,
+   "dmg": 1968,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Runic Monolith +22",
+    "Mana Tide +22",
+    "Mana Tide +22"
+   ],
+   "repeatBlocked": true
+  },
+  "arcane+light": {
+   "triggered": 1,
+   "key": "arcane+light",
+   "hits": 17,
+   "dmg": 1598,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 6,
+   "frozen": 0,
+   "feed": [
+    "Mana Tide +22",
+    "Prismatic Ray +22",
+    "Prismatic Ray +22"
+   ],
+   "repeatBlocked": true
+  },
+  "poison+spirit": {
+   "triggered": 1,
+   "key": "poison+spirit",
+   "hits": 12,
+   "dmg": 1165,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 12,
+   "frozen": 0,
+   "feed": [
+    "Prismatic Ray +22",
+    "Prism Shatter +22",
+    "Plague Wraiths +22"
+   ],
+   "repeatBlocked": true
+  },
+  "spirit+wind": {
+   "triggered": 1,
+   "key": "spirit+wind",
+   "hits": 31,
+   "dmg": 3162,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Plague Wraiths +22",
+    "Toxic Blaze +22",
+    "Spirit Gale +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+spirit": {
+   "triggered": 1,
+   "key": "earth+spirit",
+   "hits": 14,
+   "dmg": 2636,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Spirit Gale +22",
+    "Storm Wraiths +22",
+    "Golem Stomp +22"
+   ],
+   "repeatBlocked": true
+  },
+  "spirit+water": {
+   "triggered": 1,
+   "key": "spirit+water",
+   "hits": 13,
+   "dmg": 1670,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Golem Stomp +22",
+    "Runic Monolith +22",
+    "Spirit Spring +22"
+   ],
+   "repeatBlocked": true
+  },
+  "light+spirit": {
+   "triggered": 1,
+   "key": "light+spirit",
+   "hits": 54,
+   "dmg": 5754,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 8,
+   "frozen": 0,
+   "feed": [
+    "Runic Monolith +22",
+    "Spirit Spring +22",
+    "Ascension +22"
+   ],
+   "repeatBlocked": true
+  },
+  "poison+wind": {
+   "triggered": 1,
+   "key": "poison+wind",
+   "hits": 28,
+   "dmg": 3102,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 2,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Ascension +22",
+    "Purge +22",
+    "Toxic Cyclone +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+poison": {
+   "triggered": 1,
+   "key": "earth+poison",
+   "hits": 15,
+   "dmg": 1305,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 5,
+   "frozen": 0,
+   "feed": [
+    "Purge +22",
+    "Toxic Cyclone +22",
+    "Blight Fissure +22"
+   ],
+   "repeatBlocked": true
+  },
+  "poison+water": {
+   "triggered": 1,
+   "key": "poison+water",
+   "hits": 14,
+   "dmg": 854,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 3,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Toxic Cyclone +22",
+    "Blight Fissure +22",
+    "Swamp Mire +22"
+   ],
+   "repeatBlocked": true
+  },
+  "light+poison": {
+   "triggered": 1,
+   "key": "light+poison",
+   "hits": 14,
+   "dmg": 2198,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Blight Fissure +22",
+    "Swamp Mire +22",
+    "Purge +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+wind": {
+   "triggered": 1,
+   "key": "earth+wind",
+   "hits": 14,
+   "dmg": 1510,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Purge +22",
+    "Diamond Dust +22",
+    "Sandstorm +22"
+   ],
+   "repeatBlocked": true
+  },
+  "water+wind": {
+   "triggered": 1,
+   "key": "water+wind",
+   "hits": 14,
+   "dmg": 1652,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Sandstorm +22",
+    "Magma Eruption +22",
+    "Typhoon +22"
+   ],
+   "repeatBlocked": true
+  },
+  "light+wind": {
+   "triggered": 1,
+   "key": "light+wind",
+   "hits": 14,
+   "dmg": 1862,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Typhoon +22",
+    "Electrified Tide +22",
+    "Halo Gust +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+water": {
+   "triggered": 1,
+   "key": "earth+water",
+   "hits": 14,
+   "dmg": 1865,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Halo Gust +22",
+    "Prismatic Ray +22",
+    "Mudslide +22"
+   ],
+   "repeatBlocked": true
+  },
+  "earth+light": {
+   "triggered": 1,
+   "key": "earth+light",
+   "hits": 11,
+   "dmg": 1994,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 0,
+   "frozen": 0,
+   "feed": [
+    "Mudslide +22",
+    "Golem Stomp +22",
+    "Crystal Bastion +22"
+   ],
+   "repeatBlocked": true
+  },
+  "light+water": {
+   "triggered": 1,
+   "key": "light+water",
+   "hits": 21,
+   "dmg": 1827,
+   "meter": 22,
+   "sound": true,
+   "cd": 4,
+   "zones": 0,
+   "beams": 7,
+   "frozen": 0,
+   "feed": [
+    "Crystal Bastion +22",
+    "Blight Fissure +22",
+    "Rainbow Torrent +22"
+   ],
+   "repeatBlocked": true
+  }
+ },
+ "keys": [
+  "fire+ice",
+  "fire+lightning",
+  "ice+lightning",
+  "arcane+fire",
+  "arcane+ice",
+  "arcane+lightning",
+  "fire+spirit",
+  "ice+spirit",
+  "lightning+spirit",
+  "arcane+spirit",
+  "fire+poison",
+  "fire+wind",
+  "earth+fire",
+  "fire+water",
+  "fire+light",
+  "ice+poison",
+  "ice+wind",
+  "earth+ice",
+  "ice+water",
+  "ice+light",
+  "lightning+poison",
+  "lightning+wind",
+  "earth+lightning",
+  "lightning+water",
+  "light+lightning",
+  "arcane+poison",
+  "arcane+wind",
+  "arcane+earth",
+  "arcane+water",
+  "arcane+light",
+  "poison+spirit",
+  "spirit+wind",
+  "earth+spirit",
+  "spirit+water",
+  "light+spirit",
+  "poison+wind",
+  "earth+poison",
+  "poison+water",
+  "light+poison",
+  "earth+wind",
+  "water+wind",
+  "light+wind",
+  "earth+water",
+  "earth+light",
+  "light+water"
+ ],
+ "chain": {
+  "fired": [
+   "fire+ice",
+   "arcane+lightning"
+  ],
+  "cds": {
+   "fire+ice": 4,
+   "arcane+lightning": 4
+  }
+ },
+ "cdExpiry": {
+  "gameSeconds": 4.06,
+  "retrigger": 1
+ },
+ "feedHud": 1,
+ "sfx": {
+  "fire+ice": {
+   "rms": 0.1312,
+   "zcr": 505
+  },
+  "fire+lightning": {
+   "rms": 0.1271,
+   "zcr": 540
+  },
+  "ice+lightning": {
+   "rms": 0.1306,
+   "zcr": 674
+  },
+  "arcane+fire": {
+   "rms": 0.1284,
+   "zcr": 320
+  },
+  "arcane+ice": {
+   "rms": 0.1321,
+   "zcr": 579
+  },
+  "arcane+lightning": {
+   "rms": 0.1337,
+   "zcr": 476
+  },
+  "fire+spirit": {
+   "rms": 0.1289,
+   "zcr": 310
+  },
+  "ice+spirit": {
+   "rms": 0.1284,
+   "zcr": 628
+  },
+  "lightning+spirit": {
+   "rms": 0.1302,
+   "zcr": 541
+  },
+  "arcane+spirit": {
+   "rms": 0.1288,
+   "zcr": 299
+  },
+  "fire+poison": {
+   "rms": 0.1292,
+   "zcr": 284
+  },
+  "fire+wind": {
+   "rms": 0.1206,
+   "zcr": 410
+  },
+  "earth+fire": {
+   "rms": 0.1658,
+   "zcr": 285
+  },
+  "fire+water": {
+   "rms": 0.0606,
+   "zcr": 743
+  },
+  "fire+light": {
+   "rms": 0.1359,
+   "zcr": 758
+  },
+  "ice+poison": {
+   "rms": 0.1293,
+   "zcr": 447
+  },
+  "ice+wind": {
+   "rms": 0.0494,
+   "zcr": 2113
+  },
+  "earth+ice": {
+   "rms": 0.1778,
+   "zcr": 370
+  },
+  "ice+water": {
+   "rms": 0.1316,
+   "zcr": 768
+  },
+  "ice+light": {
+   "rms": 0.1364,
+   "zcr": 992
+  },
+  "lightning+poison": {
+   "rms": 0.1331,
+   "zcr": 485
+  },
+  "lightning+wind": {
+   "rms": 0.1265,
+   "zcr": 613
+  },
+  "earth+lightning": {
+   "rms": 0.1629,
+   "zcr": 479
+  },
+  "lightning+water": {
+   "rms": 0.1304,
+   "zcr": 553
+  },
+  "light+lightning": {
+   "rms": 0.1381,
+   "zcr": 1281
+  },
+  "arcane+poison": {
+   "rms": 0.1302,
+   "zcr": 283
+  },
+  "arcane+wind": {
+   "rms": 0.1255,
+   "zcr": 358
+  },
+  "arcane+earth": {
+   "rms": 0.1188,
+   "zcr": 273
+  },
+  "arcane+water": {
+   "rms": 0.053,
+   "zcr": 568
+  },
+  "arcane+light": {
+   "rms": 0.1382,
+   "zcr": 732
+  },
+  "poison+spirit": {
+   "rms": 0.1284,
+   "zcr": 563
+  },
+  "spirit+wind": {
+   "rms": 0.125,
+   "zcr": 417
+  },
+  "earth+spirit": {
+   "rms": 0.1616,
+   "zcr": 331
+  },
+  "spirit+water": {
+   "rms": 0.1288,
+   "zcr": 264
+  },
+  "light+spirit": {
+   "rms": 0.047,
+   "zcr": 2958
+  },
+  "poison+wind": {
+   "rms": 0.1252,
+   "zcr": 418
+  },
+  "earth+poison": {
+   "rms": 0.193,
+   "zcr": 202
+  },
+  "poison+water": {
+   "rms": 0.0533,
+   "zcr": 594
+  },
+  "light+poison": {
+   "rms": 0.0564,
+   "zcr": 3190
+  },
+  "earth+wind": {
+   "rms": 0.1687,
+   "zcr": 392
+  },
+  "water+wind": {
+   "rms": 0.1247,
+   "zcr": 492
+  },
+  "light+wind": {
+   "rms": 0.1326,
+   "zcr": 975
+  },
+  "earth+water": {
+   "rms": 0.1694,
+   "zcr": 317
+  },
+  "earth+light": {
+   "rms": 0.1696,
+   "zcr": 788
+  },
+  "light+water": {
+   "rms": 0.1369,
+   "zcr": 1290
+  }
+ },
+ "screen": {
+  "open": true,
+  "cards": 45,
+  "icons": 46,
+  "counts": 45,
+  "stale": false
+ },
+ "errors": [],
+ "bad": [],
+ "ok": true
+}

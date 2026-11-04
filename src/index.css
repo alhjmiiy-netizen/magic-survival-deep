@@ -89,4 +89,4 @@ html, body, #root { height: 100%; background: #020617; overscroll-behavior: none
 @keyframes evoPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 .evo-card { animation: evoPulse 1.2s ease-in-out infinite; }
 @keyframes evoGlow { 0%,100% { box-shadow: 0 0 8px var(--c), 0 0 14px #fde04788; } 50% { box-shadow: 0 0 16px var(--c), 0 0 24px #fde047cc; } }
-.evo-tile { animation: evoGlow 1.6s ease-in-out infinite; }
+.evo-tile { box-shadow: 0 0 12px var(--c), 0 0 18px #fde047aa !important; } /* v7: static glow (animated box-shadow x8 tiles repainted every frame) */

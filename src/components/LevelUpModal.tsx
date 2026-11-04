@@ -1,3 +1,5 @@
+import { SPELLS2 } from '../game/spells2';
+import { EL_NAME, EL_COLOR } from '../game/elements';
 import { RARITY_COLOR } from '../game/deep';
 import React from 'react';
 import { sound } from '../audio/soundEngine';
@@ -12,6 +14,7 @@ const KIND_LABEL: Record<UpgradeChoice['kind'], string> = {
 
 export const ELEMENT_TAG: Record<string, [string, string]> = {
   thunderstorm: ['LIGHTNING', '#fde047'], frost_nova: ['FROST', '#a5f3fc'], cataclysm: ['FIRE', '#fb923c'], arcane_missiles: ['ARCANE', '#c4b5fd'], spirit: ['SPIRIT', '#5eead4'],
+  ...Object.fromEntries(SPELLS2.map((d) => [d.id, [EL_NAME[d.el].toUpperCase(), EL_COLOR[d.el]]])),
 };
 
 function maxFor(c: UpgradeChoice, spellId: string): number {

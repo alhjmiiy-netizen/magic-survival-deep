@@ -4,6 +4,7 @@
  */
 import { SPIRIT } from './spiritRoles';
 import { BASE_SPELLS, BASE_SPELL_IDS, MAX_SPIRITS, PASSIVES } from './spells';
+import { SPELL2_BY_ID } from './spells2';
 import { ARTIFACTS, ELEMENT_OF, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVEL, ENDLESS_BOSS_EVERY, ENDLESS_CAP, RARITY_WEIGHT, evoUnlockLevel } from './deep';
 import { ENEMY_DEFS, REGION_PACKS } from './enemies';
 import { SCENES } from './cataclysm';
@@ -16,9 +17,13 @@ export interface CodexEntry { id: string; tab: CodexTab; name: string; tag: stri
 
 export const fmtTime = (s: number) => (s % 60 === 0 ? `${s / 60} min` : s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`);
 const pct = (m: number) => `${Math.round((m - 1) * 100)}%`;
-export const ELEMENT_NAME: Record<string, string> = { fire: 'Fire', ice: 'Frost', lightning: 'Lightning', arcane: 'Arcane', spirit: 'Spirit' };
-const spellOfEl: Record<string, string> = { ...Object.fromEntries(Object.entries(ELEMENT_OF).map(([id, el]) => [el, id])), spirit: 'spirit' };
-export const PAIR_ELEMENTS = ['fire', 'ice', 'lightning', 'arcane', 'spirit'];
+export const ELEMENT_NAME: Record<string, string> = { fire: 'Fire', ice: 'Frost', lightning: 'Lightning', arcane: 'Arcane', spirit: 'Spirit', poison: 'Poison', wind: 'Wind', earth: 'Earth', water: 'Water', light: 'Light' };
+/** element -> every magic of that element (v7: several spells share an element) */
+const spellsOfEl: Record<string, string[]> = { spirit: ['spirit'] };
+for (const [id, el] of Object.entries(ELEMENT_OF)) (spellsOfEl[el] ??= []).push(id);
+const spellOfEl: Record<string, string> = Object.fromEntries(Object.entries(spellsOfEl).map(([el, ids]) => [el, ids[0]]));
+const anyOf = (el: string) => (spellsOfEl[el] ?? []).map((id) => BASE_SPELLS[id]?.name).filter(Boolean).join(' / ');
+export const PAIR_ELEMENTS = ['fire', 'ice', 'lightning', 'arcane', 'spirit', 'poison', 'wind', 'earth', 'water', 'light'];
 
 /** Extra entries registered by later systems (pairs, spirit roles, interactive background). */
 const extra: (() => CodexEntry[])[] = [];
@@ -68,6 +73,7 @@ export function buildCodex(): CodexEntry[] {
     const b = BASE_SPELLS[id]; const evo = EVOLUTIONS[id]; const el = id === 'spirit' ? 'spirit' : ELEMENT_OF[id];
     add({ id: 'magic:' + id, tab: 'magics', name: b.name, tag: ELEMENT_NAME[el], icon: 'glyph:' + id, lines: [
       b.description,
+      ...(SPELL2_BY_ID[id] ? [`Scaling: ${SPELL2_BY_ID[id].scaling}.`] : []),
       ...(evo ? [`Lv${evoUnlockLevel(0)} evolution: ${evo[0].name} — ${evo[0].desc}.`, `Lv${evoUnlockLevel(1)} final form: ${evo[1].name} — ${evo[1].desc}.`] : [`Up to ${MAX_SPIRITS} spirits.`]),
     ], stats: [['Damage', `${b.damage}`], ['Cooldown', `${b.cooldown} s`], ['Max level', `${b.maxLevel}`], ...(b.area ? [['Area', `${b.area}`] as [string, string]] : [])] });
   }
@@ -81,7 +87,7 @@ export function buildCodex(): CodexEntry[] {
   for (const [key, f] of Object.entries(T.FUSIONS)) {
     const [a, b] = key.split('+');
     add({ id: 'fusion:' + key, tab: 'fusions', name: f.name, tag: `${ELEMENT_NAME[a]} + ${ELEMENT_NAME[b]}`, icon: 'pair:' + key, lines: [
-      `Cast ${BASE_SPELLS[spellOfEl[a]].name} and ${BASE_SPELLS[spellOfEl[b]].name} within ${T.FUSION_WINDOW} s.`, ...(f as { desc?: string }).desc ? [(f as { desc?: string }).desc!] : [] ] });
+      `Cast ${anyOf(a)} and ${anyOf(b)} within ${T.FUSION_WINDOW} s.`, ...(f as { desc?: string }).desc ? [(f as { desc?: string }).desc!] : [] ] });
   }
   for (const s of SYNERGIES) add({ id: 'syn:' + s.id, tab: 'fusions', name: s.name, tag: `Synergy ${ELEMENT_NAME[s.a]}+${ELEMENT_NAME[s.b]}`, icon: 'glyph:' + spellOfEl[s.a], lines: [`${s.desc}.`, `Active while both magics are Lv${SYNERGY_MIN_LEVEL}+.`] });
   // ---------- Spirits ----------

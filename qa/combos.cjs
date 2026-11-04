@@ -4,7 +4,7 @@ const fs = require('fs');
 const [,, url, tag = 'v6-combos'] = process.argv;
 const DIR = '/workspace/deploy/magic-deep-shots/'; const S = (n) => `${DIR}${tag}-${n}.png`;
 const W = (p, ms) => p.waitForTimeout(ms); const E = (p, f, a) => p.evaluate(f, a);
-const SP = { fire: 'cataclysm', ice: 'frost_nova', lightning: 'thunderstorm', arcane: 'arcane_missiles', spirit: 'spirit' };
+const SP = { fire: 'cataclysm', ice: 'frost_nova', lightning: 'thunderstorm', arcane: 'arcane_missiles', spirit: 'spirit', poison: 'poison_cloud', wind: 'cyclone', earth: 'stone_spikes', water: 'tidal_wave', light: 'holy_smite' };
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/ungoogled-chromium/chrome', headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'] });
   const p = await (await b.newContext({ viewport: { width: 900, height: 600 } })).newPage();
@@ -19,7 +19,7 @@ const SP = { fire: 'cataclysm', ice: 'frost_nova', lightning: 'thunderstorm', ar
   const shots = [];
   for (const k of keys) {
     const [a, c] = k.split('+');
-    const r = await E(p, ({ a, c, k, SP }) => { const e = __engine; e.clearEnemies(); e.pairCd = {}; e.lastByEl = {}; e.cata.meter = 0; e.cata.pending = false; e.cata.recent = [];
+    const r = await E(p, ({ a, c, k, SP }) => { const e = __engine; e.clearEnemies(); e.pairCd = {}; e.lastByEl = {}; e.cata.meter = 0; e.cata.pending = false; e.cata.recent = []; e.cata.phase = 'idle'; e.cata.cdUntil = 0; e.cata.t = 0;
       for (let i = 0; i < 14; i++) e.spawnEnemy('imp', 140 + (i % 4) * 30, -60 + Math.floor(i / 4) * 40);
       for (const q of e.enemies) { q.hp = q.maxHp = 1e7; }
       const hp0 = e.enemies.reduce((s, q) => s + q.hp, 0); const m0 = e.cata.meter; const l0 = e.pairLog.length; window.__played = []; const z0 = e.zones.length, b0 = e.beams.length;
@@ -59,13 +59,14 @@ const SP = { fire: 'cataclysm', ice: 'frost_nova', lightning: 'thunderstorm', ar
 from PIL import Image, ImageDraw
 import json
 shots=json.loads(${JSON.stringify(JSON.stringify(shots))})
-W,H=450,300; sheet=Image.new('RGB',(W*5,(H+24)*2),(10,10,20)); d=ImageDraw.Draw(sheet)
+W,H=300,200; C=9; sheet=Image.new('RGB',(W*C,(H+24)*((len(shots)+C-1)//C)),(10,10,20)); d=ImageDraw.Draw(sheet)
 for i,(k,f) in enumerate(shots):
-  im=Image.open(f).convert('RGB').resize((W,H)); x=(i%5)*W; y=(i//5)*(H+24); sheet.paste(im,(x,y+24)); d.text((x+8,y+6),k,fill=(255,255,255))
-sheet.save('${DIR}v6-combos-sheet.png')`);
+  im=Image.open(f).convert('RGB').resize((W,H)); x=(i%C)*W; y=(i//C)*(H+24); sheet.paste(im,(x,y+24)); d.text((x+8,y+6),k,fill=(255,255,255))
+sheet.save('${DIR}'+'${tag}'+'-sheet.png')`);
   execSync('python3 /tmp/sheet.py');
   const P = Object.values(R.pairs);
-  R.ok = P.every((q) => q.triggered === 1 && q.hits > 0 && q.dmg > 0 && q.sound && q.meter > 0 && q.cd > 3.9 && q.repeatBlocked && q.feed.length) && R.chain.fired.length === 2 && R.cdExpiry.retrigger === 1 && R.screen.cards === 10 && R.screen.icons >= 10 && !R.screen.stale && new Set(Object.values(R.sfx).map((s) => s.zcr)).size === 10 && Object.values(R.sfx).every((s) => s.rms > 0.01) && !errs.length;
+  R.bad = Object.entries(R.pairs).filter(([, q]) => !(q.triggered === 1 && q.hits > 0 && q.dmg > 0 && q.sound && q.meter > 0 && q.cd > 3.9 && q.repeatBlocked)).map(([k]) => k);
+  R.ok = P.length === 45 && P.every((q) => q.triggered === 1 && q.hits > 0 && q.dmg > 0 && q.sound && q.meter > 0 && q.cd > 3.9 && q.repeatBlocked && q.feed.length) && R.chain.fired.length === 2 && R.cdExpiry.retrigger === 1 && R.screen.cards === 45 && R.screen.icons >= 45 && !R.screen.stale && new Set(Object.values(R.sfx).map((s) => s.zcr)).size >= 40 && Object.values(R.sfx).every((s) => s.rms > 0.01) && !errs.length;
   fs.writeFileSync(`qa/results/${tag}.json`, JSON.stringify(R, null, 1));
   console.log(JSON.stringify(R, null, 1));
 })();

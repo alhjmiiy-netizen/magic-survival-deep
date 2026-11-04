@@ -21,7 +21,7 @@ import { drawGlow } from './ArtKit';
 import { WeatherSystem } from './WeatherSystem';
 import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS, arenaTheme } from './arenas';
 import { HEROES_LIST } from './characters';
-import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
+import { BASE_SPELLS, BASE_SPELL_IDS, MAX_MAGIC_SLOTS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
 import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
 import { ENEMY_DEFS, NEW_ENEMY_TYPES, REGION_PACKS, ELITE_AURA } from './enemies';
 import { SPIRIT, spiritRole, ascension, spiritBuffs, spiritUnlockText, ROLE_COLOR, SpiritRole } from './spiritRoles';
@@ -29,6 +29,9 @@ import { renderNewEnemy, renderEliteAura, renderShot, renderSpirit, hasNewArt } 
 import { SCENES, SceneKind, renderScene, makeCracks, renderCracks } from './cataclysm';
 import { WorldGround, REBASE_AT, CHUNK } from './world';
 import { RARITY_WEIGHT } from './deep';
+import { Magic2 } from './magic2';
+import { SPELL2_BY_ID } from './spells2';
+import { EL_RGB } from './elements';
 import { ARTIFACTS, ELEMENT_OF, ENDLESS_BOSS_EVERY, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVEL, artifactById, endlessScale, evoUnlockLevel, loadBest, saveBest, Element } from './deep';
 
 export type GameMode = 'regions' | 'endless';
@@ -551,6 +554,13 @@ export class GameEngine {
     if (sp.id === 'frost_nova') area *= 1 + 0.2 * this.art('frost_ring');
     if (sp.id === 'cataclysm') dmg *= 1 + 0.15 * this.art('ember_seed');
     if (sp.id === 'arcane_missiles') count += this.art('whetstone');
+    { const el2 = SPELL2_BY_ID[sp.id]?.el;
+      if (el2 === 'poison') dmg *= 1 + 0.2 * this.art('venom_gland');
+      if (el2 === 'wind') { area *= 1 + 0.12 * this.art('storm_vane'); count += this.art('storm_vane') >= 2 ? 1 : 0; }
+      if (el2 === 'earth') dmg *= 1 + 0.18 * this.art('earth_core');
+      if (el2 === 'water') area *= 1 + 0.18 * this.art('tide_pearl');
+      if (el2 === 'light') { dmg *= 1 + 0.15 * this.art('halo'); count += this.art('halo') >= 3 ? 1 : 0; }
+      if (el2 && this.art('elemental_codex')) dmg *= 1.2; }
     if (sp.id === 'spirit') dmg *= (this.art('twin_soul') ? 1.3 : 1) * SPIRIT.ASC_DMG[ascension(this.spirits.length)];
     dmg *= spiritBuffs(this.spirits.length).dmg;
     return { ...sp, damage: Math.round(sp.damage * dmg), area: Math.round(sp.area * area), count: sp.count + count };
@@ -814,7 +824,7 @@ export class GameEngine {
   public getUpgradeChoices(n = 4): UpgradeChoice[] {
     const pool: UpgradeChoice[] = [];
     const owned = this.spells.filter((s) => !s.isCombo);
-    if (owned.length < 5) {
+    if (owned.length < MAX_MAGIC_SLOTS) {
       for (const id of BASE_SPELL_IDS) {
         if (owned.some((s) => s.id === id)) continue;
         const b = BASE_SPELLS[id];
@@ -837,6 +847,9 @@ export class GameEngine {
     const magic = shuffle(pool.filter((c) => c.kind !== 'passive'));
     const pas = shuffle(pool.filter((c) => c.kind === 'passive'));
     const evo = this.evolveChoices();
+    // v7: while a slot is free, always offer at least one brand-new magic (new spells first)
+    const news = magic.filter((c) => c.kind === 'new');
+    if (news.length) { const fresh = news.filter((c) => !!SPELL2_BY_ID[c.id.slice(4)]); const pick = (fresh.length && Math.random() < 0.7 ? fresh : news)[0]; magic.splice(magic.indexOf(pick), 1); magic.unshift(pick); }
     const out = [...evo.slice(0, 1), ...magic.slice(0, n - 1 - Math.min(1, evo.length))];
     while (out.length < n && pas.length) out.push(pas.shift()!);
     while (out.length < n && magic.length > out.length) out.push(magic[out.length]);
@@ -895,6 +908,7 @@ export class GameEngine {
     else if (spell.id === 'cataclysm') this.castCataclysm(spell);
     else if (spell.id === 'arcane_missiles') this.castArcaneMissiles(spell);
     else if (spell.id === 'spirit') this.castSpirits(spell);
+    else if (SPELL2_BY_ID[spell.id]) { this.magic2.h.enemies = this.enemies; this.magic2.cast(spell); }
   }
 
   public triggerSpellManual(spellId: string) {
@@ -910,6 +924,7 @@ export class GameEngine {
     } else if (spellId === 'arcane_missiles') {
       this.castArcaneMissiles(spell);
     } else if (spellId === 'spirit') this.castSpirits(this.eff(spell));
+    else if (SPELL2_BY_ID[spellId]) this.autoCastRaw(this.eff(spell));
     spell.currentCooldown = spell.cooldown * (1 - this.stats.cooldownReduction / 100);
   }
 
@@ -1234,6 +1249,45 @@ export class GameEngine {
         for (const e of inR(this.playerX, this.playerY, r)) hit(e, dmg * 0.5, 'arcane', color);
         break;
       }
+      default: hits += this.genericPair(key, tgt, dmg, color, r, inR, hit); break;
+    }
+    return hits;
+  }
+  /** v7: data-driven effect for the 35 element pairs added with the new elements. */
+  private genericPair(key: string, tgt: { x: number; y: number }, dmg: number, color: string, r: number, inR: (x: number, y: number, rr: number) => Enemy[], hit: (e: Enemy, d: number, el: Element, c?: string) => void): number {
+    const def = FUSIONS[key]; if (!def?.prim) return 0;
+    const [a, b] = key.split('+') as Element[]; const els = [a, b]; const n = def.n ?? 4; const now = performance.now(); const T = this.gameTimeSeconds;
+    let hits = 0; const H = (e: Enemy, d: number, i = 0) => { hit(e, d, els[i % 2], color); hits++; status(e); };
+    const rgb = EL_RGB[b as keyof typeof EL_RGB] ?? '200,200,255';
+    const status = (e: Enemy) => {
+      switch (def.st) {
+        case 'freeze': if (!e.isBoss) e.frozenUntil = Math.max(e.frozenUntil ?? 0, now + 1500); break;
+        case 'slow': e.slowUntil = T + 2.5; break;
+        case 'poison': case 'burn': break;
+        case 'knock': if (!e.isBoss) { const dx = e.x - tgt.x, dy = e.y - tgt.y, d = Math.hypot(dx, dy) || 1; e.x += (dx / d) * 90; e.y += (dy / d) * 90; } break;
+        case 'pull': if (!e.isBoss) { const dx = tgt.x - e.x, dy = tgt.y - e.y, d = Math.hypot(dx, dy) || 1; const k = Math.min(d, 80); e.x += (dx / d) * k; e.y += (dy / d) * k; } break;
+        default: break;
+      }
+    };
+    const after = (x: number, y: number, rr: number) => {
+      if (def.st === 'poison' || def.st === 'burn') this.addZone(x, y, rr * 0.8, 3, dmg * 0.2, def.st === 'poison' ? '163,230,53' : '249,115,22');
+      if (def.st === 'steam') this.addSteam(x, y, rr, 3.5, dmg * 0.25);
+    };
+    if (def.st === 'heal') { this.stats.hp = Math.min(this.stats.maxHp, this.stats.hp + 10 + n * 2); FX.flash(this.playerX, this.playerY, 60, '#bbf7d0'); }
+    switch (def.prim) {
+      case 'nova': FX.ring(tgt.x, tgt.y, r, `rgba(${rgb},1)`, 0.55); FX.flash(tgt.x, tgt.y, r * 0.7, color); for (const e of inR(tgt.x, tgt.y, r)) H(e, dmg); after(tgt.x, tgt.y, r * 0.6); break;
+      case 'ring': FX.ring(this.playerX, this.playerY, r, `rgba(${rgb},1)`, 0.6); FX.ring(this.playerX, this.playerY, r * 0.6, color, 0.4); for (const e of inR(this.playerX, this.playerY, r)) H(e, dmg); break;
+      case 'pillars': { const tg = this.enemies.filter((e) => this.onScreen(e.x, e.y, 0)).sort((p, q) => Math.hypot(p.x - tgt.x, p.y - tgt.y) - Math.hypot(q.x - tgt.x, q.y - tgt.y)).slice(0, n); if (!tg.length) tg.push({ x: tgt.x, y: tgt.y } as Enemy);
+        tg.forEach((t, i) => { FX.fire(t.x, t.y, r); FX.flash(t.x, t.y, r, color); for (const e of inR(t.x, t.y, r)) H(e, dmg * 0.8, i); after(t.x, t.y, r); }); break; }
+      case 'rain': for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, d = Math.random() * 240; const x = tgt.x + Math.cos(a) * d, y = tgt.y + Math.sin(a) * d; this.beams.push({ x1: x + 60, y1: y - 420, x2: x, y2: y, color, life: 0.22 }); FX.ring(x, y, r, `rgba(${rgb},1)`, 0.4); for (const e of inR(x, y, r)) H(e, dmg * 0.7, i); if (i % 2 === 0) after(x, y, r); } break;
+      case 'lances': for (let i = 0; i < n; i++) { const ang = (i / n) * Math.PI * 2; const x2 = tgt.x + Math.cos(ang) * r, y2 = tgt.y + Math.sin(ang) * r; this.beams.push({ x1: tgt.x, y1: tgt.y, x2, y2, color, life: 0.22 });
+        for (const e of this.enemies) { const dx = e.x - tgt.x, dy = e.y - tgt.y; const al = dx * Math.cos(ang) + dy * Math.sin(ang); if (al < 0 || al > r) continue; if (Math.abs(-dx * Math.sin(ang) + dy * Math.cos(ang)) <= 18 + e.radius) H(e, dmg * 0.6, i); } } FX.star(tgt.x, tgt.y, 80); break;
+      case 'chain': { let prev = { x: this.playerX, y: this.playerY - 30 }; const pool = inR(tgt.x, tgt.y, 420); for (let k = 0; k < n && pool.length; k++) { let bi = 0, bd = 1e9; pool.forEach((e, i) => { const d = Math.hypot(e.x - prev.x, e.y - prev.y); if (d < bd) { bd = d; bi = i; } }); const e = pool.splice(bi, 1)[0]; this.beams.push({ x1: prev.x, y1: prev.y, x2: e.x, y2: e.y, color, life: 0.22 }); FX.flash(e.x, e.y, 40, color); H(e, dmg * 0.75, k); prev = e; } break; }
+      case 'zone': for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; const x = tgt.x + Math.cos(a) * r * 0.9, y = tgt.y + Math.sin(a) * r * 0.9; this.addZone(x, y, r * 0.7, 4, dmg * 0.3, rgb); FX.ring(x, y, r * 0.7, `rgba(${rgb},1)`, 0.4); } for (const e of inR(tgt.x, tgt.y, r * 1.6)) H(e, dmg * 0.5); after(tgt.x, tgt.y, r); break;
+      case 'vortex': for (let i = 0; i < n; i++) { const a = (i / Math.max(1, n)) * Math.PI * 2; const x = tgt.x + Math.cos(a) * 70, y = tgt.y + Math.sin(a) * 70; FX.ring(x, y, r, `rgba(${rgb},1)`, 0.7); FX.ring(x, y, r * 0.5, color, 0.5);
+        for (const e of inR(x, y, r * 1.5)) { if (!e.isBoss) { e.x += (x - e.x) * 0.5; e.y += (y - e.y) * 0.5; } H(e, dmg * 0.7, i); } after(x, y, r * 0.6); } break;
+      case 'wave': { const ang = Math.atan2(tgt.y - this.playerY, tgt.x - this.playerX); for (let s = 0; s < 6; s++) { const d = 60 + s * r * 0.4; const x = this.playerX + Math.cos(ang) * d, y = this.playerY + Math.sin(ang) * d; FX.ring(x, y, r * 0.45, `rgba(${rgb},1)`, 0.35 + s * 0.05); }
+        for (const e of this.enemies) { const dx = e.x - this.playerX, dy = e.y - this.playerY; const al = dx * Math.cos(ang) + dy * Math.sin(ang); if (al < 0 || al > r * 2.6) continue; if (Math.abs(-dx * Math.sin(ang) + dy * Math.cos(ang)) <= r * 0.6 + e.radius) H(e, dmg * 0.8); } after(tgt.x, tgt.y, r * 0.6); break; }
     }
     return hits;
   }
@@ -1486,12 +1540,13 @@ export class GameEngine {
   public static LOD_ENEMIES = [95, 140];
   private updateLod(frameMs: number) {
     this.frameEma += (Math.min(100, frameMs) - this.frameEma) * 0.05;
-    const n = this.enemies.length + this.particles.length * 0.15;
+    const n = this.enemies.length + this.particles.length * 0.15 + this.magic2.active * 0.35;
     let want = n >= GameEngine.LOD_ENEMIES[1] ? 2 : n >= GameEngine.LOD_ENEMIES[0] ? 1 : 0;
     if (this.frameEma > 26) want = Math.min(2, want + 1);
+    if (this.frameEma > 45) want = 2;
     if (this.reducedEffects || GFX.reducedEffects) want = Math.max(1, want);
     if (want > this.lod) { this.lod = want; this.lodHold = 2; } else if (want < this.lod && (this.lodHold -= frameMs / 1000) <= 0) { this.lod = want; this.lodHold = 2; }
-    Q.lod = this.lod;
+    Q.lod = this.lod; this.magic2.budget = this.lod >= 2 ? 110 : this.lod === 1 ? 170 : 220;
     this.applyRenderScale();
   }
   public setReducedEffects(v: boolean) { this.reducedEffects = v; }
@@ -1520,6 +1575,7 @@ export class GameEngine {
     for (const k in this.pairCd) if (this.pairCd[k] > 0) this.pairCd[k] = Math.max(0, this.pairCd[k] - dt);
     for (const l of this.labels) l.life -= dt; compact(this.labels, (q) => q.life > 0); if (this.labels.length > 24) this.labels.splice(0, this.labels.length - 24);
     for (const b of this.beams) b.life -= dt; compact(this.beams, (q) => q.life > 0);
+    this.magic2.h.enemies = this.enemies; this.magic2.update(dt);
 
     const mins = Math.floor(this.gameTimeSeconds / 60);
     const secs = Math.floor(this.gameTimeSeconds % 60);
@@ -1679,6 +1735,7 @@ export class GameEngine {
         } else {
           let slowK = 1;
           for (const z of this.zones) if (z.steam && Math.hypot(e.x - z.x, e.y - z.y) < z.r) { slowK = 0.45; break; }
+          if ((e.slowUntil ?? 0) > this.gameTimeSeconds) slowK = Math.min(slowK, 0.5);
           this.moveEnemy(e, dx, dy, dist, dt, slowK);
         }
 
@@ -2397,6 +2454,7 @@ export class GameEngine {
     P('7');
     // 7. Projectiles (Arcane Missiles & Fused Magic)
     this.renderProjectiles(ctx);
+    this.magic2.render(ctx, this.gameTimeSeconds);
 
     P('8');
     // 8. Dynamic Weather Overlay System (Falling Snow, Embers, Rain, Stardust)
@@ -2439,7 +2497,17 @@ export class GameEngine {
     }
   }
 
-  private magic2Shift(_dx: number, _dy: number) { /* replaced in item 2 */ }
+  private magic2Shift(dx: number, dy: number) { this.magic2?.shift(dx, dy); }
+  public magic2: Magic2 = new Magic2({
+    enemies: [] as Enemy[],
+    px: () => this.playerX, py: () => this.playerY, facing: () => this.faceAngle, time: () => this.gameTimeSeconds,
+    hit: (e, d, c, el) => this.damageEnemy(e, d * (this.stats.spellPower / 100), c, el),
+    densest: (r) => this.findDensestCluster(r), nearest: (x, y, m) => this.findNearestEnemy(x, y, m),
+    beam: (x1, y1, x2, y2, color) => this.beams.push({ x1, y1, x2, y2, color, life: 0.22 }),
+    zone: (x, y, r, dur, dps, rgb) => this.addZone(x, y, r, dur, dps, rgb),
+    heal: (n) => { this.stats.hp = Math.min(this.stats.maxHp, this.stats.hp + n); },
+    shake: (n) => this.shake(n), sfx: (n, sz) => sound.play(n, sz), onScreen: (x, y, m) => this.onScreen(x, y, m),
+  });
   private renderGround(ctx: CanvasRenderingContext2D, now: number) {
     const hw = this.viewHalfW, hh = this.viewHalfH;
     this.world.setTheme(arenaTheme(this.currentArena));

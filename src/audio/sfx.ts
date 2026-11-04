@@ -196,7 +196,17 @@ const EL_LAYER: Record<string, (ac: Ctx, o: AudioNode, t: number, s: number, roo
   arcane: (ac, o, t, s, r) => { chord(ac, o, t, [r * 2, r * 2.5, r * 3], 0.07, 0.12 * s, 1.0, 'sine'); tone(ac, o, t, { dur: 0.8, type: 'sawtooth', f0: r * 4, f1: r * 1.5, gain: 0.06 * s, curve: 3 }); },
   spirit: (ac, o, t, s, r) => { chord(ac, o, t, [r * 1.5, r * 2.25, r * 3.375], 0.12, 0.1 * s, 1.3, 'triangle'); tone(ac, o, t, { dur: 1.1, f0: r * 3, f1: r * 4, gain: 0.08 * s, attack: 0.1, curve: 3 }); },
 };
+Object.assign(EL_LAYER, {
+  poison: (ac: Ctx, o: AudioNode, t: number, s: number, r: number) => { for (let i = 0; i < 6; i++) tone(ac, o, t, { delay: i * 0.09 + R(0, 0.04), dur: 0.18, f0: r * R(2, 3.5), f1: r * 1.2, gain: 0.12 * s, curve: 2 }); noise(ac, o, t, { dur: 1.1, type: 'bandpass', f0: 700, f1: 300, q: 4, gain: 0.35 * s, attack: 0.08, curve: 3 }); },
+  wind: (ac: Ctx, o: AudioNode, t: number, s: number) => { noise(ac, o, t, { dur: 1.4, type: 'bandpass', f0: 400, f1: 2400, q: 3, gain: 0.5 * s, attack: 0.15, curve: 3 }); noise(ac, o, t, { delay: 0.3, dur: 0.9, type: 'bandpass', f0: 2600, f1: 600, q: 4, gain: 0.3 * s, curve: 3 }); },
+  earth: (ac: Ctx, o: AudioNode, t: number, s: number) => { rumble(ac, o, t, s, 0, 1.3); crackle(ac, o, t, 0.5, 10, 0.3 * s); tone(ac, o, t, { dur: 0.5, type: 'square', f0: 70, f1: 35, gain: 0.25 * s, curve: 3 }); },
+  water: (ac: Ctx, o: AudioNode, t: number, s: number, r: number) => { noise(ac, o, t, { dur: 1.3, type: 'lowpass', f0: 1600, f1: 250, gain: 0.55 * s, attack: 0.05, curve: 3 }); for (let i = 0; i < 5; i++) tone(ac, o, t, { delay: 0.1 + i * 0.07, dur: 0.12, f0: r * R(3, 5), f1: r * R(6, 9), gain: 0.1 * s, curve: 2 }); },
+  light: (ac: Ctx, o: AudioNode, t: number, s: number, r: number) => { chord(ac, o, t, [r * 2, r * 2.52, r * 3, r * 4], 0.05, 0.12 * s, 1.6, 'sine'); noise(ac, o, t, { dur: 0.5, type: 'highpass', f0: 6000, gain: 0.2 * s, curve: 2 }); },
+});
 const PAIR_ROOT: Record<string, number> = { 'fire+ice': 196, 'fire+lightning': 110, 'ice+lightning': 247, 'arcane+fire': 147, 'arcane+ice': 294, 'arcane+lightning': 165, 'fire+spirit': 131, 'ice+spirit': 262, 'lightning+spirit': 175, 'arcane+spirit': 220 };
+// v7: a root pitch for each of the 35 new pairs, from a stable hash of the key (pentatonic 98–392 Hz)
+{ const EL = ['fire', 'ice', 'lightning', 'arcane', 'spirit', 'poison', 'wind', 'earth', 'water', 'light']; const PENTA = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3];
+  for (let i = 0; i < EL.length; i++) for (let j = i + 1; j < EL.length; j++) { const k = [EL[i], EL[j]].sort().join('+'); if (PAIR_ROOT[k]) continue; let h = 0; for (const c of k) h = (h * 31 + c.charCodeAt(0)) >>> 0; PAIR_ROOT[k] = Math.round(98 * PENTA[h % 5] * (1 << ((h >> 3) % 3))); } }
 export const PAIR_SFX_KEYS = Object.keys(PAIR_ROOT);
 for (const k of PAIR_SFX_KEYS) {
   const [a, b] = k.split('+'); const root = PAIR_ROOT[k];
@@ -204,4 +214,20 @@ for (const k of PAIR_SFX_KEYS) {
 }
 export const SFX_NAMES = Object.keys(SFX);
 /** Nominal tail length per sound (for offline render + voice accounting). */
-export const SFX_LEN: Record<string, number> = { chime: 0.9, shatter: 0.5, thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5, ...Object.fromEntries(PAIR_SFX_KEYS.map((k) => ['pair_' + k, 2.4])) };
+// v7: one big signature sound per new spell
+const SP2: Record<string, [string, number, (ac: Ctx, o: AudioNode, t: number, s: number) => void]> = {
+  meteor_shower: ['fire', 110, (ac, o, t, s) => { noise(ac, o, t, { dur: 0.6, type: 'bandpass', f0: 3000, f1: 400, q: 2, gain: 0.4 * s, attack: 0.2, curve: 2 }); boom(ac, o, t, 0.8 * s, 0.5); }],
+  chain_lightning: ['lightning', 220, (ac, o, t, s) => { for (let i = 0; i < 5; i++) noise(ac, o, t, { delay: i * 0.05, dur: 0.07, type: 'highpass', f0: 3000, gain: 0.5 * s, curve: 2 }); tone(ac, o, t, { dur: 0.5, type: 'sawtooth', f0: 880, f1: 110, gain: 0.15 * s, curve: 3 }); }],
+  electric_zone: ['lightning', 165, (ac, o, t, s) => { tone(ac, o, t, { dur: 1.6, type: 'sawtooth', f0: 60, gain: 0.15 * s, attack: 0.1, curve: 2 }); crackle(ac, o, t, 1.4, 24, 0.25 * s); }],
+  satellite_orbs: ['arcane', 262, (ac, o, t, s) => { for (let i = 0; i < 4; i++) tone(ac, o, t, { delay: i * 0.08, dur: 0.9, f0: 523 * (1 + i * 0.25), gain: 0.1 * s, curve: 3 }); }],
+  poison_cloud: ['poison', 147, (ac, o, t, s) => { noise(ac, o, t, { dur: 1.2, type: 'lowpass', f0: 500, f1: 1400, gain: 0.4 * s, attack: 0.2, curve: 3 }); }],
+  cyclone: ['wind', 196, (ac, o, t, s) => { noise(ac, o, t, { dur: 2.0, type: 'bandpass', f0: 300, f1: 1800, q: 6, gain: 0.45 * s, attack: 0.3, curve: 2 }); }],
+  gale_scythe: ['wind', 294, (ac, o, t, s) => { noise(ac, o, t, { dur: 0.35, type: 'bandpass', f0: 4000, f1: 900, q: 3, gain: 0.6 * s, curve: 2 }); }],
+  stone_spikes: ['earth', 82, (ac, o, t, s) => { for (let i = 0; i < 4; i++) noise(ac, o, t, { delay: i * 0.06, dur: 0.15, type: 'lowpass', f0: 1200, f1: 200, gain: 0.5 * s, curve: 2 }); }],
+  gravity_well: ['earth', 55, (ac, o, t, s) => { tone(ac, o, t, { dur: 2.0, f0: 40, f1: 160, drop: 1.8, gain: 0.5 * s, attack: 0.3, curve: 2 }); boom(ac, o, t, 0.9 * s, 1.9, 70); }],
+  tidal_wave: ['water', 131, (ac, o, t, s) => { noise(ac, o, t, { dur: 1.8, type: 'lowpass', f0: 300, f1: 3000, gain: 0.6 * s, attack: 0.4, curve: 2 }); }],
+  holy_smite: ['light', 330, (ac, o, t, s) => { boom(ac, o, t, 0.6 * s, 0.1, 120); tone(ac, o, t, { dur: 1.4, f0: 1320, gain: 0.12 * s, curve: 3 }); }],
+  magic_circle: ['light', 247, (ac, o, t, s) => { chord(ac, o, t, [247, 370, 494, 740], 0.15, 0.1 * s, 2.0, 'triangle'); }],
+};
+for (const [id, [el, root, body]] of Object.entries(SP2)) SFX['sp_' + id] = (ac, o, t, s) => { EL_LAYER[el](ac, o, t, s, root); body(ac, o, t, s); };
+export const SFX_LEN: Record<string, number> = { ...Object.fromEntries(Object.keys(SP2).map((k) => ['sp_' + k, 3.2])), chime: 0.9, shatter: 0.5, thunder: 3.6, fire: 2.6, ice: 1.2, arcane: 1.6, void: 2.6, spirit: 1.5, fusion: 4.2, steam: 2.2, charge_release: 2.8, kill: 0.35, boss_hit: 2.2, boss_death: 5, boss_roar: 1.9, levelup: 1.6, chest: 1.9, artifact: 2.3, wings: 0.7, dash: 0.4, hurt: 0.4, pickup: 0.2, coin: 0.3, click: 0.15, crack: 2.9, collapse: 5, ...Object.fromEntries(PAIR_SFX_KEYS.map((k) => ['pair_' + k, 2.4])) };

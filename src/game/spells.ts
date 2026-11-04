@@ -1,5 +1,6 @@
 import { Spell } from '../types/game';
 import { COMBO_MAGIC_RECIPES } from './combos';
+import { SPELLS2, SPELL2_BY_ID, SPELL2_IDS } from './spells2';
 
 /** Level-1 base definitions for the four starter magics. Stats scale via applySpellLevel(). */
 export const BASE_SPELLS: Record<string, Omit<Spell, 'level' | 'currentCooldown'>> = {
@@ -29,7 +30,12 @@ export const BASE_SPELLS: Record<string, Omit<Spell, 'level' | 'currentCooldown'
     cooldown: 1.1, damage: 48, area: 0, count: 1,
   },
 };
-export const BASE_SPELL_IDS = ['thunderstorm', 'frost_nova', 'cataclysm', 'arcane_missiles', 'spirit'];
+// v7: register the twelve new spells
+for (const d of SPELLS2) BASE_SPELLS[d.id] = { id: d.id, name: d.name, maxLevel: 8, icon: d.icon, color: d.color, description: d.desc, cooldown: d.cooldown, damage: d.damage, area: d.area, count: d.count };
+export const CLASSIC_SPELL_IDS = ['thunderstorm', 'frost_nova', 'cataclysm', 'arcane_missiles', 'spirit'];
+export const BASE_SPELL_IDS = [...CLASSIC_SPELL_IDS, ...SPELL2_IDS];
+/** How many different magics (spirit included) can be owned at once. v7: 5 -> 8 */
+export const MAX_MAGIC_SLOTS = 8;
 export const MAX_SPIRITS = 12;
 
 /** Recompute a spell's output from its level (level 1 = base). */
@@ -44,6 +50,7 @@ export function applySpellLevel(sp: Spell): Spell {
     case 'frost_nova': sp.count = 2 + 2 * l; sp.area = Math.round(b.area * (1 + 0.15 * (l - 1))); break;
     case 'cataclysm': sp.count = 1 + Math.floor(l / 2); sp.area = Math.round(b.area * (1 + 0.1 * (l - 1))); break;
     case 'arcane_missiles': sp.count = 1 + Math.floor(l / 2); break;
+    default: { const d = SPELL2_BY_ID[sp.id]; if (d) { const r = d.scale(l, d); sp.count = r.count; sp.area = r.area; if (r.cooldown) sp.cooldown = r.cooldown; } break; }
     case 'spirit': sp.count = Math.min(12, l); sp.damage = Math.round(b.damage * (1 + 0.1 * (l - 1))); sp.cooldown = Math.max(0.7, b.cooldown - 0.03 * (l - 1)); break;
   }
   sp.evolved = (sp.tier ?? 0) > 0;
@@ -92,5 +99,6 @@ export function spellEffectText(sp: Spell): string {
     case 'arcane_missiles': return `${n} homing blade${n > 1 ? 's' : ''} per cast`;
     case 'spirit': return `${n} spirit${n > 1 ? 's' : ''} orbit you and strike demons (${sp.damage} dmg each)`;
   }
+  const d = SPELL2_BY_ID[sp.id]; if (d) return d.text(sp);
   return sp.description;
 }

@@ -20,7 +20,7 @@ async function fps(p, ms = 2500) { return E(p, (ms) => new Promise((r) => { let 
   // reward cap: break everything repeatedly
   R.cap = await E(p, () => { const e = __engine; for (let k = 0; k < 6; k++) { for (const q of e.ibg.propList()) e.ibg.hitAt(q.x, q.y, 10, e.gameTimeSeconds, e.ibgReward, e.ibgSfx); e.ibg.props.forEach((q) => (q.down = 0)); } const s = e.ibgState(); return { rewardsLastMin: s.rewardsLastMin, capped: s.capped, cap: 8 }; });
   // magic reaction
-  R.magic = await E(p, async () => { const e = __engine; const w0 = e.ibg.log.waves; for (const sp of e.spells) sp.currentCooldown = 0; e.castGapTimer = 0; e.spawnEnemy('imp', 120, 0); await new Promise((r) => setTimeout(r, 900)); return e.ibg.log.waves - w0; });
+  R.magic = await E(p, async () => { const e = __engine; const w0 = e.ibg.log.waves; for (const sp of e.spells) sp.currentCooldown = 0; e.castGapTimer = 0; e.spawnEnemy('imp', 120, 0); await new Promise((r) => setTimeout(r, 1500)); return { w: e.ibg.log.waves - w0, paused: e.isPaused, modal: !!document.querySelector("[data-modal]"), casts: e.castLog.length }; });
   await p.screenshot({ path: S('r1') });
   // tap ripple vs joystick drag (real touch input)
   const r0 = (await E(p, () => __engine.ibgState())).ripples;
@@ -52,6 +52,6 @@ async function fps(p, ms = 2500) { return E(p, (ms) => new Promise((r) => { let 
   R.fpsOff = await fps(p); R.offState = { enabled: mod.enabled, gfx: mod.gfx };
   await E(p, async () => { const g = await import('/src/game/gfxSettings.ts'); g.setGfx('interactiveBg', true); });
   R.errs = errs;
-  const ok = R.start.props > 0 && R.touch.lootAdded === 1 && R.hit.broke >= 1 && R.cap.rewardsLastMin <= 8 && R.cap.capped > 0 && R.magic >= 1 && R.input.ripplesFromTap === 1 && R.input.ripplesFromDrag === 0 && R.input.dragMovedPlayer > 0 && R.input.buttonRipple === 0 && R.input.flewAfterButton && R.sets.r3 === 'r3' && R.sets.sky.set === 'sky' && R.sets.abyss.set === 'abyss' && R.sets.rift.set === 'rift' && !R.offState.enabled && !errs.length;
+  const ok = R.start.props > 0 && R.touch.lootAdded === 1 && R.hit.broke >= 1 && R.cap.rewardsLastMin <= 8 && R.cap.capped > 0 && R.magic.w >= 1 && R.input.ripplesFromTap === 1 && R.input.ripplesFromDrag === 0 && R.input.dragMovedPlayer > 0 && R.input.buttonRipple === 0 && R.input.flewAfterButton && R.sets.r3 === 'r3' && R.sets.sky.set === 'sky' && R.sets.abyss.set === 'abyss' && R.sets.rift.set === 'rift' && !R.offState.enabled && !errs.length;
   console.log(JSON.stringify({ ok, ...R }, null, 1)); await b.close(); process.exit(ok ? 0 : 1);
 })().catch((e) => { console.error('FAIL', e); process.exit(1); });

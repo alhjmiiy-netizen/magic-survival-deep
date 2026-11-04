@@ -346,12 +346,15 @@ export const HUD: React.FC<HUDProps> = ({
     thunderstorm: <Zap className="w-6 h-6" />,
     cataclysm: <Flame className="w-6 h-6" />,
   };
-  const tile = 52;
+  // v7: up to 8 magics (+ combos) — shrink tiles to fit, wrap onto two rows if needed
+  const vwHud = typeof window !== 'undefined' ? window.innerWidth : 900;
+  const perRow = Math.max(1, Math.min(ownedSpells.length, portrait ? 6 : 10));
+  const tile = Math.round(Math.max(36, Math.min(52, (Math.min(vwHud, 760) - 28) / perRow - 10)));
   const powersBlock = (
     <div
       data-hud="powers"
-      className="absolute flex items-end gap-1.5 px-2 pt-3 pb-1 rounded-xl glass-panel pointer-events-auto"
-      style={{ bottom: portrait ? 190 : 6, left: '50%', transform: 'translateX(-50%)', minWidth: 120, justifyContent: 'center' }}
+      className="absolute flex flex-wrap items-end gap-1.5 px-2 pt-3 pb-1 rounded-xl glass-panel pointer-events-auto"
+      style={{ bottom: portrait ? 190 : 6, left: '50%', transform: 'translateX(-50%)', backdropFilter: 'none', WebkitBackdropFilter: 'none', minWidth: 120, maxWidth: 'calc(100vw - 12px)', width: 'max-content', justifyContent: 'center' }}
     >
       <span className="absolute -top-[7px] left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 rounded bg-slate-950 border border-sky-500/50 text-[8px] font-bold tracking-widest text-sky-300">MAGIC · AUTO-CAST</span>
       {ownedSpells.length === 0 && <span className="text-[10px] text-slate-400 px-2 py-3">No magic yet</span>}
@@ -378,7 +381,7 @@ export const HUD: React.FC<HUDProps> = ({
                 <circle cx="26" cy="26" r="24" fill="none" stroke="#0b1220" strokeWidth="3" opacity="0.6" />
                 <circle ref={(el) => { ringRefs.current[s.id] = el; }} data-ring={s.id} cx="26" cy="26" r="24" fill="none" stroke={s.color} strokeWidth="3" strokeDasharray="151" strokeDashoffset="0" strokeLinecap="round" />
               </svg>
-              <span style={{ filter: `drop-shadow(0 0 4px ${s.color})` }}><MagicGlyph k={s.isCombo ? glyphKeyFor(s.id, 1, 'combo') : spellGlyphKey(s)} size={30} color={s.color} /></span>
+              <span><MagicGlyph k={s.isCombo ? glyphKeyFor(s.id, 1, 'combo') : spellGlyphKey(s)} size={30} color={s.color} /></span>
               {tier > 0 && <span data-star className="absolute -top-2 -right-1.5 text-[11px] leading-none font-black text-amber-300 drop-shadow-[0_0_4px_#fde047]">{'★'.repeat(tier)}</span>}
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 rounded bg-black border border-amber-400 text-[10px] leading-[13px] font-black text-amber-300 whitespace-nowrap">
                 {s.isCombo ? 'COMBO' : s.id === 'spirit' ? `×${spiritN || s.count}` : `Lv ${s.level}`}

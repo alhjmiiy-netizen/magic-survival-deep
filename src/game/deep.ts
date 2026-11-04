@@ -1,9 +1,11 @@
 /** "Deep" systems: evolutions, synergies, artifacts, timed regions, endless scaling. */
 import type { Enemy } from '../types/game';
 
-export type Element = 'lightning' | 'ice' | 'fire' | 'arcane';
+import { SPELLS2 } from './spells2';
+export type Element = 'lightning' | 'ice' | 'fire' | 'arcane' | 'poison' | 'wind' | 'earth' | 'water' | 'light' | 'spirit';
 export const ELEMENT_OF: Record<string, Element> = {
   thunderstorm: 'lightning', frost_nova: 'ice', cataclysm: 'fire', arcane_missiles: 'arcane',
+  ...Object.fromEntries(SPELLS2.map((d) => [d.id, d.el])),
 };
 
 export interface Evolution { name: string; desc: string; color: string; dmg: number; area: number; count: number; }
@@ -26,6 +28,7 @@ export const EVOLUTIONS: Record<string, [Evolution, Evolution]> = {
     { name: 'Astral Swarm', desc: 'Blades split into 2 seekers on every hit', color: '#f0abfc', dmg: 1.9, area: 1, count: 3 },
   ],
 };
+for (const d of SPELLS2) EVOLUTIONS[d.id] = d.evo;
 export const evoUnlockLevel = (tier: number) => (tier === 0 ? 5 : 8);
 
 export interface Synergy { id: string; name: string; a: Element; b: Element; desc: string; color: string; }
@@ -47,6 +50,11 @@ export interface Artifact { id: string; name: string; icon: string; color: strin
 const A = (rarity: Rarity, id: string, name: string, color: string, max: number, desc: (l: number) => string, tags?: string[]): Artifact => ({ id, name, icon: id, color, max, rarity, desc, tags });
 export const ARTIFACTS: Artifact[] = [
   // ---- Normal ----
+  A('normal', 'venom_gland', 'Venom Gland', '#84cc16', 3, (l) => `Poison magic +${20 * l}% damage`),
+  A('normal', 'storm_vane', 'Storm Vane', '#6ee7b7', 3, (l) => `Wind magic +${12 * l}% area${l >= 2 ? ', +1 count' : ''}`),
+  A('normal', 'earth_core', 'Earth Core', '#a16207', 3, (l) => `Earth magic +${18 * l}% damage`),
+  A('normal', 'tide_pearl', 'Tide Pearl', '#60a5fa', 3, (l) => `Water magic +${18 * l}% area`),
+  A('normal', 'halo', 'Halo', '#fde68a', 3, (l) => `Light magic +${15 * l}% damage${l >= 3 ? ', +1 count' : ''}`),
   A('normal', 'eye', 'Eye of Ruin', '#f87171', 3, (l) => `+${8 * l}% critical chance`),
   A('normal', 'lodestone', 'Lodestone Heart', '#38bdf8', 3, (l) => `+${60 * l} pickup (magnet) range`),
   A('normal', 'titan', "Titan's Blood", '#ef4444', 3, (l) => `+${150 * l} max HP`),
@@ -75,6 +83,7 @@ export const ARTIFACTS: Artifact[] = [
   A('rare', 'vampire_fang', 'Vampire Fang', '#dc2626', 3, (l) => `Heal ${2 * l} HP per kill`),
   A('rare', 'iron_skin', 'Iron Skin', '#94a3b8', 3, (l) => `-${10 * l}% damage taken`),
   // ---- Epic ----
+  A('epic', 'elemental_codex', 'Elemental Codex', '#e879f9', 1, () => '+20% damage to all new-element magics (poison, wind, earth, water, light, chain, orbs…)'),
   A('epic', 'phoenix', 'Phoenix Feather', '#fb923c', 1, () => 'Revive once at 60% HP'),
   A('epic', 'second_heart', 'Second Heart', '#fb7185', 1, () => 'Revive 1 more time, +50% max HP'),
   A('epic', 'ether_arrow', 'Ether Arrow', '#67e8f9', 1, () => '-20% Arcane Blades (magic bolt) & Spirit cooldown', ['arcane', 'spirit']),

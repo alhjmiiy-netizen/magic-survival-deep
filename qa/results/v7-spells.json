@@ -1,0 +1,1120 @@
+{
+ "spells": {
+  "meteor_shower": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 3,
+     "area": 70,
+     "dmg": 120,
+     "cd": 3
+    },
+    {
+     "l": 2,
+     "count": 4,
+     "area": 76,
+     "dmg": 150,
+     "cd": 3
+    },
+    {
+     "l": 3,
+     "count": 5,
+     "area": 81,
+     "dmg": 180,
+     "cd": 3
+    },
+    {
+     "l": 4,
+     "count": 6,
+     "area": 87,
+     "dmg": 210,
+     "cd": 3
+    },
+    {
+     "l": 5,
+     "count": 7,
+     "area": 92,
+     "dmg": 240,
+     "cd": 3
+    },
+    {
+     "l": 6,
+     "count": 8,
+     "area": 98,
+     "dmg": 270,
+     "cd": 3
+    },
+    {
+     "l": 7,
+     "count": 9,
+     "area": 104,
+     "dmg": 300,
+     "cd": 3
+    },
+    {
+     "l": 8,
+     "count": 10,
+     "area": 109,
+     "dmg": 330,
+     "cd": 3
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 48932,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 278227,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "chain_lightning": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 4,
+     "area": 230,
+     "dmg": 80,
+     "cd": 1.8
+    },
+    {
+     "l": 2,
+     "count": 5,
+     "area": 239,
+     "dmg": 100,
+     "cd": 1.8
+    },
+    {
+     "l": 3,
+     "count": 6,
+     "area": 248,
+     "dmg": 120,
+     "cd": 1.8
+    },
+    {
+     "l": 4,
+     "count": 7,
+     "area": 258,
+     "dmg": 140,
+     "cd": 1.8
+    },
+    {
+     "l": 5,
+     "count": 8,
+     "area": 267,
+     "dmg": 160,
+     "cd": 1.8
+    },
+    {
+     "l": 6,
+     "count": 9,
+     "area": 276,
+     "dmg": 180,
+     "cd": 1.8
+    },
+    {
+     "l": 7,
+     "count": 10,
+     "area": 285,
+     "dmg": 200,
+     "cd": 1.8
+    },
+    {
+     "l": 8,
+     "count": 11,
+     "area": 294,
+     "dmg": 220,
+     "cd": 1.8
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 5771,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 28467,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "electric_zone": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 180,
+     "dmg": 45,
+     "cd": 4.5
+    },
+    {
+     "l": 2,
+     "count": 2,
+     "area": 191,
+     "dmg": 56,
+     "cd": 4.5
+    },
+    {
+     "l": 3,
+     "count": 2,
+     "area": 202,
+     "dmg": 68,
+     "cd": 4.5
+    },
+    {
+     "l": 4,
+     "count": 3,
+     "area": 212,
+     "dmg": 79,
+     "cd": 4.5
+    },
+    {
+     "l": 5,
+     "count": 3,
+     "area": 223,
+     "dmg": 90,
+     "cd": 4.5
+    },
+    {
+     "l": 6,
+     "count": 4,
+     "area": 234,
+     "dmg": 101,
+     "cd": 4.5
+    },
+    {
+     "l": 7,
+     "count": 4,
+     "area": 245,
+     "dmg": 113,
+     "cd": 4.5
+    },
+    {
+     "l": 8,
+     "count": 5,
+     "area": 256,
+     "dmg": 124,
+     "cd": 4.5
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 6218,
+    "sound": true,
+    "ents": 1
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 36034,
+    "sound": true,
+    "ents": 1
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "satellite_orbs": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 2,
+     "area": 115,
+     "dmg": 42,
+     "cd": 6
+    },
+    {
+     "l": 2,
+     "count": 3,
+     "area": 121,
+     "dmg": 53,
+     "cd": 6
+    },
+    {
+     "l": 3,
+     "count": 3,
+     "area": 127,
+     "dmg": 63,
+     "cd": 6
+    },
+    {
+     "l": 4,
+     "count": 4,
+     "area": 132,
+     "dmg": 74,
+     "cd": 6
+    },
+    {
+     "l": 5,
+     "count": 4,
+     "area": 138,
+     "dmg": 84,
+     "cd": 6
+    },
+    {
+     "l": 6,
+     "count": 5,
+     "area": 144,
+     "dmg": 95,
+     "cd": 6
+    },
+    {
+     "l": 7,
+     "count": 5,
+     "area": 150,
+     "dmg": 105,
+     "cd": 6
+    },
+    {
+     "l": 8,
+     "count": 6,
+     "area": 155,
+     "dmg": 116,
+     "cd": 6
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 3788,
+    "sound": true,
+    "ents": 6
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 59099,
+    "sound": true,
+    "ents": 20
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "poison_cloud": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 80,
+     "dmg": 30,
+     "cd": 3.2
+    },
+    {
+     "l": 2,
+     "count": 1,
+     "area": 88,
+     "dmg": 38,
+     "cd": 3.2
+    },
+    {
+     "l": 3,
+     "count": 2,
+     "area": 96,
+     "dmg": 45,
+     "cd": 3.2
+    },
+    {
+     "l": 4,
+     "count": 2,
+     "area": 104,
+     "dmg": 53,
+     "cd": 3.2
+    },
+    {
+     "l": 5,
+     "count": 2,
+     "area": 112,
+     "dmg": 60,
+     "cd": 3.2
+    },
+    {
+     "l": 6,
+     "count": 3,
+     "area": 120,
+     "dmg": 68,
+     "cd": 3.2
+    },
+    {
+     "l": 7,
+     "count": 3,
+     "area": 128,
+     "dmg": 75,
+     "cd": 3.2
+    },
+    {
+     "l": 8,
+     "count": 3,
+     "area": 136,
+     "dmg": 83,
+     "cd": 3.2
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 42886,
+    "sound": true,
+    "ents": 3
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 203566,
+    "sound": true,
+    "ents": 5
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "cyclone": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 58,
+     "dmg": 36,
+     "cd": 3.5
+    },
+    {
+     "l": 2,
+     "count": 1,
+     "area": 63,
+     "dmg": 45,
+     "cd": 3.5
+    },
+    {
+     "l": 3,
+     "count": 2,
+     "area": 67,
+     "dmg": 54,
+     "cd": 3.5
+    },
+    {
+     "l": 4,
+     "count": 2,
+     "area": 72,
+     "dmg": 63,
+     "cd": 3.5
+    },
+    {
+     "l": 5,
+     "count": 2,
+     "area": 77,
+     "dmg": 72,
+     "cd": 3.5
+    },
+    {
+     "l": 6,
+     "count": 3,
+     "area": 81,
+     "dmg": 81,
+     "cd": 3.5
+    },
+    {
+     "l": 7,
+     "count": 3,
+     "area": 86,
+     "dmg": 90,
+     "cd": 3.5
+    },
+    {
+     "l": 8,
+     "count": 3,
+     "area": 90,
+     "dmg": 99,
+     "cd": 3.5
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 11521,
+    "sound": true,
+    "ents": 3
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 155923,
+    "sound": true,
+    "ents": 5
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "gale_scythe": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 2,
+     "area": 46,
+     "dmg": 75,
+     "cd": 1.5
+    },
+    {
+     "l": 2,
+     "count": 2,
+     "area": 49,
+     "dmg": 94,
+     "cd": 1.5
+    },
+    {
+     "l": 3,
+     "count": 3,
+     "area": 52,
+     "dmg": 113,
+     "cd": 1.5
+    },
+    {
+     "l": 4,
+     "count": 3,
+     "area": 54,
+     "dmg": 131,
+     "cd": 1.5
+    },
+    {
+     "l": 5,
+     "count": 4,
+     "area": 57,
+     "dmg": 150,
+     "cd": 1.5
+    },
+    {
+     "l": 6,
+     "count": 4,
+     "area": 60,
+     "dmg": 169,
+     "cd": 1.5
+    },
+    {
+     "l": 7,
+     "count": 5,
+     "area": 63,
+     "dmg": 188,
+     "cd": 1.5
+    },
+    {
+     "l": 8,
+     "count": 5,
+     "area": 65,
+     "dmg": 206,
+     "cd": 1.5
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 19664,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 175290,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "stone_spikes": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 5,
+     "area": 40,
+     "dmg": 90,
+     "cd": 2.2
+    },
+    {
+     "l": 2,
+     "count": 6,
+     "area": 42,
+     "dmg": 113,
+     "cd": 2.2
+    },
+    {
+     "l": 3,
+     "count": 7,
+     "area": 45,
+     "dmg": 135,
+     "cd": 2.2
+    },
+    {
+     "l": 4,
+     "count": 8,
+     "area": 47,
+     "dmg": 158,
+     "cd": 2.2
+    },
+    {
+     "l": 5,
+     "count": 9,
+     "area": 50,
+     "dmg": 180,
+     "cd": 2.2
+    },
+    {
+     "l": 6,
+     "count": 10,
+     "area": 52,
+     "dmg": 203,
+     "cd": 2.2
+    },
+    {
+     "l": 7,
+     "count": 11,
+     "area": 54,
+     "dmg": 225,
+     "cd": 2.2
+    },
+    {
+     "l": 8,
+     "count": 12,
+     "area": 57,
+     "dmg": 248,
+     "cd": 2.2
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 9645,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 52145,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "gravity_well": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 140,
+     "dmg": 200,
+     "cd": 5
+    },
+    {
+     "l": 2,
+     "count": 1,
+     "area": 150,
+     "dmg": 250,
+     "cd": 5
+    },
+    {
+     "l": 3,
+     "count": 1,
+     "area": 160,
+     "dmg": 300,
+     "cd": 5
+    },
+    {
+     "l": 4,
+     "count": 2,
+     "area": 169,
+     "dmg": 350,
+     "cd": 5
+    },
+    {
+     "l": 5,
+     "count": 2,
+     "area": 179,
+     "dmg": 400,
+     "cd": 5
+    },
+    {
+     "l": 6,
+     "count": 2,
+     "area": 189,
+     "dmg": 450,
+     "cd": 5
+    },
+    {
+     "l": 7,
+     "count": 2,
+     "area": 199,
+     "dmg": 500,
+     "cd": 5
+    },
+    {
+     "l": 8,
+     "count": 3,
+     "area": 209,
+     "dmg": 550,
+     "cd": 5
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 54246,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 287191,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "tidal_wave": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 170,
+     "dmg": 90,
+     "cd": 3
+    },
+    {
+     "l": 2,
+     "count": 1,
+     "area": 184,
+     "dmg": 113,
+     "cd": 3
+    },
+    {
+     "l": 3,
+     "count": 2,
+     "area": 197,
+     "dmg": 135,
+     "cd": 3
+    },
+    {
+     "l": 4,
+     "count": 2,
+     "area": 211,
+     "dmg": 158,
+     "cd": 3
+    },
+    {
+     "l": 5,
+     "count": 2,
+     "area": 224,
+     "dmg": 180,
+     "cd": 3
+    },
+    {
+     "l": 6,
+     "count": 3,
+     "area": 238,
+     "dmg": 203,
+     "cd": 3
+    },
+    {
+     "l": 7,
+     "count": 3,
+     "area": 252,
+     "dmg": 225,
+     "cd": 3
+    },
+    {
+     "l": 8,
+     "count": 3,
+     "area": 265,
+     "dmg": 248,
+     "cd": 3
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 23400,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 62137,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "holy_smite": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 62,
+     "dmg": 220,
+     "cd": 2.4
+    },
+    {
+     "l": 2,
+     "count": 2,
+     "area": 66,
+     "dmg": 275,
+     "cd": 2.4
+    },
+    {
+     "l": 3,
+     "count": 2,
+     "area": 71,
+     "dmg": 330,
+     "cd": 2.4
+    },
+    {
+     "l": 4,
+     "count": 3,
+     "area": 75,
+     "dmg": 385,
+     "cd": 2.4
+    },
+    {
+     "l": 5,
+     "count": 3,
+     "area": 79,
+     "dmg": 440,
+     "cd": 2.4
+    },
+    {
+     "l": 6,
+     "count": 4,
+     "area": 84,
+     "dmg": 495,
+     "cd": 2.4
+    },
+    {
+     "l": 7,
+     "count": 4,
+     "area": 88,
+     "dmg": 550,
+     "cd": 2.4
+    },
+    {
+     "l": 8,
+     "count": 5,
+     "area": 92,
+     "dmg": 605,
+     "cd": 2.4
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 43361,
+    "sound": true,
+    "ents": 0
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 299827,
+    "sound": true,
+    "ents": 0
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  },
+  "magic_circle": {
+   "lv": [
+    {
+     "l": 1,
+     "count": 1,
+     "area": 120,
+     "dmg": 34,
+     "cd": 4
+    },
+    {
+     "l": 2,
+     "count": 1,
+     "area": 132,
+     "dmg": 43,
+     "cd": 4
+    },
+    {
+     "l": 3,
+     "count": 1,
+     "area": 144,
+     "dmg": 51,
+     "cd": 4
+    },
+    {
+     "l": 4,
+     "count": 2,
+     "area": 156,
+     "dmg": 60,
+     "cd": 4
+    },
+    {
+     "l": 5,
+     "count": 2,
+     "area": 168,
+     "dmg": 68,
+     "cd": 4
+    },
+    {
+     "l": 6,
+     "count": 2,
+     "area": 180,
+     "dmg": 77,
+     "cd": 4
+    },
+    {
+     "l": 7,
+     "count": 2,
+     "area": 192,
+     "dmg": 85,
+     "cd": 4
+    },
+    {
+     "l": 8,
+     "count": 3,
+     "area": 204,
+     "dmg": 94,
+     "cd": 4
+    }
+   ],
+   "base": {
+    "tier": 0,
+    "casts": 1,
+    "dmg": 46198,
+    "sound": true,
+    "ents": 3
+   },
+   "ev": [
+    {
+     "ok": true,
+     "tier": 1,
+     "name": ""
+    },
+    {
+     "ok": true,
+     "tier": 2,
+     "name": ""
+    }
+   ],
+   "evo": {
+    "tier": 2,
+    "casts": 1,
+    "dmg": 40749,
+    "sound": true,
+    "ents": 1
+   },
+   "hud": true,
+   "levelsOk": true,
+   "ok": true
+  }
+ },
+ "levelup": {
+  "N": 300,
+  "withNew": 300,
+  "fresh": 299,
+  "ownedAtCap": 8,
+  "newOfferedAtCap": false
+ },
+ "fpsAll": {
+  "fps": 7.4,
+  "worstMs": 317,
+  "enemies": 8,
+  "ents": 54
+ },
+ "soak": {
+  "seconds": 90,
+  "avgFps": 9.5,
+  "minFps": 7.8,
+  "heapFirst": 54,
+  "heapLast": 56,
+  "maxEnts": 110,
+  "maxEnemies": 8
+ },
+ "casts": {
+  "magic_circle": 20,
+  "meteor_shower": 18,
+  "chain_lightning": 18,
+  "poison_cloud": 18,
+  "cyclone": 18,
+  "stone_spikes": 18,
+  "tidal_wave": 18,
+  "holy_smite": 17,
+  "electric_zone": 17,
+  "satellite_orbs": 13,
+  "gale_scythe": 18,
+  "gravity_well": 15
+ },
+ "errors": [],
+ "portraitHud": {
+  "tiles": 8,
+  "left": 6,
+  "right": 384,
+  "top": 512,
+  "bottom": 654,
+  "vw": 390,
+  "fits": true
+ },
+ "portraitErrors": [],
+ "allOk": true
+}

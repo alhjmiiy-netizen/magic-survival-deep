@@ -1,5 +1,6 @@
 /** Etched element glyphs (Magic Survival-style): one unique symbol per spell, evolution, combo, artifact and passive. */
 import React, { useId } from 'react';
+import { SPELLS2 } from '../game/spells2';
 
 type Frame = 'none' | 'evo1' | 'evo2' | 'combo' | 'relic' | 'passive';
 interface Glyph { c: string; d: string[]; fill?: string[]; frame?: Frame }
@@ -89,6 +90,20 @@ function frameEl(f: Frame, c: string) {
   }
 }
 
+// v7: twelve new spells, each with an evolution glyph per tier
+for (const d of SPELLS2) {
+  GLYPHS[d.id] = { c: d.color, d: d.glyph };
+  GLYPHS[d.id + '#1'] = { c: d.color, frame: 'evo1', d: [...d.glyph, 'M10 40h28'] };
+  GLYPHS[d.id + '#2'] = { c: '#fde68a', frame: 'evo2', d: [...d.glyph, 'M12 12l4 4M36 12l-4 4M24 4v4'] };
+}
+Object.assign(GLYPHS, {
+  'art:venom_gland': { c: '#84cc16', frame: 'relic', d: ['M24 8c8 10 10 16 10 21a10 10 0 01-20 0c0-5 2-11 10-21z', 'M20 30h.5M28 30h.5'] },
+  'art:storm_vane': { c: '#6ee7b7', frame: 'relic', d: ['M24 40V12', 'M24 12l12 6-12 6', 'M12 30h24'] },
+  'art:earth_core': { c: '#a16207', frame: 'relic', d: ['M24 10l12 7v14l-12 7-12-7V17z', 'M24 24m-5 0a5 5 0 1010 0 5 5 0 10-10 0'] },
+  'art:tide_pearl': { c: '#60a5fa', frame: 'relic', d: ['M24 24m-9 0a9 9 0 1018 0 9 9 0 10-18 0', 'M8 38q8-5 16 0t16 0'] },
+  'art:halo': { c: '#fde68a', frame: 'relic', d: ['M24 14m-12 0a12 4 0 1024 0 12 4 0 10-24 0', 'M24 22v16M16 30h16'] },
+  'art:elemental_codex': { c: '#e879f9', frame: 'relic', d: ['M12 10h20a4 4 0 014 4v24H16a4 4 0 01-4-4z', 'M18 18h12M18 24h12M18 30h8'] },
+});
 export function MagicGlyph({ k, size = 28, color, className, style }: { k: string; size?: number; color?: string; className?: string; style?: React.CSSProperties }) {
   const fid = 'et' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const g = GLYPHS[k] ?? GLYPHS.arcane_missiles;
