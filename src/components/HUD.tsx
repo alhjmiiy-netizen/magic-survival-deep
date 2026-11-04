@@ -540,7 +540,7 @@ export const HUD: React.FC<HUDProps> = ({
         data-hud="flight" data-flying={fl8.flying ? '1' : '0'}
         onPointerDown={(e) => { e.stopPropagation(); getEngine?.()?.toggleFlight(); setHint(false); }}
         className={`absolute rounded-full flex flex-col items-center justify-center border-2 pointer-events-auto cursor-pointer ${fl8.flying ? 'border-cyan-200 bg-cyan-700/85 text-white' : wingsReady ? 'border-cyan-300 bg-slate-900/85 text-cyan-100' : 'border-slate-600 bg-slate-900/80 text-slate-500'}`}
-        style={{ ...(portrait ? { bottom: 124, right: 18, width: 84, height: 84 } : { bottom: 86, right: 10, width: 74, height: 74 }), boxShadow: fl8.flying ? '0 0 22px rgba(103,232,249,0.8)' : undefined }}
+        style={{ ...(portrait ? { bottom: 36, right: 102, width: 76, height: 76 } : { bottom: 10, right: 86, width: 70, height: 70 }), boxShadow: fl8.flying ? '0 0 22px rgba(103,232,249,0.8)' : undefined }}
       >
         <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" width="100%" height="100%">
           <circle cx="40" cy="40" r="37" fill="none" stroke="#0b1220" strokeWidth="4" opacity="0.7" />
@@ -551,7 +551,7 @@ export const HUD: React.FC<HUDProps> = ({
         </svg>
         <span className="text-[9px] font-black tracking-wider">{fl8.lock > 0 ? fl8.lock.toFixed(1) : fl8.flying ? 'LAND' : 'FLY'}</span>
       </button>
-      <div data-hud="flight-meter" className="absolute pointer-events-none flex items-center gap-1" style={portrait ? { bottom: 214, right: 14 } : { bottom: 166, right: 8 }}>
+      <div data-hud="flight-meter" className="absolute pointer-events-none flex items-center gap-1" style={portrait ? { bottom: 116, right: 104 } : { bottom: 84, right: 80 }}>
         <span className="text-[8px] font-black text-cyan-200">WINGS</span>
         <div className="w-[64px] h-[6px] rounded-full bg-slate-900/90 border border-cyan-900 overflow-hidden">
           <div className="h-full" style={{ width: `${fk * 100}%`, background: fl8.lock > 0 ? '#f87171' : 'linear-gradient(90deg,#22d3ee,#a5f3fc)' }} />
@@ -559,7 +559,7 @@ export const HUD: React.FC<HUDProps> = ({
         <span className="text-[8px] font-bold text-cyan-100 w-6">{fl8.meter.toFixed(1)}s</span>
       </div>
       {hint && (
-        <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { bottom: 236, right: 12 } : { bottom: 186, right: 8 }}>
+        <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { top: 150, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : { bottom: 100, right: 80 }}>
           🪽 Tap the wings to fly and rain magic from above
         </div>
       )}

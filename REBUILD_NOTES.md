@@ -31,3 +31,10 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 - Root cause: `UpgradeModal` kept ranks/points in component-local `useState(INITIAL_RESEARCH_ATTRIBUTES)` / `useState(3)`, nothing saved to localStorage, so every reopen/reload re-initialised to defaults. Gold was also run-local (engine started from `INITIAL_PLAYER_STATS.gold = 0`), so spent gold/bought points vanished and research never applied at run start.
 - Fix: `src/game/research.ts` — `ms_research_v1` {points, ranks, gold}; loaded on modal mount and app start, saved synchronously on every enhance/reset/buy; `applyResearch` applies purchased ranks (delta vs defaults: might/vitality/haste/snipe/agility/explorer/saturation) + gold wallet at engine init; App saves gold on change. Load merges/clamps (no wipe on unknown/partial data). No previous save existed to migrate.
 - Regression: `qa/research-persist.js <url> <shotdir> <tag>` (390x844 touch): buy point + 4 enhances, close/reopen, run start (effects + gold), reload.
+
+## v4 — Flight, new enemies, fusions, charge, spirits, glyphs
+- Flight: wing button / F key. Meter 6 s, recharge 1.5/s, forced landing locks 2.5 s. Airborne: ground enemies, ground shots and ground hazards can't touch you; spells hit +15%. Flyers (wisps, bats, etc.) still can.
+- 16 enemy types in ENEMY_DEFS (swarm, ranged, lobber, summoner, exploder, charger, teleporter, splitter, armored). Packs every 20 s, elites (x5 hp) every 45 s, and elites always drop a chest.
+- Fusions (10) when spells of different elements are cast within 1.2 s (4 s cooldown); steam zones; hold a spell tile to charge it (up to 1.5 s).
+- Spirit is a level-up spell (up to 12 spirits). Etched MagicGlyph icons everywhere (qa/icons.html sheet). Bestiary tab.
+- QA: qa/v4.cjs <url> <vw> <vh> <tag>.
