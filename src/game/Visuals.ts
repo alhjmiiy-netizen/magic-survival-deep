@@ -6,6 +6,7 @@
  */
 import { EnemyType, Projectile } from '../types/game';
 import { makeCanvas, drawGlow, tintSilhouette, glowStroke } from './ArtKit';
+import { renderFlightWings } from './EnemyArt';
 
 const RES = 2; // sprite supersampling
 
@@ -614,6 +615,7 @@ function projSprite(kind: string): HTMLCanvasElement {
   g.scale(RES, RES);
   g.translate(70, 12);
   const pal: Record<string, [string, string, string]> = {
+    spirit_bolt: ['rgba(45,212,191,0)', 'rgba(94,234,212,0.9)', '#f0fdfa'],
     arcane_missile: ['rgba(60,140,255,0)', 'rgba(90,190,255,0.85)', '#ffffff'],
     frost_shard: ['rgba(150,220,255,0)', 'rgba(190,235,255,0.9)', '#ffffff'],
     lightning_arc: ['rgba(120,170,255,0)', 'rgba(170,200,255,0.9)', '#ffffff'],
@@ -705,7 +707,7 @@ export class VisualRenderer {
    */
   public static renderArchmage(
     ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, isDashing: boolean,
-    faceAngle: number = Math.PI / 2, moveAmt: number = 0, heroId: string = 'caelen',
+    faceAngle: number = Math.PI / 2, moveAmt: number = 0, heroId: string = 'caelen', flyH = 0,
   ) {
     const t = performance.now() * 0.001;
     const d = dir8(faceAngle);
@@ -716,13 +718,14 @@ export class VisualRenderer {
     const L = HERO_LOOKS[heroId];
     const circle = L ? getMageCircle(L.aura, L.trim) : getMageCircle();
     void getMage;
-    const lift = 16 + Math.sin(t * 2.6) * 5; // hover height
+    const baseLift = 16 + Math.sin(t * 2.6) * 5; // hover height
+    const lift = baseLift + flyH * (70 + Math.sin(t * 4.5) * 4); // flight raises the mage
     const fx = Math.cos(faceAngle), fy = Math.sin(faceAngle);
     const lean = fx * 0.2 * moveAmt; // bank into horizontal movement
     ctx.save();
     ctx.translate(x, y);
     // soft ground shadow (shrinks as the mage rises)
-    const sh = 1 - (lift - 11) / 30;
+    const sh = (1 - (baseLift - 11) / 30) * (1 - 0.6 * flyH);
     ctx.fillStyle = `rgba(0,0,0,${0.42 * sh})`;
     ctx.beginPath();
     ctx.ellipse(0, 22, 20 * sh, 6.5 * sh, 0, 0, Math.PI * 2);
@@ -754,6 +757,7 @@ export class VisualRenderer {
       ctx.globalAlpha = 1;
     }
     ctx.globalCompositeOperation = 'source-over';
+    if (flyH > 0.02) renderFlightWings(ctx, 0, -lift - 22, flyH, L ? L.weaponGlow : 'rgba(140,220,255,1)');
     // the mage itself, floating
     ctx.save();
     ctx.translate(0, -lift);
@@ -874,10 +878,14 @@ export class VisualRenderer {
   public static renderProjectile(ctx: CanvasRenderingContext2D, p: Projectile) {
     const img = projSprite(p.type);
     const ang = Math.atan2(p.vy, p.vx);
+    const z = p.z ?? 0;
     ctx.save();
-    ctx.translate(p.x, p.y);
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, p.type === 'meteor' || p.type === 'fire_wave' ? 'rgba(255,120,30,1)' : 'rgba(80,180,255,1)', 0, 0, 26, 0.75);
+    if (z > 1) { // falling from a flying caster: streak down from the sky
+      ctx.strokeStyle = 'rgba(180,220,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x, p.y - z - 30); ctx.lineTo(p.x, p.y - z); ctx.stroke();
+    }
+    ctx.translate(p.x, p.y - z);
+    drawGlow(ctx, p.type === 'meteor' || p.type === 'fire_wave' ? 'rgba(255,120,30,1)' : p.type === 'spirit_bolt' ? 'rgba(45,212,191,1)' : 'rgba(80,180,255,1)', 0, 0, 26, 0.75);
     ctx.rotate(ang);
     ctx.drawImage(img, -70, -12, 96, 24);
     ctx.restore();

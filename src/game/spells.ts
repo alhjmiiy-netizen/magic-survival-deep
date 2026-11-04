@@ -23,8 +23,14 @@ export const BASE_SPELLS: Record<string, Omit<Spell, 'level' | 'currentCooldown'
     description: 'Homing arcane blades seek the nearest demon. More blades per level.',
     cooldown: 1.0, damage: 70, area: 0, count: 1,
   },
+  spirit: {
+    id: 'spirit', name: 'Spirit', maxLevel: 12, icon: 'Ghost', color: '#5eead4',
+    description: 'Summons a spirit that orbits you and strikes nearby demons. Each pick adds another spirit (max 12).',
+    cooldown: 1.1, damage: 48, area: 0, count: 1,
+  },
 };
-export const BASE_SPELL_IDS = ['thunderstorm', 'frost_nova', 'cataclysm', 'arcane_missiles'];
+export const BASE_SPELL_IDS = ['thunderstorm', 'frost_nova', 'cataclysm', 'arcane_missiles', 'spirit'];
+export const MAX_SPIRITS = 12;
 
 /** Recompute a spell's output from its level (level 1 = base). */
 export function applySpellLevel(sp: Spell): Spell {
@@ -38,6 +44,7 @@ export function applySpellLevel(sp: Spell): Spell {
     case 'frost_nova': sp.count = 2 + 2 * l; sp.area = Math.round(b.area * (1 + 0.15 * (l - 1))); break;
     case 'cataclysm': sp.count = 1 + Math.floor(l / 2); sp.area = Math.round(b.area * (1 + 0.1 * (l - 1))); break;
     case 'arcane_missiles': sp.count = 1 + Math.floor(l / 2); break;
+    case 'spirit': sp.count = Math.min(12, l); sp.damage = Math.round(b.damage * (1 + 0.1 * (l - 1))); sp.cooldown = Math.max(0.7, b.cooldown - 0.03 * (l - 1)); break;
   }
   sp.evolved = (sp.tier ?? 0) > 0;
   return sp;
@@ -82,6 +89,7 @@ export function spellEffectText(sp: Spell): string {
     case 'frost_nova': return `${n} freezing ice shards per cast`;
     case 'cataclysm': return `${n} fire burst${n > 1 ? 's' : ''} per cast, ${sp.area} radius`;
     case 'arcane_missiles': return `${n} homing blade${n > 1 ? 's' : ''} per cast`;
+    case 'spirit': return `${n} spirit${n > 1 ? 's' : ''} orbit you and strike demons (${sp.damage} dmg each)`;
   }
   return sp.description;
 }

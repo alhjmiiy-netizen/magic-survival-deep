@@ -53,6 +53,7 @@ function applyHeroBonuses(e: GameEngine, from: CharacterHero | null, to: Charact
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const getEngineCb = useCallback(() => engineRef.current, []);
 
   // View state: Home Page Main Menu vs Active Gameplay
   const [gameView, setGameView] = useState<'MAIN_MENU' | 'PLAYING'>('MAIN_MENU');
@@ -187,7 +188,10 @@ export default function App() {
     setPickingSpell(true);
     engineRef.current = engine;
     (window as unknown as { __engine?: GameEngine }).__engine = engine;
-  }, [gameView, gameMode, currentArena, showDamageNumbers, enableScreenShake, autoAim]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameView, gameMode, currentArena, showDamageNumbers, autoAim]);
+  // shake toggle must not rebuild the engine (v4 fix)
+  useEffect(() => { if (engineRef.current) engineRef.current.enableScreenShake = enableScreenShake; }, [enableScreenShake]);
 
   useEffect(() => {
     if (gameView === 'PLAYING') {
@@ -554,6 +558,7 @@ export default function App() {
             onTriggerDash={() => engineRef.current?.triggerDash()}
             onJoystickMove={(vx, vy) => engineRef.current?.setJoystickVector(vx, vy)}
             getCooldowns={getCooldowns}
+            getEngine={getEngineCb}
             deep={deep}
             notice={notice}
           />

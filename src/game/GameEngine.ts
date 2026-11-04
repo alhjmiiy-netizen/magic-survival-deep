@@ -20,11 +20,24 @@ import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS } from './arenas';
 import { HEROES_LIST } from './characters';
 import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
 import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
+import { ENEMY_DEFS, NEW_ENEMY_TYPES, REGION_PACKS, ELITE_AURA } from './enemies';
+import { renderNewEnemy, renderEliteAura, renderShot, renderSpirit, hasNewArt } from './EnemyArt';
 import { ARTIFACTS, ELEMENT_OF, ENDLESS_BOSS_EVERY, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVEL, artifactById, endlessScale, evoUnlockLevel, loadBest, saveBest, Element } from './deep';
 
 export type GameMode = 'regions' | 'endless';
-interface Zone { x: number; y: number; r: number; t: number; max: number; dps: number; color: string; tick: number }
-interface Hazard { x: number; y: number; r: number; t: number; dmg: number; color: string; slow?: boolean }
+interface Zone { x: number; y: number; r: number; t: number; max: number; dps: number; color: string; tick: number; steam?: boolean }
+interface EShot { x: number; y: number; vx: number; vy: number; dmg: number; color: string; ground: boolean; slow?: boolean; life: number; r: number; src: string }
+interface SpiritUnit { x: number; y: number; z: number; dash: number; tx: number; ty: number; target: Enemy | null; dmg: number }
+interface Label { text: string; x: number; y: number; color: string; life: number; max: number; big: boolean }
+interface Beam { x1: number; y1: number; x2: number; y2: number; color: string; life: number }
+export const FLIGHT_MAX = 6, FLIGHT_RECHARGE = 1.5, FLIGHT_LOCK = 2.5, FLIGHT_LIFT = 70, FLIGHT_SPEED = 1.2, FLIGHT_DMG = 1.15, CHARGE_MAX = 1.5, FUSION_WINDOW = 1.2, FUSION_CD = 4;
+const FUSIONS: Record<string, { name: string; color: string }> = {
+  'fire+ice': { name: 'Steam Burst', color: '#e2e8f0' }, 'fire+lightning': { name: 'Plasma Nova', color: '#fb923c' }, 'ice+lightning': { name: 'Frozen Spark', color: '#7dd3fc' },
+  'arcane+fire': { name: 'Hex Inferno', color: '#f472b6' }, 'arcane+ice': { name: 'Prism Shatter', color: '#a5b4fc' }, 'arcane+lightning': { name: 'Arc Storm', color: '#93c5fd' },
+  'fire+spirit': { name: 'Soulfire', color: '#5eead4' }, 'ice+spirit': { name: 'Wraith Frost', color: '#99f6e4' }, 'lightning+spirit': { name: 'Storm Wraiths', color: '#67e8f9' }, 'arcane+spirit': { name: 'Astral Echo', color: '#c4b5fd' },
+};
+export const FUSION_TABLE = FUSIONS;
+interface Hazard { x: number; y: number; r: number; t: number; dmg: number; color: string; slow?: boolean; air?: boolean }
 
 export interface GameEngineCallbacks {
   onStatsUpdate: (stats: PlayerStats) => void;
@@ -121,6 +134,9 @@ export class GameEngine {
   // Settings
   public showDamageNumbers: boolean = true;
   public enableScreenShake: boolean = true;
+  public enableHitStop: boolean = true;
+  private viewHalfW = 1200; private viewHalfH = 900;
+  private onScreen(x: number, y: number, m: number) { return Math.abs(x - this.cameraX) < this.viewHalfW + m && Math.abs(y - this.cameraY) < this.viewHalfH + m; }
   public autoAim: boolean = true;
 
   // Dynamic Weather Overlay System
@@ -188,6 +204,7 @@ export class GameEngine {
     if (e.key === ' ' || e.code === 'Space') {
       this.triggerDash();
     }
+    if ((e.key === 'f' || e.key === 'F') && !e.repeat) this.toggleFlight();
   };
 
   private onKeyUp = (e: KeyboardEvent) => {
@@ -278,6 +295,69 @@ export class GameEngine {
   public bossKills = 0;
   public frameTimes: number[] = [];
   public MAX_PARTICLES = 450;
+  // ---- v4: flight ----
+  public flying = false;
+  public flyH = 0;
+  public flightMeter = FLIGHT_MAX;
+  public flightLock = 0;
+  public flightLog: string[] = [];
+  get airborne() { return this.flyH > 0.5; }
+  public toggleFlight(on?: boolean) {
+    const want = on ?? !this.flying;
+    if (want === this.flying) return this.flying;
+    if (want) {
+      if (this.flightLock > 0 || this.flightMeter < 1) { this.label('WINGS RECHARGING', this.playerX, this.playerY - 60, '#94a3b8'); return false; }
+      this.flying = true; this.flightLog.push('takeoff'); sound.playDash();
+      FX.ring(this.playerX, this.playerY, 90, 'rgba(180,230,255,1)', 0.4);
+    } else { this.flying = false; this.flightLog.push('land'); FX.ring(this.playerX, this.playerY, 70, 'rgba(200,220,255,1)', 0.35); }
+    return this.flying;
+  }
+  public flightState() { return { flying: this.flying, h: this.flyH, meter: this.flightMeter, max: FLIGHT_MAX, lock: this.flightLock, airborne: this.airborne }; }
+  private resetFlight() { this.flying = false; this.flyH = 0; this.flightMeter = FLIGHT_MAX; this.flightLock = 0; }
+  private updateFlight(dt: number) {
+    if (this.flying) {
+      this.flightMeter -= dt;
+      if (this.flightMeter <= 0) {
+        this.flightMeter = 0; this.flying = false; this.flightLock = FLIGHT_LOCK; this.flightLog.push('forced');
+        this.label('WINGS EXHAUSTED', this.playerX, this.playerY - 80, '#f87171', true);
+      }
+    } else if (this.flightLock > 0) this.flightLock = Math.max(0, this.flightLock - dt);
+    else this.flightMeter = Math.min(FLIGHT_MAX, this.flightMeter + FLIGHT_RECHARGE * dt);
+    const target = this.flying ? 1 : 0;
+    this.flyH += (target - this.flyH) * Math.min(1, dt * (this.flying ? 5 : 3.5));
+    if (Math.abs(target - this.flyH) < 0.002) this.flyH = target;
+  }
+  /** World-space height of the caster (for spells raining down). */
+  private casterZ() { return FLIGHT_LIFT * this.flyH; }
+  // ---- v4: labels / beams / juice ----
+  public labels: Label[] = [];
+  public beams: Beam[] = [];
+  private hitStop = 0;
+  public label(text: string, x: number, y: number, color: string, big = false) {
+    if (this.labels.length > 14) this.labels.shift();
+    this.labels.push({ text, x, y, color, life: big ? 1.6 : 1.1, max: big ? 1.6 : 1.1, big });
+  }
+  private shake(n: number) { this.screenShake = Math.max(this.screenShake, n); }
+  /** Sky strike visual from the flying mage to a ground point + impact flash. */
+  private skyStrike(tx: number, ty: number, color: string) {
+    if (this.flyH < 0.3) return;
+    if (this.beams.length > 30) this.beams.shift();
+    this.beams.push({ x1: this.playerX, y1: this.playerY - this.casterZ() - 40, x2: tx, y2: ty, color, life: 0.22 });
+    FX.flash(tx, ty, 46, color);
+  }
+  // ---- v4: enemies ----
+  public enemyShots: EShot[] = [];
+  private packTimer = 18;
+  private eliteTimer = 45;
+  public spawnLog: string[] = [];
+  // ---- v4: fusion / steam / charge / spirits ----
+  private lastCast: { el: string; id: string; t: number } | null = null;
+  private fusionCd = 0;
+  public fusionLog: string[] = [];
+  private charging: { id: string; t0: number } | null = null;
+  public chargeLog: { id: string; k: number }[] = [];
+  public spirits: SpiritUnit[] = [];
+  public spiritLog = { strikes: 0, bolts: 0 };
 
   private notice(text: string, color: string, kind = 'info') {
     this.notices.push({ text, color, kind });
@@ -396,7 +476,7 @@ export class GameEngine {
     this.regionIdx = Math.max(0, Math.min(REGIONS.length - 1, i));
     this.inEndless = false; this.regionPhase = 'fight';
     this.regionTime = bossNow ? this.region.duration : 0;
-    this.enemies = this.enemies.filter((e) => !e.isBoss); this.currentBoss = null; this.callbacks.onBossState(null);
+    this.enemies = this.enemies.filter((e) => !e.isBoss); this.currentBoss = null; this.callbacks.onBossState(null); this.enemyShots = [];
     this.applyRegionArena();
     this.notice(`REGION ${this.regionIdx + 1}: ${this.region.name}`, this.region.color, 'region');
   }
@@ -407,7 +487,7 @@ export class GameEngine {
   private advanceRegion() {
     if (this.regionIdx >= REGIONS.length - 1) { this.startEndless(); return; }
     this.regionIdx++; this.regionTime = 0; this.regionPhase = 'fight';
-    this.enemies = this.enemies.filter((e) => e.isBoss);
+    this.enemies = this.enemies.filter((e) => e.isBoss); this.enemyShots = [];
     this.applyRegionArena();
     this.notice(`REGION ${this.regionIdx + 1}: ${this.region.name}`, this.region.color, 'region');
   }
@@ -439,13 +519,13 @@ export class GameEngine {
     if (this.hazardTimer <= 0) {
       this.hazardTimer = hz.every * (this.inEndless ? Math.max(0.5, 1.2 - this.endlessTime / 900) : 1);
       const n = this.inEndless ? 1 + Math.min(3, Math.floor(this.endlessTime / 180)) : 1 + Math.floor(this.regionIdx / 2);
-      for (let k = 0; k < n; k++) this.hazards.push({ x: this.playerX + (k ? (Math.random() - 0.5) * 360 : 0), y: this.playerY + (k ? (Math.random() - 0.5) * 300 : 0), r: hz.radius, t: 1.3, dmg: Math.round(hz.dmg * hzMul), color: hz.color, slow: hz.slow });
+      for (let k = 0; k < n; k++) this.hazards.push({ x: this.playerX + (k ? (Math.random() - 0.5) * 360 : 0), y: this.playerY + (k ? (Math.random() - 0.5) * 300 : 0), r: hz.radius, t: 1.3, dmg: Math.round(hz.dmg * hzMul), color: hz.color, slow: hz.slow, air: hz.air });
     }
     for (let i = this.hazards.length - 1; i >= 0; i--) {
       const h = this.hazards[i]; h.t -= dt;
       if (h.t <= 0) {
         FX.ring(h.x, h.y, h.r, `rgba(${h.color},1)`, 0.5);
-        if (Math.hypot(this.playerX - h.x, this.playerY - h.y) < h.r && !this.stats.isDashing) {
+        if (Math.hypot(this.playerX - h.x, this.playerY - h.y) < h.r && !this.stats.isDashing && (!this.airborne || h.air)) {
           this.stats.hp -= h.dmg;
           if (h.slow) this.slowUntil = this.gameTimeSeconds + 2.5;
           this.spawnFloatingText(`-${h.dmg} ${this.region.hazard.name}`, this.playerX, this.playerY - 40, `rgb(${h.color})`);
@@ -458,7 +538,7 @@ export class GameEngine {
       const z = this.zones[i]; z.t += dt; z.tick -= dt;
       if (z.tick <= 0) {
         z.tick = 0.5;
-        for (const e of this.enemies) if (Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.radius) this.damageEnemy(e, Math.round(z.dps * 0.5), '#fb923c', 'fire', false);
+        for (const e of this.enemies) if (Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.radius) this.damageEnemy(e, Math.round(z.dps * 0.5), z.steam ? '#e2e8f0' : '#fb923c', z.steam ? undefined : 'fire', false);
       }
       if (z.t >= z.max) this.zones.splice(i, 1);
     }
@@ -486,7 +566,7 @@ export class GameEngine {
   private diff() {
     if (this.inEndless) return endlessScale(this.endlessTime);
     const r = this.region; const ramp = 1 + 0.5 * Math.min(1, this.regionTime / r.duration);
-    return { hp: r.hp * ramp, dmg: r.dmg * (0.85 + 0.3 * Math.min(1, this.regionTime / r.duration)), speed: 1, spawn: r.spawn / ramp, cap: 95 };
+    return { hp: r.hp * ramp, dmg: r.dmg * (0.85 + 0.3 * Math.min(1, this.regionTime / r.duration)), speed: 1, spawn: r.spawn / ramp, cap: 110 };
   }
   public summaryExtra() {
     const best = loadBest();
@@ -549,7 +629,7 @@ export class GameEngine {
   public getUpgradeChoices(n = 4): UpgradeChoice[] {
     const pool: UpgradeChoice[] = [];
     const owned = this.spells.filter((s) => !s.isCombo);
-    if (owned.length < 4) {
+    if (owned.length < 5) {
       for (const id of BASE_SPELL_IDS) {
         if (owned.some((s) => s.id === id)) continue;
         const b = BASE_SPELLS[id];
@@ -600,6 +680,7 @@ export class GameEngine {
       this.castCombo(spell);
     } else this.autoCastRaw(this.eff(spell));
     this.castLog.push({ id: spell.id, t: this.gameTimeSeconds });
+    if (!spell.isCombo) this.noteCastForFusion(spell.id);
     if (this.castLog.length > 60) this.castLog.shift();
     spell.currentCooldown = spell.cooldown * Math.pow(0.9, this.fastCasting) * (1 - this.stats.cooldownReduction / 100) * (1 - 0.07 * this.art('hourglass'));
     this.castGapTimer = this.castGap();
@@ -626,6 +707,7 @@ export class GameEngine {
     else if (spell.id === 'thunderstorm') this.castThunderstorm(spell);
     else if (spell.id === 'cataclysm') this.castCataclysm(spell);
     else if (spell.id === 'arcane_missiles') this.castArcaneMissiles(spell);
+    else if (spell.id === 'spirit') this.castSpirits(spell);
   }
 
   public triggerSpellManual(spellId: string) {
@@ -640,7 +722,7 @@ export class GameEngine {
       this.castCataclysm(spell);
     } else if (spellId === 'arcane_missiles') {
       this.castArcaneMissiles(spell);
-    }
+    } else if (spellId === 'spirit') this.castSpirits(this.eff(spell));
     spell.currentCooldown = spell.cooldown * (1 - this.stats.cooldownReduction / 100);
   }
 
@@ -746,84 +828,237 @@ export class GameEngine {
     }
   }
 
-  private spawnEnemyAt(type: Enemy['type'], x: number, y: number) {
-    let radius = 16;
-    let hp = 450;
-    let speed = 2.4;
-    let damage = 45;
-    let xp = 35;
-    let gold = 20;
-    let color = '#a855f7';
-    let glow = '#7e22ce';
-    let name = 'Void Crawler';
-
-    if (type === 'crawler') {
-      radius = 14;
-      hp = 320;
-      speed = 3.0;
-      damage = 30;
-      xp = 25;
-      gold = 15;
-      color = '#c084fc';
-      glow = '#a855f7';
-      name = 'Void Crawler';
-    } else if (type === 'shadow_fiend') {
-      radius = 18;
-      hp = 640;
-      speed = 2.0;
-      damage = 65;
-      xp = 45;
-      gold = 35;
-      color = '#ef4444';
-      glow = '#b91c1c';
-      name = 'Shadow Fiend';
-    } else if (type === 'hellhound') {
-      radius = 20;
-      hp = 880;
-      speed = 2.6;
-      damage = 80;
-      xp = 60;
-      gold = 50;
-      color = '#f97316';
-      glow = '#ea580c';
-      name = 'Hellhound';
-    } else if (type === 'void_knight') {
-      radius = 26;
-      hp = 1900;
-      speed = 1.5;
-      damage = 120;
-      xp = 160;
-      gold = 130;
-      color = '#6366f1';
-      glow = '#4f46e5';
-      name = 'Void Knight';
-    }
-
-    // Early-wave scaling so a level-1 mage can fight wave 1 (waves 7+ unchanged).
+  private spawnEnemyAt(type: Enemy['type'], x: number, y: number, opts: { elite?: boolean; small?: boolean; hpMul?: number } = {}) {
+    const def = ENEMY_DEFS[type] ?? ENEMY_DEFS.crawler;
     const df = this.diff();
-    hp = Math.round(hp * df.hp);
-    damage = Math.round(damage * df.dmg * 0.7);
-    speed *= df.speed;
-    this.enemies.push({
-      id: `enemy_${Math.random()}`,
-      name,
-      type,
-      x,
-      y,
-      vx: 0,
-      vy: 0,
-      radius,
-      hp,
-      maxHp: hp,
-      speed,
-      damage,
-      xpValue: xp,
-      crystalDropChance: 0.18,
-      goldValue: gold,
-      color,
-      glowColor: glow,
-      isBoss: false,
-    });
+    const elite = opts.elite ?? (!opts.small && Math.random() < 0.015);
+    let radius = def.r * (opts.small ? 0.6 : 1);
+    let hp = Math.round(def.hp * df.hp * (opts.hpMul ?? 1));
+    let damage = Math.round(def.dmg * df.dmg * 0.7);
+    if (elite) { hp *= 5; damage = Math.round(damage * 1.5); radius *= 1.25; }
+    const e: Enemy = {
+      id: `enemy_${Math.random()}`, name: (elite ? 'Elite ' : '') + def.name, type, x, y, vx: 0, vy: 0, radius, hp, maxHp: hp,
+      speed: def.speed * df.speed * (opts.small ? 1.25 : 1), damage, xpValue: Math.round(def.xp * (elite ? 6 : 1)), crystalDropChance: elite ? 1 : 0.18,
+      goldValue: def.gold * (elite ? 5 : 1), color: def.color, glowColor: def.glow, isBoss: false,
+      flying: !!def.flying, elite, small: !!opts.small, ai: def.shot ? def.shot.every * (0.4 + Math.random() * 0.8) : 1 + Math.random() * 2, ai2: 0, state: 0,
+    };
+    this.enemies.push(e);
+    if (this.spawnLog.length < 400) this.spawnLog.push(type + (elite ? '*' : ''));
+    if (elite) this.notice(`ELITE: ${def.name} approaches!`, ELITE_AURA[this.regionIdx % ELITE_AURA.length], 'elite');
+    return e;
+  }
+  /** Debug/QA: spawn an enemy relative to the player. */
+  public spawnEnemy(type: string, dx = 200, dy = 0, elite = false) {
+    return this.spawnEnemyAt(type as Enemy['type'], this.playerX + dx, this.playerY + dy, { elite })?.id;
+  }
+  public enemySnapshot() { return this.enemies.map((e) => ({ id: e.id, type: e.type, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, flying: !!e.flying, elite: !!e.elite, small: !!e.small, state: e.state ?? 0, boss: !!e.isBoss })); }
+  public debugState() { return { px: this.playerX, py: this.playerY, hp: this.stats.hp, maxHp: this.stats.maxHp, shots: this.enemyShots.length, enemies: this.enemies.length, zones: this.zones.map((z) => ({ steam: !!z.steam, r: z.r })), spirits: this.spirits.length, labels: this.labels.map((l) => l.text), beams: this.beams.length, arenaR: this.arenaRadius }; }
+  public setPlayerPos(x: number, y: number) { this.playerX = x; this.playerY = y; this.cameraX = x; this.cameraY = y; }
+  public clearEnemies() { this.enemies = this.enemies.filter((e) => e.isBoss); this.enemyShots = []; }
+  public setHp(v: number) { this.stats.hp = v; }
+
+  private spawnPack() {
+    const pool = this.inEndless ? NEW_ENEMY_TYPES.filter((t) => ENEMY_DEFS[t].flying || ENEMY_DEFS[t].shot) : REGION_PACKS[Math.min(this.regionIdx, REGION_PACKS.length - 1)];
+    const m = this.endlessTime / 60;
+    const n = this.inEndless ? 6 + Math.min(10, Math.floor(m * 1.5)) : 6 + 2 * this.regionIdx;
+    const a0 = Math.random() * Math.PI * 2;
+    for (let i = 0; i < n; i++) {
+      const t = pool[i % pool.length];
+      const a = a0 + (Math.random() - 0.5) * 0.9; const d = 560 + Math.random() * 120;
+      let x = this.playerX + Math.cos(a) * d, y = this.playerY + Math.sin(a) * d;
+      const sd = Math.hypot(x, y); if (sd > this.arenaRadius - 40) { x *= (this.arenaRadius - 40) / sd; y *= (this.arenaRadius - 40) / sd; }
+      this.spawnEnemyAt(t as Enemy['type'], x, y, { elite: false });
+    }
+    this.notice(`A ${ENEMY_DEFS[pool[0]].name} pack swoops in!`, '#7dd3fc', 'pack');
+  }
+
+  /** Behaviour-driven movement for non-boss enemies. */
+  private moveEnemy(e: Enemy, dx: number, dy: number, dist: number, dt: number, slowK: number) {
+    const def = ENEMY_DEFS[e.type] ?? ENEMY_DEFS.crawler;
+    const sp = e.speed * 60 * dt * slowK;
+    const ux = dx / dist, uy = dy / dist;
+    let mx = ux, my = uy;
+    e.ai = (e.ai ?? 0) - dt;
+    switch (def.behavior) {
+      case 'swarm': { const w = Math.sin(this.gameTimeSeconds * 4 + (e.x + e.y) * 0.01) * 0.8; mx = ux - uy * w; my = uy + ux * w; break; }
+      case 'ranged': case 'lobber': case 'summoner': {
+        const want = def.behavior === 'summoner' ? 300 : def.behavior === 'lobber' ? 230 : 270;
+        const k = dist > want + 40 ? 1 : dist < want - 50 ? -0.8 : 0;
+        mx = ux * k - uy * 0.35; my = uy * k + ux * 0.35;
+        if (def.shot && e.ai <= 0 && dist < 620) {
+          e.ai = def.shot.every * (e.elite ? 0.7 : 1);
+          const lead = 0.25; const tx = this.playerX + (this.joystickVector.x * this.stats.speed * 60 * lead), ty = this.playerY + (this.joystickVector.y * this.stats.speed * 60 * lead);
+          const a = Math.atan2(ty - e.y, tx - e.x);
+          const dmg = Math.round(def.shot.dmg * this.diff().dmg * 0.7 * (e.elite ? 1.5 : 1));
+          const fire = (off: number) => this.enemyShots.push({ x: e.x, y: e.y, vx: Math.cos(a + off) * def.shot!.speed, vy: Math.sin(a + off) * def.shot!.speed, dmg, color: def.shot!.color, ground: !!def.shot!.ground, slow: def.shot!.slow, life: 0, r: def.shot!.ground ? 9 : 6, src: e.type });
+          fire(0); if (e.elite) { fire(-0.25); fire(0.25); }
+          if (this.enemyShots.length > 120) this.enemyShots.shift();
+        }
+        if (def.behavior === 'summoner' && e.ai <= 0) {
+          e.ai = 6;
+          if (this.enemies.length < this.diff().cap + 30) for (let k2 = 0; k2 < 3; k2++) { const a = Math.random() * 6.28; this.spawnEnemyAt('crawler', e.x + Math.cos(a) * 40, e.y + Math.sin(a) * 40, { elite: false, hpMul: 0.6 }); }
+          FX.ring(e.x, e.y, 60, 'rgba(163,230,53,1)', 0.4);
+        }
+        break;
+      }
+      case 'exploder': {
+        if (e.state === 1) {
+          mx = 0; my = 0; e.ai2 = (e.ai2 ?? 0) - dt;
+          if ((e.ai2 ?? 0) <= 0) {
+            FX.fire(e.x, e.y, 110); this.shake(10);
+            if (dist < 110 && !this.airborne && !this.stats.isDashing) { const d = Math.round(160 * this.diff().dmg * 0.7 * (e.elite ? 1.5 : 1)); this.stats.hp -= d; this.label(`-${d} BLAST`, this.playerX, this.playerY - 50, '#fb923c'); }
+            e.state = 2; e.hp = 0;
+          }
+        } else if (dist < 64 + e.radius) { e.state = 1; e.ai2 = 0.6; }
+        break;
+      }
+      case 'charger': {
+        e.ai2 = (e.ai2 ?? 0) - dt;
+        if (e.state === 1) { mx = 0; my = 0; if (e.ai2 <= 0) { e.state = 2; e.ai2 = 0.6; } }
+        else if (e.state === 2) { e.x += (e.dx ?? 0) * sp * 6; e.y += (e.dy ?? 0) * sp * 6; if (e.ai2 <= 0) { e.state = 0; e.ai2 = 2.5; } return; }
+        else if (dist < 340 && e.ai2 <= 0) { e.state = 1; e.ai2 = 0.8; e.dx = ux; e.dy = uy; }
+        break;
+      }
+      case 'teleport': {
+        if (e.ai <= 0) { e.ai = 3; FX.flash(e.x, e.y, 40, '#d8b4fe'); const a = Math.random() * 6.28; e.x = this.playerX + Math.cos(a) * 110; e.y = this.playerY + Math.sin(a) * 110; FX.flash(e.x, e.y, 40, '#d8b4fe'); }
+        break;
+      }
+    }
+    // cheap separation (first 12 only)
+    let rx = 0, ry = 0;
+    for (let j = 0; j < Math.min(this.enemies.length, 12); j++) { const o = this.enemies[j]; if (o === e) continue; const ox = e.x - o.x, oy = e.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 32) { rx += ox / od; ry += oy / od; } }
+    e.x += (mx * 0.7 + rx * 0.3) * sp; e.y += (my * 0.7 + ry * 0.3) * sp;
+  }
+
+  private updateEnemyShots(dt: number) {
+    for (let i = this.enemyShots.length - 1; i >= 0; i--) {
+      const b = this.enemyShots[i]; b.life += dt; b.x += b.vx * dt; b.y += b.vy * dt;
+      let dead = b.life > 3.2 || Math.hypot(b.x, b.y) > this.arenaRadius + 60;
+      if (!dead && Math.hypot(b.x - this.playerX, b.y - this.playerY) < b.r + 16 && !this.stats.isDashing && !(b.ground && this.airborne)) {
+        this.stats.hp -= b.dmg; if (b.slow) this.slowUntil = this.gameTimeSeconds + 1.5;
+        FX.flash(this.playerX, this.playerY - this.casterZ(), 30, b.color); sound.playHit(); this.shake(4); dead = true;
+      }
+      if (dead) this.enemyShots.splice(i, 1);
+    }
+  }
+
+  // ---------- fusion bursts ----------
+  private noteCastForFusion(id: string) {
+    const el = id === 'spirit' ? 'spirit' : ELEMENT_OF[id];
+    if (!el) return;
+    const t = this.gameTimeSeconds;
+    const lc = this.lastCast;
+    if (lc && lc.el !== el && t - lc.t <= FUSION_WINDOW && this.fusionCd <= 0) {
+      const key = [lc.el, el].sort().join('+');
+      const f = FUSIONS[key];
+      if (f) { this.triggerFusion(key, f.name, f.color); this.lastCast = null; return; }
+    }
+    this.lastCast = { el, id, t };
+  }
+  public triggerFusion(key: string, name: string, color: string) {
+    this.fusionCd = FUSION_CD;
+    this.fusionLog.push(name);
+    const tgt = this.findDensestCluster(220) ?? { x: this.playerX + Math.cos(this.playerAngle) * 160, y: this.playerY + Math.sin(this.playerAngle) * 160 };
+    const base = this.spells.filter((s) => !s.isCombo); const avg = base.reduce((a, s) => a + s.damage, 0) / Math.max(1, base.length);
+    const dmg = Math.round(avg * 1.6 * (this.stats.spellPower / 100));
+    const r = 200;
+    this.label(name.toUpperCase() + '!', tgt.x, tgt.y - 90, color, true);
+    FX.star(tgt.x, tgt.y, r); FX.ring(tgt.x, tgt.y, r, 'rgba(255,255,255,1)', 0.5); this.shake(12); this.hitStop = Math.max(this.hitStop, 0.05);
+    this.skyStrike(tgt.x, tgt.y, color);
+    const els = key.split('+');
+    for (const e of this.enemies) {
+      if (Math.hypot(e.x - tgt.x, e.y - tgt.y) > r + e.radius) continue;
+      this.damageEnemy(e, dmg, color, (els.includes('fire') ? 'fire' : els.includes('lightning') ? 'lightning' : els.includes('ice') ? 'ice' : 'arcane') as Element);
+      if (els.includes('ice')) e.frozenUntil = performance.now() + 1200;
+    }
+    if (els.includes('fire') && els.includes('ice')) this.addSteam(tgt.x, tgt.y, 150, 4.5, dmg * 0.3);
+    else if (els.includes('fire')) this.addZone(tgt.x, tgt.y, 120, 3, dmg * 0.4, '251,146,60');
+    if (els.includes('lightning')) for (let k = 0; k < 4 && this.enemies.length; k++) { const e = this.enemies[Math.floor(Math.random() * this.enemies.length)]; FX.bolt(e.x, e.y); this.damageEnemy(e, Math.round(dmg * 0.6), '#93c5fd', 'lightning'); }
+    if (els.includes('spirit')) for (const sp of this.spirits) { sp.dash = 0.3; sp.target = this.findNearestEnemy(tgt.x, tgt.y, 300); }
+  }
+  private addSteam(x: number, y: number, r: number, dur: number, dps: number) {
+    const st = this.zones.filter((z) => z.steam);
+    if (st.length >= 6) this.zones.splice(this.zones.indexOf(st[0]), 1);
+    if (this.zones.length >= 24) this.zones.shift();
+    this.zones.push({ x, y, r, t: 0, max: dur, dps, color: '226,232,240', tick: 0, steam: true });
+  }
+
+  // ---------- charge-up ----------
+  public chargeStart(id: string) {
+    const sp = this.spells.find((s) => s.id === id && !s.isCombo);
+    if (!sp || this.isPaused) return false;
+    this.charging = { id, t0: this.gameTimeSeconds }; return true;
+  }
+  public chargeProgress() { return this.charging ? { id: this.charging.id, k: Math.min(1, (this.gameTimeSeconds - this.charging.t0) / CHARGE_MAX) } : null; }
+  public chargeCancel() { this.charging = null; }
+  public chargeRelease() {
+    const c = this.charging; this.charging = null;
+    if (!c) return null;
+    const sp = this.spells.find((s) => s.id === c.id); if (!sp) return null;
+    const k = Math.min(1, (this.gameTimeSeconds - c.t0) / CHARGE_MAX);
+    const e = this.eff(sp);
+    const boosted = { ...e, damage: Math.round(e.damage * (1 + 1.5 * k)), area: Math.round(e.area * (1 + 0.6 * k)), count: e.count + Math.round(2 * k) };
+    this.autoCastRaw(boosted);
+    this.castLog.push({ id: sp.id, t: this.gameTimeSeconds }); this.noteCastForFusion(sp.id);
+    sp.currentCooldown = sp.cooldown * (1 + 0.5 * k) * Math.pow(0.9, this.fastCasting) * (1 - 0.07 * this.art('hourglass'));
+    this.chargeLog.push({ id: sp.id, k });
+    if (k > 0.25) {
+      this.shake(8 + 18 * k); this.hitStop = Math.max(this.hitStop, 0.07 * k);
+      FX.ring(this.playerX, this.playerY - this.casterZ(), 120 + 120 * k, 'rgba(255,240,180,1)', 0.45);
+      this.label(k >= 1 ? `MAX CHARGE: ${sp.name}!` : `CHARGED ${Math.round(k * 100)}%`, this.playerX, this.playerY - this.casterZ() - 90, sp.color, true);
+    }
+    return k;
+  }
+
+  // ---------- spirits ----------
+  private syncSpirits() {
+    const sp = this.spells.find((s) => s.id === 'spirit');
+    const n = sp ? Math.min(12, sp.count) : 0;
+    while (this.spirits.length < n) { const a = Math.random() * 6.28; this.spirits.push({ x: this.playerX + Math.cos(a) * 60, y: this.playerY + Math.sin(a) * 60, z: 0, dash: 0, tx: 0, ty: 0, target: null, dmg: 0 }); FX.flash(this.playerX, this.playerY, 40, '#5eead4'); }
+    if (this.spirits.length > n) this.spirits.length = n;
+  }
+  private updateSpirits(dt: number) {
+    this.syncSpirits();
+    const n = this.spirits.length; if (!n) return;
+    const R = 58 + n * 4; const t = this.gameTimeSeconds;
+    for (let i = 0; i < n; i++) {
+      const s = this.spirits[i];
+      if (s.dash > 0 && s.target && s.target.hp > 0) {
+        s.dash -= dt;
+        const dx = s.target.x - s.x, dy = s.target.y - s.y, d = Math.hypot(dx, dy) || 1;
+        const st = Math.min(d, 900 * dt); s.x += (dx / d) * st; s.y += (dy / d) * st; s.z += (0 - s.z) * Math.min(1, dt * 10);
+        if (d < s.target.radius + 10) {
+          this.damageEnemy(s.target, Math.round((s.dmg || 40) * (this.airborne ? FLIGHT_DMG : 1)), '#5eead4', 'arcane');
+          FX.flash(s.target.x, s.target.y, 26, '#99f6e4'); this.spiritLog.strikes++; s.dash = 0; s.target = null;
+        }
+        continue;
+      }
+      s.dash = 0;
+      const a = t * 1.6 + (i / n) * Math.PI * 2;
+      const ox = this.playerX + Math.cos(a) * R, oy = this.playerY + Math.sin(a) * R * 0.8;
+      const lag = Math.min(1, dt * 5);
+      s.x += (ox - s.x) * lag; s.y += (oy - s.y) * lag;
+      s.z += (this.casterZ() + 10 - s.z) * lag;
+    }
+  }
+  private castSpirits(spell: Spell) {
+    this.syncSpirits();
+    const dmg = Math.round(spell.damage * (this.stats.spellPower / 100));
+    const big = spell.damage > this.eff(this.spells.find((x) => x.id === 'spirit') ?? spell).damage * 1.2; // charged or fused
+    for (let i = 0; i < this.spirits.length; i++) {
+      const s = this.spirits[i];
+      const target = this.findNearestEnemy(s.x, s.y, 420);
+      if (!target) continue;
+      const d = Math.hypot(target.x - s.x, target.y - s.y);
+      s.dmg = dmg;
+      if (d < 170 || big) { s.dash = 0.5; s.target = target; }
+      else if (this.projectiles.length < 200) {
+        const a = Math.atan2(target.y - s.y, target.x - s.x);
+        this.projectiles.push({ id: `proj_${Math.random()}`, x: s.x, y: s.y, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420, radius: 7, damage: dmg, color: '#5eead4', trailColor: '#99f6e4', duration: 1.6, life: 0, pierce: 1, hitEnemies: new Set(), type: 'spirit_bolt', homingTarget: target, z: s.z + 18, z0: s.z + 18 });
+        this.spiritLog.bolts++;
+      }
+    }
+    if (this.spirits.length) sound.playArcaneCast();
   }
 
   public start() {
@@ -876,7 +1111,12 @@ export class GameEngine {
   };
 
   private update(dt: number) {
+    if (this.hitStop > 0) { this.hitStop = Math.max(0, this.hitStop - dt); if (this.enableHitStop) dt *= 0.15; }
     this.gameTimeSeconds += dt;
+    this.updateFlight(dt);
+    this.fusionCd = Math.max(0, this.fusionCd - dt);
+    for (let i = this.labels.length - 1; i >= 0; i--) { this.labels[i].life -= dt; if (this.labels[i].life <= 0) this.labels.splice(i, 1); }
+    for (let i = this.beams.length - 1; i >= 0; i--) { this.beams[i].life -= dt; if (this.beams[i].life <= 0) this.beams.splice(i, 1); }
 
     const mins = Math.floor(this.gameTimeSeconds / 60);
     const secs = Math.floor(this.gameTimeSeconds % 60);
@@ -911,7 +1151,7 @@ export class GameEngine {
     let ready: Spell | null = null;
     for (const spell of this.spells) {
       if (spell.currentCooldown > 0) spell.currentCooldown = Math.max(0, spell.currentCooldown - dt);
-      else if (!ready) ready = spell;
+      else if (!ready && !(this.charging && this.charging.id === spell.id)) ready = spell;
     }
     if (ready && this.castGapTimer <= 0) {
       this.autoCast(ready);
@@ -938,7 +1178,7 @@ export class GameEngine {
     }
     const moveLen = Math.hypot(mx, my);
     if (moveLen > 0) {
-      const speed = this.stats.speed * 60 * (this.gameTimeSeconds < this.slowUntil ? 0.6 : 1);
+      const speed = this.stats.speed * 60 * (this.gameTimeSeconds < this.slowUntil ? 0.6 : 1) * (this.airborne ? FLIGHT_SPEED : 1);
       const mag = Math.min(1, moveLen); // analog joystick; keys give 1
       this.playerX += (mx / moveLen) * speed * mag * dt;
       this.playerY += (my / moveLen) * speed * mag * dt;
@@ -991,8 +1231,23 @@ export class GameEngine {
       for (const [t, w] of roster) { if (roll < w) { type = t; break; } roll -= w; }
       const sx = this.playerX + Math.cos(angle) * dist, sy = this.playerY + Math.sin(angle) * dist;
       const sd = Math.hypot(sx, sy); const k = sd > this.arenaRadius - 40 ? (this.arenaRadius - 40) / sd : 1;
-      this.spawnEnemyAt(type, sx * k, sy * k);
+      let t2 = type;
+      if (this.inEndless && Math.random() < Math.min(0.4, 0.05 * (this.endlessTime / 60))) t2 = NEW_ENEMY_TYPES[Math.floor(Math.random() * NEW_ENEMY_TYPES.length)] as Enemy['type'];
+      this.spawnEnemyAt(t2, sx * k, sy * k);
     }
+    this.packTimer -= dt;
+    if (this.packTimer <= 0 && !this.currentBoss) { this.packTimer = this.inEndless ? 15 : 20; if (this.enemies.length < df.cap + 20) this.spawnPack(); }
+    this.eliteTimer -= dt;
+    if (this.eliteTimer <= 0) {
+      this.eliteTimer = 45;
+      const roster = this.region.roster; const t = roster[Math.floor(Math.random() * roster.length)][0];
+      const a = Math.random() * 6.28; const d = Math.min(this.arenaRadius - 60, 560);
+      let ex = this.playerX + Math.cos(a) * d, ey = this.playerY + Math.sin(a) * d; const sd = Math.hypot(ex, ey); if (sd > this.arenaRadius - 40) { ex *= (this.arenaRadius - 40) / sd; ey *= (this.arenaRadius - 40) / sd; }
+      this.spawnEnemyAt(t, ex, ey, { elite: true });
+    }
+    this.updateEnemyShots(dt);
+    this.updateSpirits(dt);
+    if (this.stats.hp <= 0) { this.handlePlayerDeath(); if (this.stats.hp <= 0) return; }
 
     // Update Enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -1017,29 +1272,15 @@ export class GameEngine {
             }
           }
         } else {
-          // Flocking repulsion
-          let repelX = 0;
-          let repelY = 0;
-          for (let j = 0; j < Math.min(this.enemies.length, 12); j++) {
-            const other = this.enemies[j];
-            if (other !== e) {
-              const odx = e.x - other.x;
-              const ody = e.y - other.y;
-              const odist = Math.hypot(odx, ody);
-              if (odist > 0 && odist < 32) {
-                repelX += odx / odist;
-                repelY += ody / odist;
-              }
-            }
-          }
-
-          e.x += ((dx / dist) * 0.7 + repelX * 0.3) * e.speed * 60 * dt;
-          e.y += ((dy / dist) * 0.7 + repelY * 0.3) * e.speed * 60 * dt;
+          let slowK = 1;
+          for (const z of this.zones) if (z.steam && Math.hypot(e.x - z.x, e.y - z.y) < z.r) { slowK = 0.45; break; }
+          this.moveEnemy(e, dx, dy, dist, dt, slowK);
         }
 
         // Damage Player
-        if (dist < e.radius + 18 && !this.stats.isDashing) {
-          const dmg = (e.damage * dt) / 0.35;
+        const groundOnly = !e.isBoss && !e.flying;
+        if (dist < e.radius + 18 && !this.stats.isDashing && !(groundOnly && this.airborne) && e.hp > 0) {
+          const dmg = (e.damage * dt) / 0.35 * (e.state === 2 && (ENEMY_DEFS[e.type]?.behavior === 'charger') ? 2 : 1);
           if (this.stats.mana > dmg * 0.7) {
             this.stats.mana -= dmg * 0.7;
             this.stats.hp -= dmg * 0.3;
@@ -1068,7 +1309,8 @@ export class GameEngine {
       const p = this.projectiles[i];
       p.life += dt;
 
-      if (p.type === 'arcane_missile' && (!p.homingTarget || p.homingTarget.hp <= 0)) {
+      if (p.z) p.z = Math.max(0, p.z - (p.z0 ?? p.z) * dt * 3);
+      if ((p.type === 'arcane_missile' || p.type === 'spirit_bolt') && (!p.homingTarget || p.homingTarget.hp <= 0)) {
         p.homingTarget = this.findNearestEnemy(p.x, p.y, 450);
       }
       if (p.homingTarget && p.homingTarget.hp > 0) {
@@ -1280,6 +1522,7 @@ export class GameEngine {
         id: `proj_${Math.random()}`,
         x: this.playerX,
         y: this.playerY,
+        z: this.casterZ() + (this.flyH > 0.1 ? 30 : 0), z0: this.casterZ() + (this.flyH > 0.1 ? 30 : 0),
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         radius: 8 + 4 * (spell.tier ?? 0),
@@ -1310,7 +1553,7 @@ export class GameEngine {
       const a = off + (i / shards) * Math.PI * 2;
       this.projectiles.push({
         id: `proj_${Math.random()}`,
-        x: this.playerX, y: this.playerY,
+        x: this.playerX, y: this.playerY, z: this.casterZ(), z0: this.casterZ(),
         vx: Math.cos(a) * 360, vy: Math.sin(a) * 360,
         radius: 7 + 4 * (spell.tier ?? 0), damage, color: (spell.tier ?? 0) > 0 ? spell.color : '#bae6fd', trailColor: (spell.tier ?? 0) > 0 ? '#e0f2fe' : '#93c5fd',
         duration: 0.9 + 0.2 * (spell.tier ?? 0), life: 0, pierce: 1 + 2 * (spell.tier ?? 0), hitEnemies: new Set(), type: 'frost_shard',
@@ -1352,7 +1595,7 @@ export class GameEngine {
       const target = this.enemies[Math.floor(Math.random() * this.enemies.length)];
       const tx = target ? target.x : this.playerX + (Math.random() - 0.5) * 400;
       const ty = target ? target.y : this.playerY + (Math.random() - 0.5) * 400;
-      FX.bolt(tx, ty);
+      FX.bolt(tx, ty); this.skyStrike(tx, ty, '#fde047');
       if ((spell.tier ?? 0) > 0) FX.ring(tx, ty, spell.area, (spell.tier ?? 0) >= 2 ? 'rgba(253,224,71,1)' : 'rgba(103,232,249,1)', 0.35);
       if (this.hasSyn('plasma')) this.addZone(tx, ty, spell.area * 0.6, 2, damage * 0.4, '255,120,40');
 
@@ -1402,7 +1645,7 @@ export class GameEngine {
     const target = burst === 0 ? this.findDensestCluster(400) : this.enemies[Math.floor(Math.random() * this.enemies.length)];
     const tx = target ? target.x : this.playerX + (Math.random() - 0.5) * 320;
     const ty = target ? target.y : this.playerY + (Math.random() - 0.5) * 320;
-    FX.fire(tx, ty, spell.area);
+    FX.fire(tx, ty, spell.area); this.skyStrike(tx, ty, '#fb923c');
 
     for (let i = 0; i < 65; i++) {
       const ang = Math.random() * Math.PI * 2;
@@ -1438,9 +1681,11 @@ export class GameEngine {
     const isCrit = Math.random() * 100 < this.stats.critChance;
     let mult = 1;
     const frozen = !!(enemy.frozenUntil && performance.now() < enemy.frozenUntil);
-    if (el === 'fire' && frozen && this.hasSyn('thermal')) { mult *= 1.6; enemy.frozenUntil = 0; }
+    if (el === 'fire' && frozen) { if (this.hasSyn('thermal')) mult *= 1.6; enemy.frozenUntil = 0; if (!this.zones.some((z) => z.steam && Math.hypot(z.x - enemy.x, z.y - enemy.y) < z.r)) this.addSteam(enemy.x, enemy.y, 90, 3, 12); }
     if (el === 'lightning' && frozen && this.hasSyn('chainfreeze')) mult *= 2;
-    if ((enemy.isBoss || enemy.type === 'void_knight') && this.art('slayer')) mult *= 1 + 0.35 * this.art('slayer');
+    if (this.airborne) mult *= FLIGHT_DMG;
+    { const ar = ENEMY_DEFS[enemy.type]?.armor; if (ar && !enemy.small) mult *= 1 - ar; }
+    if ((enemy.isBoss || enemy.elite || enemy.type === 'void_knight') && this.art('slayer')) mult *= 1 + 0.35 * this.art('slayer');
     const finalDamage = Math.round((isCrit ? baseDamage * this.stats.critMultiplier : baseDamage) * mult);
     if (!fx) { enemy.hp -= finalDamage; this.totalDamageDealt += finalDamage; return; }
 
@@ -1530,7 +1775,8 @@ export class GameEngine {
         });
       }
     } else {
-      if (enemy.type === 'void_knight' && Math.random() < 0.07) {
+      if (ENEMY_DEFS[enemy.type]?.behavior === 'splitter' && !enemy.small) for (const o of [-1, 1]) { const c = this.spawnEnemyAt(enemy.type, enemy.x + o * 20, enemy.y, { small: true, elite: false, hpMul: 0.35 }); void c; }
+      if (enemy.elite || (enemy.type === 'void_knight' && Math.random() < 0.07)) {
         this.lootItems.push({ id: `chest_${Math.random()}`, x: enemy.x, y: enemy.y, type: 'chest', value: 1, color: '#facc15', bobOffset: 0 });
       } else if (Math.random() < enemy.crystalDropChance) {
         this.lootItems.push({
@@ -1651,6 +1897,7 @@ export class GameEngine {
   }
 
   private handlePlayerDeath() {
+    this.resetFlight(); this.charging = null;
     if (this.art('phoenix') > 0 && !this.revived) {
       this.revived = true;
       this.stats.hp = Math.round(this.stats.maxHp * 0.6);
@@ -1691,6 +1938,7 @@ export class GameEngine {
 
     // Enhanced 3D Isometric Viewport & Camera Tilt (Expansive POV)
     const zoom = Math.min(1.0, Math.max(0.78, w / 1500));
+    this.viewHalfW = w / 2 / zoom; this.viewHalfH = this.canvas.height / (window.devicePixelRatio || 1) / 2 / (zoom * 0.88);
     ctx.translate(w / 2 + shakeX, h / 2 + shakeY);
     ctx.scale(zoom, zoom * 0.88); // 3/4 Isometric Depth
     ctx.translate(-this.cameraX, -this.cameraY);
@@ -1712,7 +1960,14 @@ export class GameEngine {
     this.renderLivingEnemies(ctx);
 
     // 6. Player Archmage
-    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt, this.currentHero.id);
+    for (const b of this.enemyShots) if (this.onScreen(b.x, b.y, 40)) renderShot(ctx, b);
+    VisualRenderer.renderArchmage(ctx, this.playerX, this.playerY, this.playerAngle, this.stats.isDashing, this.faceAngle, this.moveAmt, this.currentHero.id, this.flyH);
+    for (let i = 0; i < this.spirits.length; i++) { const sp = this.spirits[i]; renderSpirit(ctx, sp.x, sp.y, sp.z, this.gameTimeSeconds * 3 + i, sp.dash > 0); }
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const b of this.beams) { const k = b.life / 0.22; ctx.strokeStyle = b.color; ctx.globalAlpha = k; ctx.lineWidth = 2 + 8 * k; ctx.beginPath(); ctx.moveTo(b.x1, b.y1); ctx.lineTo(b.x2, b.y2); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    ctx.restore();
+    if (this.charging) { const k = Math.min(1, (this.gameTimeSeconds - this.charging.t0) / CHARGE_MAX); const cz = this.casterZ(); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = k >= 1 ? '#fde68a' : 'rgba(255,240,180,0.8)'; ctx.lineWidth = 3 + 3 * k; ctx.beginPath(); ctx.arc(this.playerX, this.playerY - cz - 30, 30 + 26 * (1 - k), 0, Math.PI * 2 * k); ctx.stroke(); ctx.restore(); }
+    for (const l of this.labels) { const k = l.life / l.max; ctx.save(); ctx.globalAlpha = Math.min(1, k * 2); ctx.font = `900 ${l.big ? 26 : 16}px Cinzel, Georgia, serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.8)'; const yy = l.y - (1 - k) * 40; ctx.strokeText(l.text, l.x, yy); ctx.fillStyle = l.color; ctx.fillText(l.text, l.x, yy); ctx.restore(); }
 
     // 7. Projectiles (Arcane Missiles & Fused Magic)
     this.renderProjectiles(ctx);
@@ -1740,7 +1995,7 @@ export class GameEngine {
       const a = Math.max(0, 1 - z.t / z.max);
       const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.r);
       g.addColorStop(0, `rgba(${z.color},${0.22 * a})`); g.addColorStop(0.7, `rgba(${z.color},${0.1 * a})`); g.addColorStop(1, `rgba(${z.color},0)`);
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (0.92 + 0.08 * Math.sin(now * 9 + z.x)), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (0.92 + 0.08 * Math.sin(now * 9 + z.x)), 0, Math.PI * 2); ctx.fill();      if (z.steam) for (let k = 0; k < 7; k++) { const pa = k * 0.9 + now * 0.6, pr = z.r * (0.25 + 0.5 * ((k * 37) % 10) / 10); const px = z.x + Math.cos(pa) * pr, py = z.y + Math.sin(pa) * pr * 0.7 - ((now * 30 + k * 13) % 30); ctx.fillStyle = `rgba(241,245,249,${0.28 * a})`; ctx.beginPath(); ctx.arc(px, py, 18 + (k % 3) * 8, 0, Math.PI * 2); ctx.fill(); }
     }
     ctx.restore();
     for (const h of this.hazards) {
@@ -1765,10 +2020,15 @@ export class GameEngine {
       const isHit = Boolean(e.hitFlash && now < e.hitFlash);
       const isFrozen = Boolean(e.frozenUntil && now < e.frozenUntil);
 
+      if (!e.isBoss && !this.onScreen(e.x, e.y, e.radius + 60)) continue;
+      const aura = ELITE_AURA[this.regionIdx % ELITE_AURA.length];
       if (e.isBoss) {
         VisualRenderer.renderVoidColossus(ctx, e.x, e.y, e.hp, e.maxHp, isHit);
+      } else if (hasNewArt(e.type)) {
+        renderNewEnemy(ctx, e, isFrozen, isHit, this.playerX < e.x ? -1 : 1, (e.x * 0.013 + e.y * 0.007) % 6.28 + this.gameTimeSeconds, e.elite ? aura : undefined);
       } else {
         const facing = this.playerX < e.x ? -1 : 1;
+        if (e.elite) renderEliteAura(ctx, e.x, e.y, e.radius, aura);
         VisualRenderer.renderDemonMinion(ctx, e.x, e.y, e.type, isFrozen, isHit, facing, e.hp, e.maxHp, (e.x * 0.013 + e.y * 0.007) % 6.28);
       }
     }

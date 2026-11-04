@@ -31,7 +31,22 @@ interface EncyclopediaModalProps {
   onClose: () => void;
 }
 
-type TabType = 'magics' | 'fusions' | 'passives' | 'artifacts' | 'runes' | 'chronicles';
+import { MagicGlyph, GLYPHS } from './MagicIcons';
+import { ENEMY_DEFS } from '../game/enemies';
+import { renderNewEnemy, hasNewArt } from '../game/EnemyArt';
+import { VisualRenderer } from '../game/Visuals';
+const enemyIconCache: Record<string, string> = {};
+function enemyIcon(type: string): string {
+  if (enemyIconCache[type]) return enemyIconCache[type];
+  const c = document.createElement('canvas'); c.width = 96; c.height = 96; const ctx = c.getContext('2d')!;
+  const d = ENEMY_DEFS[type]; const k = Math.min(1.6, 30 / d.r); ctx.translate(48, 60); ctx.scale(k, k);
+  try {
+    if (hasNewArt(type)) renderNewEnemy(ctx, { x: 0, y: 0, type, radius: d.r, hp: 1, maxHp: 1, flying: d.flying }, false, false, 1, 0);
+    else VisualRenderer.renderDemonMinion(ctx, 0, 0, type as never, false, false, 1, 1, 1, 0);
+  } catch { /* ignore */ }
+  return (enemyIconCache[type] = c.toDataURL());
+}
+type TabType = 'magics' | 'fusions' | 'passives' | 'artifacts' | 'runes' | 'chronicles' | 'bestiary';
 
 interface PowerEntry {
   id: string;
@@ -62,6 +77,17 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({
   const [selectedPowerId, setSelectedPowerId] = useState<string>('arcane_missiles');
 
   const powersList: PowerEntry[] = [
+    {
+      id: 'spirit', name: 'Spirit', category: 'magics', iconType: 'glyph:spirit', element: 'Spirit', level: 12, maxLevel: 12, damage: 48, cooldown: '1.1s', count: '1 per pick (max 12)',
+      description: 'Each pick summons another spirit (up to 12). Spirits orbit you, rise with you in flight, dash-strike nearby foes or loose homing soul bolts, and join fusions and charged casts.',
+      fusionRecipe: { partner: 'any element', result: 'Soulfire / Wraith Frost / Storm Wraiths / Astral Echo' },
+    },
+    ...Object.entries(ENEMY_DEFS).map(([t, d]): PowerEntry => ({
+      id: 'enemy:' + t, name: d.name, category: 'bestiary', iconType: 'enemy:' + t, element: d.flying ? 'Flying' : d.behavior === 'ranged' || d.behavior === 'lobber' ? 'Ranged' : 'Ground',
+      level: 1, maxLevel: 1, damage: d.dmg, area: `r${d.r}`, count: `HP ${d.hp}`, cooldown: d.shot ? `shot ${d.shot.every}s` : undefined,
+      description: `${d.desc}${d.armor ? ` Armor ${Math.round(d.armor * 100)}%.` : ''} Region ${d.region}. ${d.flying ? 'Can reach you while you fly.' : d.shot && !d.shot.ground ? 'Its shots hit you in the air.' : 'Cannot touch you while you fly.'}${d.isNew ? ' (NEW)' : ''}`,
+      flavorLore: 'Elites: ×5 HP, ×1.5 damage, glowing aura, guaranteed chest.',
+    })),
     // --- 1. ACTIVE MAGICS (20 Magics matching Magic Survival) ---
     {
       id: 'arcane_missiles',
@@ -433,6 +459,8 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({
 
   const renderIconGraphic = (iconType: string, isSmall: boolean = false) => {
     const size = isSmall ? 'w-5 h-5' : 'w-10 h-10';
+    if (iconType.startsWith('glyph:')) return <MagicGlyph k={iconType.slice(6)} size={isSmall ? 20 : 40} />;
+    if (iconType.startsWith('enemy:')) return <img data-enemy={iconType.slice(6)} src={enemyIcon(iconType.slice(6))} width={isSmall ? 24 : 52} height={isSmall ? 24 : 52} alt="" />;
     switch (iconType) {
       case 'darts':
         return <Sparkles className={`${size} text-sky-300 stroke-[2]`} />;
@@ -606,6 +634,15 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({
             <BookOpen className="w-5 h-5 stroke-[2.5]" />
             <span className="text-[9px] font-cinzel font-bold">Notes</span>
           </button>
+          <button
+            data-tab="bestiary"
+            onClick={() => { sound.playItemUse(); setActiveTab('bestiary'); setSelectedPowerId('enemy:astral_wisp'); }}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-all cursor-pointer ${activeTab === 'bestiary' ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_#f59e0b]' : 'text-stone-500 hover:text-stone-300'}`}
+            title="Bestiary"
+          >
+            <Skull className="w-5 h-5 stroke-[2.5]" />
+            <span className="text-[9px] font-cinzel font-bold">Bestiary</span>
+          </button>
         </div>
 
         {/* Center Grid of Powers (5 columns matching screenshot) */}
@@ -633,7 +670,7 @@ export const EncyclopediaModal: React.FC<EncyclopediaModalProps> = ({
 
                   {/* Icon Graphic */}
                   <div className="my-1.5 flex items-center justify-center">
-                    {renderIconGraphic(power.iconType, false)}
+                    {GLYPHS[power.id] ? <MagicGlyph k={power.id} size={40} /> : renderIconGraphic(power.iconType, false)}
                   </div>
 
                   {/* Power Name */}

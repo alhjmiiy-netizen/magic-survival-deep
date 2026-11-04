@@ -27,7 +27,8 @@ export interface DeepHUD {
 }
 const ART_ICON: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = { Eye, Hourglass, Magnet, Heart, Feather, Triangle, Hexagon, Sword, Crown };
 import { PlayerStats, Spell, QuickBeltItem, GameQuest } from '../types/game';
-import { RadarData } from '../game/GameEngine';
+import { RadarData, GameEngine } from '../game/GameEngine';
+import { MagicGlyph, spellGlyphKey, glyphKeyFor } from './MagicIcons';
 
 interface HUDProps {
   stats: PlayerStats;
@@ -53,6 +54,7 @@ interface HUDProps {
   hero: CharacterHero;
   deep?: DeepHUD | null;
   notice?: { text: string; color: string; k: number; kind: string } | null;
+  getEngine?: () => GameEngine | null;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -78,6 +80,7 @@ export const HUD: React.FC<HUDProps> = ({
   getCooldowns,
   deep,
   notice,
+  getEngine,
 }) => {
   const [artTip, setArtTip] = useState<string | null>(null);
   const [isObjectivesCollapsed, setIsObjectivesCollapsed] = useState(true);
@@ -235,6 +238,18 @@ export const HUD: React.FC<HUDProps> = ({
   const xpPct = Math.max(0, Math.min(100, (stats.xp / stats.maxXp) * 100));
   const questsDone = quests.filter((q) => q.completed || q.current >= q.target).length;
   const dashReady = stats.dashCurrentCooldown <= 0;
+  // v4 flight + charge state, polled at ~15Hz
+  const [fl8, setFl8] = useState({ flying: false, meter: 6, max: 6, lock: 0, h: 0 });
+  const [charge, setCharge] = useState<{ id: string; k: number } | null>(null);
+  const [spiritN, setSpiritN] = useState(0);
+  const [hint, setHint] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setHint(false), 7000); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    if (!getEngine) return;
+    const id = setInterval(() => { const e = getEngine(); if (!e) return; const f = e.flightState(); setFl8({ flying: f.flying, meter: f.meter, max: f.max, lock: f.lock, h: f.h }); setCharge(e.chargeProgress()); setSpiritN(e.spirits.length); }, 66);
+    return () => clearInterval(id);
+  }, [getEngine]);
+  const chargeDown = useRef<{ id: string; t: number } | null>(null);
 
   const SPELL_ICON: Record<string, React.ReactNode> = {
     arcane_missiles: <Sparkles className="w-4 h-4" />,
@@ -339,7 +354,15 @@ export const HUD: React.FC<HUDProps> = ({
         const fl = flash[s.id];
         const tier = s.tier ?? 0;
         return (
-          <div key={s.id} data-power={s.id} className="relative flex flex-col items-center" onClick={() => setTip(tip === s.id ? null : s.id)}>
+          <div key={s.id} data-power={s.id} className="relative flex flex-col items-center pointer-events-auto" style={{ touchAction: 'none' }}
+            onPointerDown={(ev) => { ev.stopPropagation(); if (s.isCombo) return; chargeDown.current = { id: s.id, t: performance.now() }; getEngine?.()?.chargeStart(s.id); }}
+            onPointerUp={(ev) => { ev.stopPropagation(); const c = chargeDown.current; chargeDown.current = null; const e = getEngine?.(); if (!c || !e) { setTip(tip === s.id ? null : s.id); return; } if (performance.now() - c.t < 220) { e.chargeCancel(); setTip(tip === s.id ? null : s.id); } else e.chargeRelease(); }}
+            onPointerCancel={() => { chargeDown.current = null; getEngine?.()?.chargeCancel(); }}>
+            {charge && charge.id === s.id && (
+              <svg data-charge={s.id} className="absolute -rotate-90 pointer-events-none" style={{ top: -6, left: '50%', marginLeft: -(tile + 12) / 2 }} width={tile + 12} height={tile + 12} viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="30" fill="none" stroke={charge.k >= 1 ? '#fde68a' : '#fff7d6'} strokeWidth="4" strokeDasharray="188.5" strokeDashoffset={188.5 * (1 - charge.k)} style={{ filter: 'drop-shadow(0 0 6px #fde68a)' }} />
+              </svg>
+            )}
             <div
               key={fl}
               data-tier={tier}
@@ -350,10 +373,10 @@ export const HUD: React.FC<HUDProps> = ({
                 <circle cx="26" cy="26" r="24" fill="none" stroke="#0b1220" strokeWidth="3" opacity="0.6" />
                 <circle ref={(el) => { ringRefs.current[s.id] = el; }} data-ring={s.id} cx="26" cy="26" r="24" fill="none" stroke={s.color} strokeWidth="3" strokeDasharray="151" strokeDashoffset="0" strokeLinecap="round" />
               </svg>
-              <span style={{ filter: `drop-shadow(0 0 4px ${s.color})` }}>{s.isCombo ? <Sparkles className="w-6 h-6 text-fuchsia-200" /> : BIG_ICON[s.id] ?? <Sparkles className="w-6 h-6" />}</span>
+              <span style={{ filter: `drop-shadow(0 0 4px ${s.color})` }}><MagicGlyph k={s.isCombo ? glyphKeyFor(s.id, 1, 'combo') : spellGlyphKey(s)} size={30} color={s.color} /></span>
               {tier > 0 && <span data-star className="absolute -top-2 -right-1.5 text-[11px] leading-none font-black text-amber-300 drop-shadow-[0_0_4px_#fde047]">{'★'.repeat(tier)}</span>}
               <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 rounded bg-black border border-amber-400 text-[10px] leading-[13px] font-black text-amber-300 whitespace-nowrap">
-                {s.isCombo ? 'COMBO' : `Lv ${s.level}`}
+                {s.isCombo ? 'COMBO' : s.id === 'spirit' ? `×${spiritN || s.count}` : `Lv ${s.level}`}
               </span>
             </div>
             <div className="flex gap-[2px] mt-[5px] h-[4px]">
@@ -509,6 +532,40 @@ export const HUD: React.FC<HUDProps> = ({
     </button>
   );
 
+  const fk = fl8.meter / fl8.max;
+  const wingsReady = fl8.lock <= 0 && (fl8.flying || fl8.meter >= 1);
+  const flightBlock = (
+    <>
+      <button
+        data-hud="flight" data-flying={fl8.flying ? '1' : '0'}
+        onPointerDown={(e) => { e.stopPropagation(); getEngine?.()?.toggleFlight(); setHint(false); }}
+        className={`absolute rounded-full flex flex-col items-center justify-center border-2 pointer-events-auto cursor-pointer ${fl8.flying ? 'border-cyan-200 bg-cyan-700/85 text-white' : wingsReady ? 'border-cyan-300 bg-slate-900/85 text-cyan-100' : 'border-slate-600 bg-slate-900/80 text-slate-500'}`}
+        style={{ ...(portrait ? { bottom: 124, right: 18, width: 84, height: 84 } : { bottom: 86, right: 10, width: 74, height: 74 }), boxShadow: fl8.flying ? '0 0 22px rgba(103,232,249,0.8)' : undefined }}
+      >
+        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" width="100%" height="100%">
+          <circle cx="40" cy="40" r="37" fill="none" stroke="#0b1220" strokeWidth="4" opacity="0.7" />
+          <circle data-flight-ring cx="40" cy="40" r="37" fill="none" stroke={fl8.lock > 0 ? '#f87171' : fk < 0.3 ? '#fbbf24' : '#67e8f9'} strokeWidth="4" strokeDasharray="232.5" strokeDashoffset={232.5 * (1 - fk)} strokeLinecap="round" />
+        </svg>
+        <svg viewBox="0 0 48 28" width="40" height="24" style={{ filter: 'drop-shadow(0 0 4px #67e8f9)' }}>
+          <path d="M24 20 C18 6 8 2 1 4 C6 8 6 12 3 14 C8 14 10 17 8 20 C13 19 17 21 24 22 Z M24 20 C30 6 40 2 47 4 C42 8 42 12 45 14 C40 14 38 17 40 20 C35 19 31 21 24 22 Z" fill="currentColor" />
+        </svg>
+        <span className="text-[9px] font-black tracking-wider">{fl8.lock > 0 ? fl8.lock.toFixed(1) : fl8.flying ? 'LAND' : 'FLY'}</span>
+      </button>
+      <div data-hud="flight-meter" className="absolute pointer-events-none flex items-center gap-1" style={portrait ? { bottom: 214, right: 14 } : { bottom: 166, right: 8 }}>
+        <span className="text-[8px] font-black text-cyan-200">WINGS</span>
+        <div className="w-[64px] h-[6px] rounded-full bg-slate-900/90 border border-cyan-900 overflow-hidden">
+          <div className="h-full" style={{ width: `${fk * 100}%`, background: fl8.lock > 0 ? '#f87171' : 'linear-gradient(90deg,#22d3ee,#a5f3fc)' }} />
+        </div>
+        <span className="text-[8px] font-bold text-cyan-100 w-6">{fl8.meter.toFixed(1)}s</span>
+      </div>
+      {hint && (
+        <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { bottom: 236, right: 12 } : { bottom: 186, right: 8 }}>
+          🪽 Tap the wings to fly and rain magic from above
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden font-sans">
       <div
@@ -534,6 +591,7 @@ export const HUD: React.FC<HUDProps> = ({
       {beltBlock}
       {joystickBlock}
       {dashBlock}
+      {flightBlock}
     </div>
   );
 };
