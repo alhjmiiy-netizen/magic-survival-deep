@@ -54,3 +54,12 @@ Forked from Wtf-rebuild (`source` @ 2becf52); art, hero sprites, cards, joystick
 - Spirit roles (game/spiritRoles.ts, SPIRIT constants): guardians (block shots within 24px), hunters (dart at enemies within 280px every 1.1 s), Mender at 3+ (heal 0.6% max hp/s + loot magnet 240), Beacon at 5+ (170px aura, 45% slow, dmg ticks). Surge HUD button (18 s cd, x2.5, clear radius 260, cooldown ring). Buffs +4% dmg per 2 spirits, 3% DR per 3. Lethal-hit save at 4+ spirits (sacrifice one, 35% hp, 90 s cd, regrow 30 s). Wing formation while flying. Ascension I/II at 8/12 (dmg x1.25/x1.5, surge cd x0.8/x0.5). Level-up text names the unlock. qa/spirits.cjs (12 spirits + 120 enemies ≈ 28–33 fps headless).
 - qa/v4.cjs forced-landing check retired (free flight since v5 has no meter).
 - Final soak: qa/results/soak-v6-final.json (endless 20 min, 0 errors, heap 30→34 MB).
+
+## v7 — more magic (Nov 3 2026)
+- Free movement: endless world, no arena circle/rim/pull-back (commit 970a68c; qa/travel.cjs landscape + 390x844 portrait).
+- 12 new spells (src/game/spells2.ts, engine src/game/magic2.ts, pooled ents, LOD budget 220/170/110): meteor_shower(fire), chain_lightning(lightning), electric_zone(lightning), satellite_orbs(arcane), poison_cloud(poison), cyclone(wind), gale_scythe(wind), stone_spikes(earth), gravity_well(arcane/void), tidal_wave(water), holy_smite(light), magic_circle(light). Lv1-8, 2 evolution tiers, sp_<id> SFX, glyphs, codex entries.
+- Elements now 10 (+poison, wind, earth, water, light) -> 45 element pairs via genericPair; ComboModal shows X/45 discovered.
+- Artifacts: venom_gland, storm_vane, earth_core, tide_pearl, halo, epic elemental_codex.
+- MAX_MAGIC_SLOTS=8; level-up always offers one new magic while a slot is free.
+- HUD: adaptive tiles 36-52px, wraps (6/row portrait); removed backdrop blur / animated box-shadow / drop-shadow filters on tiles (perf).
+- QA: qa/spells.cjs <url> <tag> <soakSec> (per-spell lv1-8, damage, sound, evolutions, level-up guarantee, all-spell FPS, soak, portrait HUD). qa/combos.cjs asserts 45 pairs -> v7-combos-sheet.png.
