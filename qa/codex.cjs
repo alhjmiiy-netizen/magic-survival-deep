@@ -17,7 +17,7 @@ const S = (n) => `/workspace/deploy/magic-deep-shots/${tag}-${n}.png`;
     const need = (id, s) => { if (!txt(id).includes(s)) fails.push(`${id} missing "${s}"`); };
     for (const r of D.REGIONS) { need('region:' + r.id, C.fmtTime(r.duration)); need('region:' + r.id, r.boss.name); need('region:' + r.id, `every ${r.hazard.every} s`); }
     need('guide:modes', C.fmtTime(D.REGIONS[0].duration)); need('guide:modes', C.fmtTime(D.ENDLESS_BOSS_EVERY)); need('guide:modes', String(D.ENDLESS_CAP)); need('guide:modes', `${T.ELITE_EVERY} s`);
-    need('guide:flight', String(T.FLIGHT_LIFT)); need('guide:flight', `×${T.SOAR_SPEED}`); need('guide:flight', `×${T.HOVER_SPEED}`); need('guide:flight', `+${Math.round((T.SOAR_DMG - 1) * 100)}%`); need('guide:flight', `${T.WORLD_MUL}×`);
+    need('guide:flight', String(T.FLIGHT_LIFT)); need('guide:flight', `×${T.SOAR_SPEED}`); need('guide:flight', `×${T.HOVER_SPEED}`); need('guide:flight', `+${Math.round((T.SOAR_DMG - 1) * 100)}%`); need('guide:flight', 'endless');
     need('guide:cataclysm', `${T.CATA_SCENE} s`); need('guide:cataclysm', C.fmtTime(T.CATA_CD)); need('guide:cataclysm', `+${T.CATA_GAIN.fusion}`);
     need('guide:charge', `${T.CHARGE_MAX} s`); need('fusion:rules', `${T.FUSION_CD} s`); need('fusion:rules', `${T.FUSION_WINDOW} s`);
     for (const id of SP.BASE_SPELL_IDS) { const s = SP.BASE_SPELLS[id]; need('magic:' + id, `${s.cooldown} s`); need('magic:' + id, String(s.damage)); }

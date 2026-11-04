@@ -176,20 +176,20 @@ export const HUD: React.FC<HUDProps> = ({
     ctx.fillStyle = '#080c14';
     ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(center, center, radarData.arenaRadius * mapScale, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-    ctx.lineWidth = 1.5;
+    // v7 endless world: the minimap is relative to the player and scrolls — a world grid slides under it
+    ctx.save(); ctx.beginPath(); ctx.arc(center, center, center - 2, 0, Math.PI * 2); ctx.clip();
+    const G = 300, wx = radarData.worldX ?? radarData.playerX, wy = radarData.worldY ?? radarData.playerY;
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.16)'; ctx.lineWidth = 1; ctx.beginPath();
+    const offX = (((wx % G) + G) % G) * mapScale, offY = (((wy % G) + G) % G) * mapScale;
+    for (let g = -3; g <= 3; g++) { const gx = center - offX + g * G * mapScale, gy = center - offY + g * G * mapScale; ctx.moveTo(gx, 0); ctx.lineTo(gx, size); ctx.moveTo(0, gy); ctx.lineTo(size, gy); }
     ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(center, 4);
-    ctx.lineTo(center, size - 4);
-    ctx.moveTo(4, center);
-    ctx.lineTo(size - 4, center);
-    ctx.stroke();
+    // spawn decal (rune circle) marker / pointer at the rim when off the map
+    if (radarData.spawnX !== undefined && radarData.spawnY !== undefined) {
+      let sx = (radarData.spawnX - radarData.playerX) * mapScale, sy = (radarData.spawnY - radarData.playerY) * mapScale; const sd = Math.hypot(sx, sy), lim = center - 8;
+      if (sd > lim) { sx *= lim / sd; sy *= lim / sd; }
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(center + sx, center + sy, sd > lim ? 3 : Math.max(3, 300 * mapScale), 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
 
     for (const e of radarData.enemies) {
       const rx = center + (e.x - radarData.playerX) * mapScale;
@@ -331,7 +331,7 @@ export const HUD: React.FC<HUDProps> = ({
 
   const radarBlock = (
     <div
-      data-hud="radar"
+      data-hud="radar" data-world={radarData ? `${Math.round(radarData.worldX ?? 0)},${Math.round(radarData.worldY ?? 0)}` : ""}
       className="absolute rounded-full border-2 border-amber-500/70 overflow-hidden bg-slate-950"
       style={portrait ? { top: 6, right: 6, width: 50, height: 50 } : { top: 40, right: 6, width: 58, height: 58 }}
     >
@@ -593,7 +593,7 @@ export const HUD: React.FC<HUDProps> = ({
         ); })()}
       {hint && (
         <div data-hud="flight-hint" className="magic-toast absolute px-3 py-1.5 rounded-lg glass-panel text-[11px] font-black text-cyan-100 pointer-events-none" style={portrait ? { top: 150, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : { bottom: 100, right: 80 }}>
-          🪽 Tap the wings to fly freely
+          The world is endless — roam anywhere · 🪽 tap the wings to fly
         </div>
       )}
     </>

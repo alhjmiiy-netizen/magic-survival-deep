@@ -14,7 +14,7 @@ async function fps(p, ms = 2500) { return E(p, (ms) => new Promise((r) => { let 
   await E(p, () => { const e = __engine; e.stats.maxHp = 1e9; e.stats.hp = 1e9; e.stats.maxXp = 1e12; e.clearEnemies(); });
   const R = {}; R.start = await E(p, () => __engine.ibgState());
   // touch: walk onto a prop
-  R.touch = await E(p, () => { const e = __engine; const pr = e.ibg.propList().find((q) => q.down <= 0); const loot0 = e.lootItems.length; e.setPlayerPos(pr.x, pr.y); e.ibg.update(0.016, e.gameTimeSeconds, e.playerX, e.playerY, e.worldR, e.ibgReward, e.ibgSfx); return { s: e.ibgState(), lootAdded: e.lootItems.length - loot0 }; });
+  R.touch = await E(p, () => { const e = __engine; const pr = e.ibg.propList().find((q) => q.down <= 0); const loot0 = e.lootItems.length; e.setPlayerPos(pr.x, pr.y); e.ibg.update(0.016, e.gameTimeSeconds, e.playerX, e.playerY, e.origin, e.ibgReward, e.ibgSfx); return { s: e.ibgState(), lootAdded: e.lootItems.length - loot0 }; });
   // spell hit: damage an enemy standing on a prop
   R.hit = await E(p, () => { const e = __engine; const pr = e.ibg.propList().find((q) => q.down <= 0); e.spawnEnemy('imp', pr.x - e.playerX, pr.y - e.playerY); const en = e.enemies[e.enemies.length - 1]; en.x = pr.x; en.y = pr.y; const b0 = e.ibg.log.breaks; e.damageEnemy(en, 1, '#fff', 'fire'); return { broke: e.ibg.log.breaks - b0, s: e.ibgState() }; });
   // reward cap: break everything repeatedly

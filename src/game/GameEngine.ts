@@ -19,14 +19,15 @@ import { VisualRenderer } from './Visuals';
 import { FX } from './FX';
 import { drawGlow } from './ArtKit';
 import { WeatherSystem } from './WeatherSystem';
-import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS } from './arenas';
+import { ARENAS_LIST, ArenaRenderer, OBELISK_POSITIONS, arenaTheme } from './arenas';
 import { HEROES_LIST } from './characters';
 import { BASE_SPELLS, BASE_SPELL_IDS, PASSIVES, UpgradeChoice, applySpellLevel, makeComboSpell, makeSpell, spellEffectText } from './spells';
 import { COMBO_MAGIC_RECIPES, canFormCombo } from './combos';
 import { ENEMY_DEFS, NEW_ENEMY_TYPES, REGION_PACKS, ELITE_AURA } from './enemies';
 import { SPIRIT, spiritRole, ascension, spiritBuffs, spiritUnlockText, ROLE_COLOR, SpiritRole } from './spiritRoles';
 import { renderNewEnemy, renderEliteAura, renderShot, renderSpirit, hasNewArt } from './EnemyArt';
-import { SCENES, SceneKind, renderBeyond, renderScene, makeCracks, renderCracks } from './cataclysm';
+import { SCENES, SceneKind, renderScene, makeCracks, renderCracks } from './cataclysm';
+import { WorldGround, REBASE_AT, CHUNK } from './world';
 import { RARITY_WEIGHT } from './deep';
 import { ARTIFACTS, ELEMENT_OF, ENDLESS_BOSS_EVERY, EVOLUTIONS, REGIONS, SYNERGIES, SYNERGY_MIN_LEVEL, artifactById, endlessScale, evoUnlockLevel, loadBest, saveBest, Element } from './deep';
 
@@ -62,6 +63,7 @@ export interface RadarData {
   playerX: number;
   playerY: number;
   arenaRadius: number;
+  worldX?: number; worldY?: number; spawnX?: number; spawnY?: number;
   enemies: { x: number; y: number; isBoss?: boolean }[];
   crystals: { x: number; y: number }[];
 }
@@ -324,7 +326,31 @@ export class GameEngine {
   get airborne() { return this.flyH > 0.5; }
   /** Altitude state: not flying -> ground; flying + moving -> soar; flying + idle/slow -> hover. */
   get alt(): 'ground' | 'hover' | 'soar' { return !this.flying ? 'ground' : this.moveAmt > 0.3 ? 'soar' : 'hover'; }
-  get worldR() { return this.arenaRadius * WORLD_MUL; }
+  /** v7: the world is endless — no rim, no wall. Kept for API compatibility (Infinity). */
+  get worldR() { return Infinity; }
+  public world = new WorldGround();
+  /** integer world offset of the local origin (multiple of CHUNK): absolute = local + origin */
+  public origin = { x: 0, y: 0 };
+  public rebaseCount = 0;
+  private cataAt = { x: 0, y: 0 };
+  /** off-screen spawn distance around the player (scales with view/zoom) */
+  private offDist() { return Math.max(this.viewHalfW, this.viewHalfH) + 90; }
+  public absPos() { return { x: this.playerX + this.origin.x, y: this.playerY + this.origin.y }; }
+  /** Float precision: when the player wanders far, shift every position by a CHUNK multiple. */
+  private rebase() {
+    if (Math.abs(this.playerX) < REBASE_AT && Math.abs(this.playerY) < REBASE_AT) return;
+    const dx = Math.round(this.playerX / CHUNK) * CHUNK, dy = Math.round(this.playerY / CHUNK) * CHUNK;
+    this.origin.x += dx; this.origin.y += dy; this.rebaseCount++;
+    this.playerX -= dx; this.playerY -= dy; this.cameraX -= dx; this.cameraY -= dy;
+    this.cataAt.x -= dx; this.cataAt.y -= dy;
+    const K = ['x', 'y', 'x1', 'y1', 'x2', 'y2', 'tx', 'ty', 'targetX', 'targetY', 'sx', 'sy', 'ox', 'oy', 'homeX', 'homeY', 'lx', 'ly'];
+    const sh = (o: Record<string, unknown>) => { for (const k of K) if (typeof o[k] === 'number') (o as Record<string, number>)[k] -= (k.endsWith('y') || k.endsWith('Y') || k === 'y1' || k === 'y2') ? dy : dx; };
+    const self = this as unknown as Record<string, unknown>;
+    for (const key of Object.keys(self)) { const v = self[key]; if (!Array.isArray(v)) continue; for (const o of v) { if (!o || typeof o !== 'object' || Array.isArray(o)) continue; const r = o as Record<string, unknown>; if (typeof r.x === 'number' || typeof r.x1 === 'number') sh(r); } }
+    for (const cr of this.cata.cracks) for (let i = 0; i < cr.length; i += 2) { cr[i] -= dx; cr[i + 1] -= dy; }
+    if (this.charging) { /* no positions */ }
+    FX.shift(dx, dy); this.ibg.shift(dx, dy); this.weatherSystem.shift(dx, dy); this.magic2Shift(dx, dy);
+  }
   public toggleFlight(on?: boolean) {
     const want = on ?? !this.flying;
     if (want === this.flying) return this.flying;
@@ -340,7 +366,7 @@ export class GameEngine {
     } else { this.flying = false; this.flightLog.push('land'); FX.ring(this.playerX, this.playerY, 70, 'rgba(200,220,255,1)', 0.35); sound.play('dash', 0.7); }
     return this.flying;
   }
-  public flightState() { return { flying: this.flying, h: this.flyH, alt: this.alt, airborne: this.airborne, zoom: this.zoomK, outside: Math.hypot(this.playerX, this.playerY) > this.arenaRadius, dist: Math.round(Math.hypot(this.playerX, this.playerY)), arenaR: this.arenaRadius, worldR: this.worldR, pulling: !!this.pullBack, pulls: this.pullLog }; }
+  public flightState() { return { flying: this.flying, h: this.flyH, alt: this.alt, airborne: this.airborne, zoom: this.zoomK, outside: false, endless: true, dist: Math.round(Math.hypot(this.playerX + this.origin.x, this.playerY + this.origin.y)), abs: this.absPos(), arenaR: this.arenaRadius, worldR: -1, pulling: !!this.pullBack, pulls: this.pullLog }; }
   private resetFlight() { this.flying = false; this.flyH = 0; }
   private updateFlight(dt: number) {
     const target = this.alt === 'soar' ? SOAR_H : this.alt === 'hover' ? 1 : 0;
@@ -359,32 +385,10 @@ export class GameEngine {
     }
   }
   private flightDmgMul() { return !this.airborne ? 1 : this.alt === 'soar' || this.flyH > 1.3 ? SOAR_DMG * (1 + 0.2 * this.art('sky_talon')) : HOVER_DMG; }
-  /** Out-of-circle rule: airborne -> free roam to the soft world edge; grounded outside the rim -> gentle pull back (no damage). */
-  private applyBounds(dt: number) {
-    const R = this.arenaRadius, WR = this.worldR;
-    let d = Math.hypot(this.playerX, this.playerY);
-    if (this.pullBack) {
-      const pb = this.pullBack; pb.t += dt / 0.6; const k = 1 - Math.pow(1 - Math.min(1, pb.t), 3);
-      this.playerX = pb.x0 + (pb.x1 - pb.x0) * k; this.playerY = pb.y0 + (pb.y1 - pb.y0) * k;
-      if (pb.t >= 1) this.pullBack = null;
-      return;
-    }
-    if (this.flying || this.flyH > 0.6) {
-      if (d > WR - 260) { const push = Math.min(1, (d - (WR - 260)) / 260) * 520 * dt; this.playerX -= (this.playerX / d) * push; this.playerY -= (this.playerY / d) * push; d = Math.hypot(this.playerX, this.playerY); }
-      if (d > WR) { this.playerX *= WR / d; this.playerY *= WR / d; }
-      return;
-    }
-    if (d > R + 10) {
-      const k = (R - 90) / d; this.pullBack = { x0: this.playerX, y0: this.playerY, x1: this.playerX * k, y1: this.playerY * k, t: 0 };
-      this.pullLog++; this.label('PULLED BACK TO THE CIRCLE', this.playerX, this.playerY - 70, '#a5f3fc'); FX.ring(this.playerX, this.playerY, 80, 'rgba(165,243,252,1)', 0.4); sound.play('wings', 0.6);
-    } else if (d > R - 40) { this.playerX *= (R - 40) / d; this.playerY *= (R - 40) / d; }
-  }
-  /** Clamp a spawn point: to the arena when the player is inside it, to the world when roaming outside. */
-  private clampSpawn(x: number, y: number) {
-    const lim = Math.hypot(this.playerX, this.playerY) > this.arenaRadius - 60 ? this.worldR - 40 : this.arenaRadius - 40;
-    const sd = Math.hypot(x, y); if (sd > lim) { x *= lim / sd; y *= lim / sd; }
-    return { x, y };
-  }
+  /** v7: no confinement at all (ground or air). Only keeps float precision stable by rebasing the origin. */
+  private applyBounds(_dt: number) { this.pullBack = null; this.rebase(); }
+  /** v7: spawns are never clamped — the world is endless. */
+  private clampSpawn(x: number, y: number) { return { x, y }; }
   /** Central player damage (iron skin). */
   private hurt(d: number) { this.stats.hp -= d * (1 - 0.1 * this.art('iron_skin')) * (1 - spiritBuffs(this.spirits.length).dr); }
   // ---- v5: cataclysm ----
@@ -393,7 +397,7 @@ export class GameEngine {
     const c = this.cata; if (c.phase !== 'idle') return;
     c.meter = Math.min(100, c.meter + n * (1 + 0.3 * this.art('storm_heart')));
     if (c.gains.length < 60) c.gains.push(`${why}+${Math.round(n)}`);
-    if (c.meter >= 100 && !c.pending) { c.pending = true; this.notice('CATACLYSM READY — the circle trembles…', '#f43f5e', 'cataclysm'); }
+    if (c.meter >= 100 && !c.pending) { c.pending = true; this.notice('CATACLYSM READY — the ground trembles…', '#f43f5e', 'cataclysm'); }
   }
   private cataBlock(): string {
     if (this.currentBoss) return 'boss';
@@ -409,9 +413,9 @@ export class GameEngine {
     this.beginCataclysm(kind ?? null); return 'ok';
   }
   private beginCataclysm(kind: SceneKind | null) {
-    const c = this.cata; c.phase = 'crack'; c.t = 0; c.forced = kind; c.pending = false; c.cracks = makeCracks(this.arenaRadius); c.log.push('crack');
+    const c = this.cata; c.phase = 'crack'; c.t = 0; c.forced = kind; c.pending = false; this.cataAt = { x: this.playerX, y: this.playerY }; c.cracks = makeCracks(this.arenaRadius, this.playerX, this.playerY); c.log.push('crack');
     sound.play('crack', 1.4); this.shake(14); FX.flash(this.playerX, this.playerY, 300, '#fecaca');
-    this.notice('THE CIRCLE IS CRACKING!', '#f43f5e', 'cataclysm');
+    this.notice('THE GROUND IS CRACKING!', '#f43f5e', 'cataclysm');
   }
   private sceneKindNow(): SceneKind { return !this.flying ? 'abyss' : this.alt === 'soar' ? 'sky' : 'rift'; }
   private updateCataclysm(dt: number) {
@@ -442,7 +446,7 @@ export class GameEngine {
         for (let i = 0; i < n; i++) this.lootItems.push({ id: `chest_scene_${Math.random()}`, x: this.playerX + 70 + i * 60, y: this.playerY + 30, type: 'chest', value: 1, color: '#facc15', bobOffset: 0 });
         for (const e of this.enemies) if (!e.isBoss) FX.flash(e.x, e.y, 26, '#ffffff');
         this.enemies = this.enemies.filter((e) => e.isBoss); this.enemyShots = []; this.hazards = [];
-        this.notice('THE CIRCLE RE-FORMS — a reward chest awaits', '#facc15', 'cataclysm'); sound.play('artifact', 1.2); sound.startAmbience(null);
+        this.notice('THE GROUND RE-FORMS — a reward chest awaits', '#facc15', 'cataclysm'); sound.play('artifact', 1.2); sound.startAmbience(null);
       }
     } else if (c.phase === 'reform') {
       if (c.t >= 1.5) { c.phase = 'idle'; c.t = 0; c.kind = null; c.meter = 0; c.cdUntil = this.gameTimeSeconds + CATA_CD; c.log.push('reformed'); sound.startAtmosphereMusic(); }
@@ -720,8 +724,8 @@ export class GameEngine {
       }
       if (z.t >= z.max) this.zones.splice(i, 1);
     }
-    // despawn far non-boss enemies (player roaming far outside the circle)
-    for (let i = this.enemies.length - 1; i >= 0; i--) { const e = this.enemies[i]; if (!e.isBoss && !e.elite && Math.hypot(e.x - this.playerX, e.y - this.playerY) > 1700) { this.enemies.splice(i, 1); this.despawned++; } }
+    // despawn far non-boss enemies (player roaming far away)
+    for (let i = this.enemies.length - 1; i >= 0; i--) { const e = this.enemies[i]; if (!e.isBoss && !e.elite && Math.hypot(e.x - this.playerX, e.y - this.playerY) > Math.max(1700, this.offDist() * 1.9)) { this.enemies.splice(i, 1); this.despawned++; } }
     if (this.amberT === undefined) this.amberT = 0;
     // perf caps
     { const pc = this.lod >= 2 ? 160 : this.lod === 1 ? 280 : this.MAX_PARTICLES; if (this.particles.length > pc) this.particles.splice(0, this.particles.length - pc); }
@@ -1050,7 +1054,7 @@ export class GameEngine {
     const a0 = Math.random() * Math.PI * 2;
     for (let i = 0; i < n; i++) {
       const t = pool[i % pool.length];
-      const a = a0 + (Math.random() - 0.5) * 0.9; const d = 560 + Math.random() * 120;
+      const a = a0 + (Math.random() - 0.5) * 0.9; const d = this.offDist() + Math.random() * 120;
       const q = this.clampSpawn(this.playerX + Math.cos(a) * d, this.playerY + Math.sin(a) * d);
       this.spawnEnemyAt(t as Enemy['type'], q.x, q.y, { elite: false });
     }
@@ -1596,7 +1600,7 @@ export class GameEngine {
 
     if (moveLen === 0) this.moveAmt = Math.max(0, this.moveAmt - dt * 4);
 
-    // v5 bounds: free flight beyond the circle, pull-back when grounded outside
+    // v7: endless world — no bounds; only origin rebasing for float precision
     this.applyBounds(dt);
 
     // Dynamic camera tracking with subtle directional lead for enhanced POV
@@ -1614,7 +1618,7 @@ export class GameEngine {
 
     this.updateDeep(dt);
     this.ibg.enabled = GFX.interactiveBg;
-    if (this.ibg.enabled) { this.ibg.setScene(this.ibgSceneId()); this.ibg.update(dt, this.gameTimeSeconds, this.playerX, this.playerY, this.worldR, this.ibgReward, this.ibgSfx); }
+    if (this.ibg.enabled) { this.ibg.setScene(this.ibgSceneId()); this.ibg.update(dt, this.gameTimeSeconds, this.playerX, this.playerY, this.origin, this.ibgReward, this.ibgSfx); }
     if (this.stats.hp <= 0) { this.handlePlayerDeath(); if (this.stats.hp <= 0) return; }
 
     // Spawn regular hordes (region roster / endless scaling)
@@ -1625,7 +1629,7 @@ export class GameEngine {
     else if ((cp === 'idle' || cp === 'crack') && this.spawnTimer >= df.spawn && this.enemies.length < df.cap) {
       this.spawnTimer = 0;
       const angle = Math.random() * Math.PI * 2;
-      const dist = Math.min(this.arenaRadius - 50, 520 + Math.random() * 200);
+      const dist = this.offDist() + Math.random() * 160;
       let roll = Math.random();
       const roster = this.region.roster;
       let type = roster[0][0];
@@ -1642,7 +1646,7 @@ export class GameEngine {
     if (this.eliteTimer <= 0 && cp === 'idle') {
       this.eliteTimer = ELITE_EVERY;
       const roster = this.region.roster; const t = roster[Math.floor(Math.random() * roster.length)][0];
-      const a = Math.random() * 6.28; const d = Math.min(this.arenaRadius - 60, 560);
+      const a = Math.random() * 6.28; const d = this.offDist() + 40;
       const ep = this.clampSpawn(this.playerX + Math.cos(a) * d, this.playerY + Math.sin(a) * d);
       this.spawnEnemyAt(t, ep.x, ep.y, { elite: true });
     }
@@ -1845,7 +1849,7 @@ export class GameEngine {
       const en: { x: number; y: number; isBoss?: boolean }[] = []; const cr: { x: number; y: number }[] = [];
       for (const e of this.enemies) en.push({ x: e.x, y: e.y, isBoss: e.isBoss });
       for (const l of this.lootItems) if (l.type === 'crystal') cr.push({ x: l.x, y: l.y });
-      this.callbacks.onRadarUpdate({ playerX: this.playerX, playerY: this.playerY, arenaRadius: this.arenaRadius, enemies: en, crystals: cr });
+      this.callbacks.onRadarUpdate({ playerX: this.playerX, playerY: this.playerY, arenaRadius: 900, worldX: this.playerX + this.origin.x, worldY: this.playerY + this.origin.y, spawnX: -this.origin.x, spawnY: -this.origin.y, enemies: en, crystals: cr });
       this.callbacks.onStatsUpdate({ ...this.stats });
     }
     this.lootTimer -= dt; if (this.lootTimer <= 0) { this.lootTimer = 1; this.compactLoot(); }
@@ -2362,7 +2366,7 @@ export class GameEngine {
 
     P('2');
     // 2. Obelisk Blue Laser Beams
-    VisualRenderer.renderObeliskBeams(ctx, OBELISK_POSITIONS[0][0], OBELISK_POSITIONS[0][1] - 70);
+    if (this.onScreen(OBELISK_POSITIONS[0][0] - this.origin.x, OBELISK_POSITIONS[0][1] - this.origin.y, 900)) VisualRenderer.renderObeliskBeams(ctx, OBELISK_POSITIONS[0][0] - this.origin.x, OBELISK_POSITIONS[0][1] - 70 - this.origin.y);
 
     P('3');
     // 3. Central 8-Directional Radiant Celestial Spear Wings (From Screenshot)
@@ -2435,32 +2439,39 @@ export class GameEngine {
     }
   }
 
-  private renderBackdrop(ctx: CanvasRenderingContext2D) {
-    const now = performance.now() / 1000, c = this.cata, R = this.arenaRadius;
+  private magic2Shift(_dx: number, _dy: number) { /* replaced in item 2 */ }
+  private renderGround(ctx: CanvasRenderingContext2D, now: number) {
     const hw = this.viewHalfW, hh = this.viewHalfH;
-    const beyond = () => { profMark(ctx, '1beyond'); renderBeyond(ctx, this.region.color, this.cameraX, this.cameraY, hw, hh, R, this.worldR, now); profMark(ctx, '1platform'); };
+    this.world.setTheme(arenaTheme(this.currentArena));
+    profMark(ctx, '1ground');
+    this.world.render(ctx, this.cameraX, this.cameraY, hw, hh, this.origin.x, this.origin.y, now);
+    // the rune circle is only a decorative spawn decal at absolute (0,0)
+    const dx = -this.origin.x, dy = -this.origin.y;
+    if (Math.abs(dx - this.cameraX) < hw + 700 && Math.abs(dy - this.cameraY) < hh + 700) { profMark(ctx, '1runes'); ArenaRenderer.renderSpawnDecal(ctx, this.currentArena, this.arenaRadius, dx, dy); }
+  }
+  private renderBackdrop(ctx: CanvasRenderingContext2D) {
+    const now = performance.now() / 1000, c = this.cata;
+    const hw = this.viewHalfW, hh = this.viewHalfH, ax = this.cataAt.x, ay = this.cataAt.y;
     if (c.phase === 'scene' || c.phase === 'reform' || c.phase === 'collapse') {
       const kind = c.kind!;
+      renderScene(ctx, kind, ax, ay, this.cameraX, this.cameraY, hw, hh, now, c.phase === 'collapse' ? Math.min(1, c.t / 0.8) : 1);
       if (c.phase === 'collapse') {
-        // the arena shatters into wedges falling away over the new scene
-        renderScene(ctx, kind, R, this.cameraX, this.cameraY, hw, hh, this.worldR, now, Math.min(1, c.t / 0.8));
-        const k = c.t / 1.6;
-        if (k < 1) for (let i = 0; i < 10; i++) {
-          const a0 = (i / 10) * Math.PI * 2, a1 = a0 + Math.PI * 2 / 10, am = (a0 + a1) / 2;
+        // the ground around the player shatters into wedges falling away over the new scene
+        const k = c.t / 1.6, RR = Math.hypot(hw, hh) + 200;
+        if (k < 1) for (let i = 0; i < 12; i++) {
+          const a0 = (i / 12) * Math.PI * 2, a1 = a0 + Math.PI * 2 / 12, am = (a0 + a1) / 2;
           ctx.save(); ctx.globalAlpha = 1 - k;
-          ctx.translate(Math.cos(am) * k * 500, Math.sin(am) * k * 500 + k * k * 600); ctx.rotate((i % 2 ? 1 : -1) * k * 0.6); ctx.scale(1 - 0.4 * k, 1 - 0.4 * k);
-          ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, a0, a1); ctx.closePath(); ctx.clip();
-          ArenaRenderer.renderArenaBase(ctx, this.currentArena, R, this.cameraX, this.cameraY);
+          ctx.translate(ax, ay); ctx.translate(Math.cos(am) * k * 500, Math.sin(am) * k * 500 + k * k * 600); ctx.rotate((i % 2 ? 1 : -1) * k * 0.6); ctx.scale(1 - 0.4 * k, 1 - 0.4 * k); ctx.translate(-ax, -ay);
+          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.arc(ax, ay, RR, a0, a1); ctx.closePath(); ctx.clip();
+          this.renderGround(ctx, now);
           ctx.restore();
         }
       } else if (c.phase === 'reform') {
-        const k = Math.min(1, c.t / 1.5);
-        renderScene(ctx, kind, R, this.cameraX, this.cameraY, hw, hh, this.worldR, now, 1);
-        ctx.save(); ctx.globalAlpha = k; ArenaRenderer.renderArenaBase(ctx, this.currentArena, R, this.cameraX, this.cameraY, beyond); ctx.restore();
-      } else renderScene(ctx, kind, R, this.cameraX, this.cameraY, hw, hh, this.worldR, now, 1);
+        ctx.save(); ctx.globalAlpha = Math.min(1, c.t / 1.5); this.renderGround(ctx, now); ctx.restore();
+      }
       return;
     }
-    ArenaRenderer.renderArenaBase(ctx, this.currentArena, R, this.cameraX, this.cameraY, beyond);
+    this.renderGround(ctx, now);
     if (c.phase === 'crack') renderCracks(ctx, c.cracks, Math.min(1, c.t / 2), '#fb7185');
   }
 

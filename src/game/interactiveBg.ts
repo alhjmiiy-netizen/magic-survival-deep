@@ -58,24 +58,36 @@ export class InteractiveBg {
   constructor() { for (let i = 0; i < IBG.MOTES; i++) { this.motes[i * 4] = this.rnd(); this.motes[i * 4 + 1] = this.rnd(); this.motes[i * 4 + 2] = 0.15 + this.rnd() * 0.85; this.motes[i * 4 + 3] = this.rnd() * 6.28; } }
   private rnd() { this.seed = (this.seed * 16807) % 2147483647; return this.seed / 2147483647; }
   get set(): BgSet { return IBG_SETS[this.setId] ?? IBG_SETS.r1; }
-  public setScene(id: string) { if (id !== this.setId) { this.setId = id; this.props.length = 0; this.log.setChanges++; } }
+  public setScene(id: string) { if (id !== this.setId) { this.setId = id; this.props.length = 0; this.chunkProps.clear(); this.log.setChanges++; } }
   public state() { return { set: this.setId, enabled: this.enabled, props: this.props.length, intact: this.props.filter((p) => p.down <= 0).length, activeWaves: this.waves.length, activeRipples: this.ripples.length, rewardsLastMin: this.rewardTimes.length, ...this.log }; }
   public propList() { return this.props.map((p) => ({ x: p.x, y: p.y, down: p.down, kind: this.set.props[p.v].kind })); }
-  private place(p: Prop, px: number, py: number, bound: number) {
-    for (let k = 0; k < 6; k++) { const a = this.rnd() * 6.28, d = IBG.RING_MIN + this.rnd() * (IBG.RING_MAX - IBG.RING_MIN); p.x = px + Math.cos(a) * d; p.y = py + Math.sin(a) * d; if (Math.hypot(p.x, p.y) < bound) break; }
-    p.v = this.rnd() < 0.5 ? 0 : 1; p.hp = 1; p.down = 0; p.wob = 0; p.ph = this.rnd() * 6.28;
+  /** v7: props are generated per world chunk (seeded by absolute chunk coords -> the same place always has the
+   *  same scenery), loaded around the player and unloaded when far. Pool is capped. */
+  private chunkProps = new Map<string, Prop[]>();
+  public chunkStats = { loaded: 0, unloaded: 0 };
+  private static CH = 640;
+  private genChunk(ax: number, ay: number, ox: number, oy: number): Prop[] {
+    let h = (Math.imul(ax, 73856093) ^ Math.imul(ay, 19349663) ^ Math.imul(this.setId.charCodeAt(this.setId.length - 1), 83492791)) >>> 0;
+    const r = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return h / 4294967296; };
+    const out: Prop[] = []; const n = r() < 0.75 ? (r() < 0.3 ? 2 : 1) : 0;
+    for (let i = 0; i < n; i++) out.push({ x: ax * InteractiveBg.CH - ox + 60 + r() * 520, y: ay * InteractiveBg.CH - oy + 60 + r() * 520, set: 0, v: r() < 0.5 ? 0 : 1, hp: 1, down: 0, wob: 0, ph: r() * 6.28 });
+    return out;
   }
+  /** shift local coordinates after an origin rebase */
+  public shift(dx: number, dy: number) { for (const p of this.props) { p.x -= dx; p.y -= dy; } for (const w of this.waves) { w.x -= dx; w.y -= dy; } for (const r of this.ripples) { r.x -= dx; r.y -= dy; } }
   /** returns reward events the engine turns into loot (already capped) */
-  public update(dt: number, now: number, px: number, py: number, bound: number, onReward: (x: number, y: number, kind: 'xp' | 'gold') => void, onSfx: (n: string) => void) {
+  public update(dt: number, now: number, px: number, py: number, origin: { x: number; y: number }, onReward: (x: number, y: number, kind: 'xp' | 'gold') => void, onSfx: (n: string) => void) {
     if (!this.enabled) return;
-    const want = Q.lod >= 2 ? 10 : IBG.PROPS;
-    while (this.props.length < want) { const p = { x: 0, y: 0, set: 0, v: 0, hp: 1, down: 0, wob: 0, ph: 0 }; this.place(p, px, py, bound); this.props.push(p); }
-    if (this.props.length > want) this.props.length = want;
+    const CH = InteractiveBg.CH, R = Q.lod >= 2 ? 1 : 2;
+    const pcx = Math.floor((px + origin.x) / CH), pcy = Math.floor((py + origin.y) / CH);
+    let changed = false;
+    for (const k of [...this.chunkProps.keys()]) { const [a, b] = k.split(',').map(Number); if (Math.abs(a - pcx) > R + 1 || Math.abs(b - pcy) > R + 1) { this.chunkProps.delete(k); this.chunkStats.unloaded++; changed = true; } }
+    for (let a = pcx - R; a <= pcx + R; a++) for (let b = pcy - R; b <= pcy + R; b++) { const k = a + ',' + b; if (!this.chunkProps.has(k)) { this.chunkProps.set(k, this.genChunk(a, b, origin.x, origin.y)); this.chunkStats.loaded++; changed = true; } }
+    if (changed || this.props.length === 0) { this.props.length = 0; for (const arr of this.chunkProps.values()) for (const p of arr) if (this.props.length < IBG.PROPS * 2) this.props.push(p); }
     while (this.rewardTimes.length && now - this.rewardTimes[0] > 60) this.rewardTimes.shift();
     for (const p of this.props) {
       p.wob = Math.max(0, p.wob - dt * 2.5);
       const d = Math.hypot(p.x - px, p.y - py);
-      if (d > IBG.RING_MAX + 500) { this.place(p, px, py, bound); continue; }
       if (p.down > 0) { p.down -= dt; continue; }
       if (d < IBG.TOUCH_R) { this.log.touches++; p.wob = 1; p.down = IBG.REGROW; onSfx('chime'); this.reward(now, p, 'xp', onReward); }
     }

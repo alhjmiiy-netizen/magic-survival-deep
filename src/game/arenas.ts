@@ -163,6 +163,7 @@ const BOLT_PTS = 9;
 const bolts = { t: new Float32Array(6), life: new Float32Array(6), pts: new Float32Array(6 * BOLT_PTS * 2) };
 let boltRng = mulberry32(99);
 
+export function arenaTheme(arena: ArenaRealm) { return themeFor(arena); }
 function themeFor(arena: ArenaRealm): ArenaTheme {
   return THEMES[arena.id] || THEMES.astral_sanctuary;
 }
@@ -714,6 +715,26 @@ export class ArenaRenderer {
   /** Pre-build caches (call once on arena select to avoid a first-frame hitch). */
   public static warm(arena: ArenaRealm, radius: number) {
     getCache(arena, radius);
+  }
+
+  /** v7: the rune circle + obelisks only, as a decorative spawn decal at world (ox,oy). No floor, no rim, no limits. */
+  public static renderSpawnDecal(ctx: CanvasRenderingContext2D, arena: ArenaRealm, radius: number, ox: number, oy: number) {
+    const t = themeFor(arena); const c = getCache(arena, radius); const now = performance.now() * 0.001;
+    ctx.save(); ctx.translate(ox, oy); ctx.globalCompositeOperation = 'lighter';
+    const pulse = 0.5 + Math.sin(now * 1.8) * 0.12; const rr = c.runeR;
+    ctx.globalAlpha = pulse * 0.85;
+    ctx.save(); ctx.rotate(now * 0.05); ctx.drawImage(c.runeOuter, -rr, -rr, rr * 2, rr * 2); ctx.restore();
+    ctx.save(); ctx.rotate(-now * 0.12); ctx.drawImage(c.runeInner, -rr, -rr, rr * 2, rr * 2); ctx.restore();
+    ctx.globalAlpha = 1;
+    if (Q.lod < 2) drawGlow(ctx, `rgba(${t.rune},1)`, 0, 0, 360, 0.1 + pulse * 0.08);
+    for (let i = 0; i < OBELISK_POSITIONS.length; i++) {
+      const [bx, by] = OBELISK_POSITIONS[i]; const bob = Math.sin(now * 2 + i) * 6;
+      ctx.globalCompositeOperation = 'source-over'; ctx.drawImage(c.obeliskBase, bx - 60, by - 50);
+      ctx.globalCompositeOperation = 'lighter';
+      drawGlow(ctx, `rgba(${t.crystal},1)`, bx, by - 60 + bob, 90, 0.55 + Math.sin(now * 3 + i) * 0.15);
+      ctx.drawImage(c.crystal, bx - 22, by - 120 + bob, 44, 103);
+    }
+    ctx.restore();
   }
 
   public static renderArenaBase(

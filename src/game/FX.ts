@@ -17,6 +17,8 @@ function spawn(kind: Kind, x: number, y: number, size: number, max: number, colo
 
 export const FX = {
   active() { let n = 0; for (const f of pool) if (f.life > 0) n++; return n; },
+  /** v7 origin rebase (pts are relative offsets) */
+  shift(dx: number, dy: number) { for (const f of pool) if (f.life > 0) { f.x -= dx; f.y -= dy; if (f.kind === 2) for (let i = 0; i < 24; i += 2) { f.pts[i] -= dx; f.pts[i + 1] -= dy; } } },
   tick(dt: number) { for (const f of pool) if (f.life > 0) f.life -= dt; },
   ring(x: number, y: number, radius: number, color: string, dur = 0.45) { spawn(0, x, y, radius, dur, color); },
   flash(x: number, y: number, size: number, color: string) { spawn(1, x, y, size, 0.18, color); },

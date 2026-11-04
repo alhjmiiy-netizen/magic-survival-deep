@@ -183,6 +183,7 @@ export class WeatherSystem {
     }
   }
 
+  public shift(dx: number, dy: number) { for (const p of this.particles) { p.x -= dx; p.y -= dy; } }
   public update(dt: number, cameraX: number, cameraY: number) {
     // Weather transition interpolation
     if (this.transitionTimer > 0) {

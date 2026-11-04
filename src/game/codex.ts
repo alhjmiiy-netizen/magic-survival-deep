@@ -46,15 +46,15 @@ export function buildCodex(): CodexEntry[] {
     `FLY lifts you ${T.FLIGHT_LIFT} px off the ground (hover): ×${T.HOVER_SPEED} move speed, +${pct(T.HOVER_DMG)} spell damage.`,
     `SOAR (moving while flying) climbs to ×${T.SOAR_H} height: ×${T.SOAR_SPEED} move speed and +${pct(T.SOAR_DMG)} spell damage.`,
     'While airborne, ground demons and lobbed ground shots cannot touch you; flying demons and aimed shots still can.',
-    `In flight you may leave the circle and roam a world ${T.WORLD_MUL}× its radius. LAND puts you back on the ground.`,
-  ], stats: [['Hover dmg', `+${pct(T.HOVER_DMG)}`], ['Soar dmg', `+${pct(T.SOAR_DMG)}`], ['World', `${T.WORLD_MUL}× radius`]] });
+    `The world is endless — walk or fly in any direction forever; the terrain is generated as you go (the same place always looks the same). LAND puts you back on the ground.`,
+  ], stats: [['Hover dmg', `+${pct(T.HOVER_DMG)}`], ['Soar dmg', `+${pct(T.SOAR_DMG)}`], ['World', 'endless']] });
   add({ id: 'guide:charge', tab: 'guide', name: 'Charge-Up', tag: 'Rules', icon: 'glyph:cataclysm', lines: [
     `Hold a magic for up to ${T.CHARGE_MAX} s. A full charge deals +150% damage, +60% area and +2 projectiles, but the cooldown grows by up to 50%.`,
     `Each charged cast feeds the Cataclysm meter (+${T.CATA_GAIN.chargeMin} to +${T.CATA_GAIN.chargeMax}).`,
   ] });
   add({ id: 'guide:cataclysm', tab: 'guide', name: 'Cataclysm', tag: 'Rules', icon: 'glyph:cataclysm', lines: [
     `The meter fills to 100 from fusions (+${T.CATA_GAIN.fusion}; three different fusions within 6 s fill it instantly), synergies (+${T.CATA_GAIN.synergy}), steam (+${T.CATA_GAIN.steam}), combos (+${T.CATA_GAIN.combo}) and charged casts.`,
-    `When full, the circle cracks and collapses into a scene for ${T.CATA_SCENE} s, then re-forms with a reward chest. Next cataclysm after a ${fmtTime(T.CATA_CD)} cooldown.`,
+    `When full, the ground around you shatters and collapses into a scene for ${T.CATA_SCENE} s, then re-forms with a reward chest. Next cataclysm after a ${fmtTime(T.CATA_CD)} cooldown.`,
     'The scene depends on how you stand: on the ground → The Abyss, hovering → Rift Between, soaring → Sky Realm.',
     'Never during a boss fight or between regions.',
   ], stats: [['Scene', `${T.CATA_SCENE} s`], ['Cooldown', fmtTime(T.CATA_CD)]] });
