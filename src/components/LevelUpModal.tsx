@@ -1,35 +1,43 @@
 import React from 'react';
-import { Sparkles, Zap, Snowflake, Flame, Timer, Crosshair, Heart, Magnet, Wind, Eye, Hourglass, Feather, Triangle, Hexagon, Sword, Crown } from 'lucide-react';
 import { sound } from '../audio/soundEngine';
 import type { UpgradeChoice } from '../game/spells';
 import { BASE_SPELLS, BASE_SPELL_IDS, makeSpell, spellEffectText } from '../game/spells';
-
-const ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  Sparkles, Zap, Snowflake, Flame, Timer, Crosshair, Heart, Magnet, Wind, Eye, Hourglass, Feather, Triangle, Hexagon, Sword, Crown,
-};
+import { ARTIFACTS } from '../game/deep';
+import { MagicGlyph, GLYPHS, glyphKeyFor } from './MagicIcons';
 
 const KIND_LABEL: Record<UpgradeChoice['kind'], string> = {
-  new: 'NEW MAGIC', level: 'MAGIC LEVEL UP', fast: 'CASTING', passive: 'PASSIVE', evolve: 'EVOLVE', artifact: 'ARTIFACT',
+  new: 'NEW MAGIC', level: 'MAGIC', fast: 'CASTING', passive: 'PASSIVE', evolve: 'EVOLVE', artifact: 'ARTIFACT',
 };
 
-const ELEMENT: Record<string, string> = {
-  thunderstorm: 'LIGHTNING', frost_nova: 'FROST', cataclysm: 'FIRE', arcane_missiles: 'ARCANE',
+export const ELEMENT_TAG: Record<string, [string, string]> = {
+  thunderstorm: ['LIGHTNING', '#fde047'], frost_nova: ['FROST', '#a5f3fc'], cataclysm: ['FIRE', '#fb923c'], arcane_missiles: ['ARCANE', '#c4b5fd'], spirit: ['SPIRIT', '#5eead4'],
 };
+
+function maxFor(c: UpgradeChoice, spellId: string): number {
+  if (c.kind === 'evolve') return 2;
+  if (c.kind === 'artifact') return ARTIFACTS.find((a) => `art:${a.id}` === c.id || a.id === spellId)?.max ?? 1;
+  if (c.kind === 'fast') return 6;
+  return BASE_SPELLS[spellId]?.maxLevel ?? 0;
+}
 
 function Card({ c, onPick }: { c: UpgradeChoice; onPick: (id: string) => void }) {
-  const Icon = ICONS[c.icon] ?? Sparkles;
-  const spellId = c.id.replace(/^(new|lvl|evo):/, '');
+  const spellId = c.id.replace(/^(new|lvl|evo|art):/, '');
   const evo = c.kind === 'evolve';
-  const el = ELEMENT[spellId];
+  const key = glyphKeyFor(c.id, c.level, c.kind);
+  const tag = ELEMENT_TAG[spellId];
+  const accent = evo ? '#ffd700' : tag?.[1] ?? GLYPHS[key]?.c ?? c.color;
   const [name, lvl] = c.title.includes(' Lv ') ? c.title.split(' Lv ') : [c.title, ''];
+  const max = maxFor(c, spellId);
+  const cur = c.level ?? (lvl ? Number(lvl) : 0);
   return (
     <div data-choice={c.id} role="button" data-kind={c.kind} onClick={() => { sound.playItemUse(); onPick(c.id); }}
-      className={`ms-card lv-card ${evo ? 'evo evo-card' : ''}`}>
-      <div className="lv-ic" style={{ color: evo ? '#ffd700' : '#fff' }}><Icon style={{ filter: `drop-shadow(0 0 5px ${c.color})` }} /></div>
+      className={`ms-card lv-card ${evo ? 'evo evo-card' : ''}`} style={{ ['--acc' as string]: accent }}>
+      <div className="lv-ic"><MagicGlyph k={key} size={40} /></div>
       <div className="lv-body">
-        <div className="lv-kind" style={{ color: evo ? '#ffd700' : c.color }}>{evo ? `★ EVOLVE${c.level === 2 ? ' · FINAL' : ''}` : KIND_LABEL[c.kind]}{el ? ` · ${el}` : ''}</div>
+        <div className="lv-kind"><span style={{ color: accent }}>{evo ? `★ EVOLVE${c.level === 2 ? ' · FINAL' : ''}` : KIND_LABEL[c.kind]}</span>{tag && <span className="lv-tag" style={{ color: tag[1], borderColor: tag[1] }}>{tag[0]}</span>}</div>
         <div className="lv-row"><span className="lv-name">{name}</span>{lvl && <span className="lv-lvl">Lv {lvl}</span>}</div>
         <div className="lv-desc">{c.desc}</div>
+        {max > 1 && max <= 12 && <div className="lv-pips">{Array.from({ length: max }, (_, i) => <i key={i} className={i < cur ? 'on' : ''} />)}</div>}
       </div>
     </div>
   );
