@@ -96,6 +96,7 @@ export interface LootItem {
   color: string;
   bobOffset: number;
   magnetized?: boolean;
+  merged?: number;
 }
 
 export interface Spell {

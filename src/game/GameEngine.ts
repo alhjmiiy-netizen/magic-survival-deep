@@ -39,6 +39,8 @@ const FUSIONS: Record<string, { name: string; color: string }> = {
   'fire+spirit': { name: 'Soulfire', color: '#5eead4' }, 'ice+spirit': { name: 'Wraith Frost', color: '#99f6e4' }, 'lightning+spirit': { name: 'Storm Wraiths', color: '#67e8f9' }, 'arcane+spirit': { name: 'Astral Echo', color: '#c4b5fd' },
 };
 export const FUSION_TABLE = FUSIONS;
+/** In-place stable compaction (no new array, no splice shifting). */
+export function compact<T>(a: T[], keep: (x: T) => boolean) { let j = 0; for (let i = 0; i < a.length; i++) { const x = a[i]; if (keep(x)) a[j++] = x; } a.length = j; }
 interface Hazard { x: number; y: number; r: number; t: number; dmg: number; color: string; slow?: boolean; air?: boolean }
 
 export interface GameEngineCallbacks {
@@ -1232,6 +1234,47 @@ export class GameEngine {
     if (this.spirits.length) sound.play('spirit', Math.min(1.6, 0.6 + this.spirits.length * 0.08));
   }
 
+
+
+  private uiSec = -1; private uiTimer = 0; private lootTimer = 1;
+  public lootMerged = 0;
+  /** v6: keep pickups bounded — merge surplus gems/coins into their nearest same-type neighbour (value adds up). */
+  public static LOOT_CAP: Record<string, number> = { xp: 90, gold: 70, crystal: 40, chest: 6 };
+  private compactLoot() {
+    const L = this.lootItems; const by: Record<string, LootItem[]> = {};
+    for (const l of L) (by[l.type] ??= []).push(l);
+    for (const type of Object.keys(by)) {
+      const arr = by[type]; const cap = GameEngine.LOOT_CAP[type] ?? 60; if (arr.length <= cap) continue;
+      const px = this.playerX, py = this.playerY;
+      arr.sort((a, b) => Math.hypot(b.x - px, b.y - py) - Math.hypot(a.x - px, a.y - py)); // farthest first
+      const extra = arr.length - cap;
+      for (let i = 0; i < extra; i++) {
+        const a = arr[i];
+        if (type === 'chest') { a.type = 'gold'; a.value = 250; a.color = '#eab308'; continue; }
+        let best: LootItem | null = null, bd = 1e18;
+        for (let j = extra; j < arr.length; j++) { const b = arr[j]; const d = (b.x - a.x) ** 2 + (b.y - a.y) ** 2; if (d < bd) { bd = d; best = b; } }
+        if (best) { best.value += a.value; best.merged = (best.merged ?? 1) + (a.merged ?? 1); a.value = -1; this.lootMerged++; }
+      }
+    }
+    compact(L, (q) => q.value >= 0);
+  }
+  private capLogs() {
+    for (const k of ['fusionLog', 'chestLog', 'flightLog', 'comboLog', 'chargeLog', 'castLog'] as const) { const a = this[k] as unknown[]; if (a.length > 240) a.splice(0, a.length - 200); }
+  }
+
+  // ---------- v6 perf instrumentation ----------
+  /** Lengths of every array / Map / Set reachable on the engine (and weather), for soak tests. */
+  public perfStats() {
+    const out: Record<string, number> = {};
+    const scan = (o: Record<string, unknown>, pre: string) => { for (const k of Object.keys(o)) { const v = o[k]; if (Array.isArray(v)) out[pre + k] = v.length; else if (v instanceof Map || v instanceof Set) out[pre + k] = v.size; } };
+    scan(this as unknown as Record<string, unknown>, ''); scan(this.weatherSystem as unknown as Record<string, unknown>, 'weather.');
+    out['fx.active'] = FX.active();
+    return out;
+  }
+  /** Advance the simulation n fixed steps without rendering (debug fast-forward). Returns avg update ms. */
+  public soakSteps(n: number, dt = 1 / 30) { const t0 = performance.now(); for (let i = 0; i < n; i++) { this.update(dt); FX.tick(dt); } return (performance.now() - t0) / Math.max(1, n); }
+  public soakRender(n: number) { const t0 = performance.now(); for (let i = 0; i < n; i++) this.render(); return (performance.now() - t0) / Math.max(1, n); }
+
   public start() {
     if (this.isRunning) return;
     this.isRunning = true;
@@ -1286,13 +1329,15 @@ export class GameEngine {
     this.gameTimeSeconds += dt;
     this.updateFlight(dt);
     this.fusionCd = Math.max(0, this.fusionCd - dt);
-    for (let i = this.labels.length - 1; i >= 0; i--) { this.labels[i].life -= dt; if (this.labels[i].life <= 0) this.labels.splice(i, 1); }
-    for (let i = this.beams.length - 1; i >= 0; i--) { this.beams[i].life -= dt; if (this.beams[i].life <= 0) this.beams.splice(i, 1); }
+    for (const l of this.labels) l.life -= dt; compact(this.labels, (q) => q.life > 0); if (this.labels.length > 24) this.labels.splice(0, this.labels.length - 24);
+    for (const b of this.beams) b.life -= dt; compact(this.beams, (q) => q.life > 0);
 
     const mins = Math.floor(this.gameTimeSeconds / 60);
     const secs = Math.floor(this.gameTimeSeconds % 60);
     const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    this.callbacks.onWaveUpdate(this.currentWave, this.targetEnemiesThisWave, timeStr);
+    const secNow = Math.floor(this.gameTimeSeconds);
+    const secChanged = secNow !== this.uiSec; this.uiSec = secNow;
+    if (secChanged) this.callbacks.onWaveUpdate(this.currentWave, this.targetEnemiesThisWave, timeStr);
 
     // Survival Milestone check: 15:00 mark (900 seconds) required by the containment protocol
     if (false as boolean) {
@@ -1301,7 +1346,7 @@ export class GameEngine {
       this.callbacks.onSurvivalMilestone?.(timeStr, this.currentWave, this.enemiesDefeated);
     }
 
-    this.callbacks.onQuestUpdate((prev) =>
+    if (secChanged) this.callbacks.onQuestUpdate((prev) =>
       prev.map((q) => (q.id === 'q3' ? { ...q, current: Math.min(q.target, Math.floor(this.gameTimeSeconds)) } : q))
     );
 
@@ -1572,7 +1617,7 @@ export class GameEngine {
       const dy = this.playerY - item.y;
       const dist = Math.hypot(dx, dy);
 
-      if (item.type === 'chest') { if (dist < 46) { this.collectLoot(item); this.lootItems.splice(i, 1); } continue; }
+      if (item.type === 'chest') { if (dist < 46) { this.collectLoot(item); item.value = -1; } continue; }
       if (dist < pickupRad || item.magnetized) {
         item.magnetized = true;
         const spd = 480;
@@ -1582,9 +1627,10 @@ export class GameEngine {
 
       if (dist < 32) {
         this.collectLoot(item);
-        this.lootItems.splice(i, 1);
+        item.value = -1;
       }
     }
+    compact(this.lootItems, (q) => q.value >= 0);
 
     // Update Particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
@@ -1593,10 +1639,8 @@ export class GameEngine {
       part.x += part.vx * dt;
       part.y += part.vy * dt;
       part.alpha = Math.max(0, part.life / part.maxLife);
-      if (part.life <= 0) {
-        this.particles.splice(i, 1);
-      }
     }
+    compact(this.particles, (q) => q.life > 0);
 
     // Update Damage Numbers
     for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
@@ -1604,21 +1648,21 @@ export class GameEngine {
       dn.life -= dt;
       dn.y += dn.vy * dt;
       dn.alpha = Math.max(0, dn.life / dn.maxLife);
-      if (dn.life <= 0) {
-        this.damageNumbers.splice(i, 1);
-      }
     }
+    compact(this.damageNumbers, (q) => q.life > 0);
 
-    // Update Radar Data
-    this.callbacks.onRadarUpdate({
-      playerX: this.playerX,
-      playerY: this.playerY,
-      arenaRadius: this.arenaRadius,
-      enemies: this.enemies.map((e) => ({ x: e.x, y: e.y, isBoss: e.isBoss })),
-      crystals: this.lootItems.filter((l) => l.type === 'crystal').map((l) => ({ x: l.x, y: l.y })),
-    });
-
-    this.callbacks.onStatsUpdate({ ...this.stats });
+    // v6: UI callbacks throttled to ~12 Hz (they re-render the React tree)
+    this.uiTimer -= dt;
+    if (this.uiTimer <= 0) {
+      this.uiTimer = 0.083;
+      const en: { x: number; y: number; isBoss?: boolean }[] = []; const cr: { x: number; y: number }[] = [];
+      for (const e of this.enemies) en.push({ x: e.x, y: e.y, isBoss: e.isBoss });
+      for (const l of this.lootItems) if (l.type === 'crystal') cr.push({ x: l.x, y: l.y });
+      this.callbacks.onRadarUpdate({ playerX: this.playerX, playerY: this.playerY, arenaRadius: this.arenaRadius, enemies: en, crystals: cr });
+      this.callbacks.onStatsUpdate({ ...this.stats });
+    }
+    this.lootTimer -= dt; if (this.lootTimer <= 0) { this.lootTimer = 1; this.compactLoot(); }
+    this.capLogs();
   }
 
   private triggerCentralSigilSurge() {
@@ -2215,6 +2259,7 @@ export class GameEngine {
     const now = performance.now();
 
     for (const e of this.enemies) {
+      if (!e.isBoss && !this.onScreen(e.x, e.y, 140)) continue;
       const isHit = Boolean(e.hitFlash && now < e.hitFlash);
       const isFrozen = Boolean(e.frozenUntil && now < e.frozenUntil);
 
@@ -2240,9 +2285,11 @@ export class GameEngine {
     const time = performance.now() * 0.003;
 
     for (const item of this.lootItems) {
+      if (!this.onScreen(item.x, item.y, 40)) continue;
       ctx.save();
       const bob = Math.sin(time * 2 + item.bobOffset) * 4;
       ctx.translate(item.x, item.y + bob);
+      if (item.merged && item.merged > 1) { const k = Math.min(2.2, 1 + Math.log2(item.merged) * 0.25); ctx.scale(k, k); }
 
 
       if (item.type === 'crystal') {
@@ -2294,6 +2341,7 @@ export class GameEngine {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (const part of this.particles) {
+      if (!this.onScreen(part.x, part.y, 60)) continue;
       ctx.globalAlpha = Math.max(0, Math.min(1, part.alpha));
       ctx.fillStyle = part.color;
       if (part.shape === 'spark') {
@@ -2316,6 +2364,7 @@ export class GameEngine {
   private renderDamageNumbers(ctx: CanvasRenderingContext2D) {
     ctx.save();
     for (const dn of this.damageNumbers) {
+      if (!this.onScreen(dn.x, dn.y, 60)) continue;
       ctx.globalAlpha = dn.alpha;
       ctx.textAlign = 'center';
 
