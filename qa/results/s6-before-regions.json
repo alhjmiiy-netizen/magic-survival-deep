@@ -1,0 +1,2030 @@
+{
+ "rows": [
+  {
+   "stats": {
+    "enemies": 9,
+    "projectiles": 4,
+    "particles": 182,
+    "damageNumbers": 9,
+    "lootItems": 21,
+    "castLog": 2,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 0,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 4,
+    "chestLog": 0,
+    "flightLog": 0,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 17,
+    "fusionLog": 1,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 5
+   },
+   "updMs": 0.223,
+   "drawMs": 3.725,
+   "heapMB": 30.08,
+   "dom": 332,
+   "sound": 1,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 0,
+   "loot": {
+    "crystal": 5,
+    "gold": 8,
+    "xp": 8
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     118
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     13
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 0.3,
+    "scriptMsPerFrame": 816.35,
+    "styleLayoutMsPerFrame": 3.16,
+    "taskMsPerFrame": 904.14
+   },
+   "minute": 0
+  },
+  {
+   "stats": {
+    "enemies": 4,
+    "projectiles": 4,
+    "particles": 104,
+    "damageNumbers": 3,
+    "lootItems": 102,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 4,
+    "zones": 0,
+    "hazards": 1,
+    "frameTimes": 7,
+    "chestLog": 0,
+    "flightLog": 0,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 116,
+    "fusionLog": 15,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.054,
+   "drawMs": 1.25,
+   "heapMB": 32.22,
+   "dom": 325,
+   "sound": 18,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 0,
+   "loot": {
+    "crystal": 24,
+    "gold": 40,
+    "xp": 36,
+    "chest": 2
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     118
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 1
+  },
+  {
+   "stats": {
+    "enemies": 6,
+    "projectiles": 1,
+    "particles": 128,
+    "damageNumbers": 2,
+    "lootItems": 183,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 10,
+    "chestLog": 0,
+    "flightLog": 1,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 2,
+    "spawnLog": 227,
+    "fusionLog": 30,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 3
+   },
+   "updMs": 0.087,
+   "drawMs": 1.67,
+   "heapMB": 31.58,
+   "dom": 324,
+   "sound": 20,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 0,
+   "loot": {
+    "crystal": 42,
+    "gold": 74,
+    "xp": 63,
+    "chest": 4
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     118
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     13
+    ]
+   ],
+   "endless": false,
+   "minute": 2
+  },
+  {
+   "stats": {
+    "enemies": 12,
+    "projectiles": 0,
+    "particles": 65,
+    "damageNumbers": 4,
+    "lootItems": 253,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 16,
+    "chestLog": 2,
+    "flightLog": 2,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 2,
+    "spawnLog": 351,
+    "fusionLog": 44,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.083,
+   "drawMs": 1.425,
+   "heapMB": 31.73,
+   "dom": 328,
+   "sound": 22,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 0,
+   "loot": {
+    "crystal": 61,
+    "gold": 103,
+    "xp": 84,
+    "chest": 5
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     118
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     13
+    ]
+   ],
+   "endless": false,
+   "minute": 3
+  },
+  {
+   "stats": {
+    "enemies": 2,
+    "projectiles": 0,
+    "particles": 3,
+    "damageNumbers": 2,
+    "lootItems": 310,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 21,
+    "chestLog": 6,
+    "flightLog": 2,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 59,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.076,
+   "drawMs": 3.135,
+   "heapMB": 32.51,
+   "dom": 356,
+   "sound": 26,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 1,
+   "loot": {
+    "crystal": 73,
+    "gold": 124,
+    "xp": 106,
+    "chest": 7
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     142
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 4
+  },
+  {
+   "stats": {
+    "enemies": 19,
+    "projectiles": 0,
+    "particles": 102,
+    "damageNumbers": 24,
+    "lootItems": 357,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 0,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 26,
+    "chestLog": 7,
+    "flightLog": 2,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 3,
+    "spawnLog": 400,
+    "fusionLog": 74,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 5
+   },
+   "updMs": 0.11,
+   "drawMs": 2.805,
+   "heapMB": 31.49,
+   "dom": 380,
+   "sound": 11,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 1,
+   "loot": {
+    "crystal": 78,
+    "gold": 152,
+    "xp": 119,
+    "chest": 8
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     155
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 4.3,
+    "scriptMsPerFrame": 83.77,
+    "styleLayoutMsPerFrame": 0.67,
+    "taskMsPerFrame": 94.57
+   },
+   "minute": 5
+  },
+  {
+   "stats": {
+    "enemies": 39,
+    "projectiles": 0,
+    "particles": 99,
+    "damageNumbers": 15,
+    "lootItems": 371,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 3,
+    "zones": 1,
+    "hazards": 1,
+    "frameTimes": 44,
+    "chestLog": 9,
+    "flightLog": 3,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 15,
+    "spawnLog": 400,
+    "fusionLog": 88,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.102,
+   "drawMs": 3.15,
+   "heapMB": 31.87,
+   "dom": 376,
+   "sound": 18,
+   "phase": "scene",
+   "alt": "hover",
+   "region": 1,
+   "loot": {
+    "crystal": 81,
+    "gold": 158,
+    "xp": 124,
+    "chest": 8
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     155
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 6
+  },
+  {
+   "stats": {
+    "enemies": 37,
+    "projectiles": 0,
+    "particles": 87,
+    "damageNumbers": 19,
+    "lootItems": 395,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 6,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 49,
+    "chestLog": 11,
+    "flightLog": 4,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 10,
+    "spawnLog": 400,
+    "fusionLog": 103,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.11,
+   "drawMs": 2.835,
+   "heapMB": 32.24,
+   "dom": 402,
+   "sound": 24,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 1,
+   "loot": {
+    "crystal": 89,
+    "gold": 165,
+    "xp": 132,
+    "chest": 9
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     179
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 7
+  },
+  {
+   "stats": {
+    "enemies": 32,
+    "projectiles": 0,
+    "particles": 77,
+    "damageNumbers": 26,
+    "lootItems": 438,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 6,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 56,
+    "chestLog": 13,
+    "flightLog": 4,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 10,
+    "spawnLog": 400,
+    "fusionLog": 118,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 3
+   },
+   "updMs": 0.102,
+   "drawMs": 4.5,
+   "heapMB": 32.99,
+   "dom": 416,
+   "sound": 28,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 1,
+   "loot": {
+    "crystal": 95,
+    "gold": 192,
+    "xp": 141,
+    "chest": 10
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     190
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 8
+  },
+  {
+   "stats": {
+    "enemies": 1,
+    "projectiles": 4,
+    "particles": 99,
+    "damageNumbers": 1,
+    "lootItems": 458,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 61,
+    "chestLog": 15,
+    "flightLog": 4,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 132,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 3
+   },
+   "updMs": 0.132,
+   "drawMs": 3.225,
+   "heapMB": 32.32,
+   "dom": 432,
+   "sound": 38,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 2,
+   "loot": {
+    "crystal": 98,
+    "gold": 201,
+    "xp": 149,
+    "chest": 10
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 9
+  },
+  {
+   "stats": {
+    "enemies": 34,
+    "projectiles": 0,
+    "particles": 0,
+    "damageNumbers": 1,
+    "lootItems": 486,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 3,
+    "hazards": 0,
+    "frameTimes": 66,
+    "chestLog": 15,
+    "flightLog": 5,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 4,
+    "spawnLog": 400,
+    "fusionLog": 151,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.111,
+   "drawMs": 1.94,
+   "heapMB": 31.89,
+   "dom": 436,
+   "sound": 22,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 2,
+   "loot": {
+    "crystal": 102,
+    "gold": 215,
+    "xp": 157,
+    "chest": 12
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 6.3,
+    "scriptMsPerFrame": 54.33,
+    "styleLayoutMsPerFrame": 0.82,
+    "taskMsPerFrame": 59.98
+   },
+   "minute": 10
+  },
+  {
+   "stats": {
+    "enemies": 51,
+    "projectiles": 0,
+    "particles": 149,
+    "damageNumbers": 38,
+    "lootItems": 536,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 1,
+    "zones": 1,
+    "hazards": 2,
+    "frameTimes": 94,
+    "chestLog": 16,
+    "flightLog": 6,
+    "labels": 2,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 171,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 28
+   },
+   "updMs": 0.101,
+   "drawMs": 3.405,
+   "heapMB": 33.09,
+   "dom": 436,
+   "sound": 15,
+   "phase": "scene",
+   "alt": "ground",
+   "region": 2,
+   "loot": {
+    "crystal": 111,
+    "gold": 238,
+    "xp": 175,
+    "chest": 12
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 11
+  },
+  {
+   "stats": {
+    "enemies": 40,
+    "projectiles": 0,
+    "particles": 77,
+    "damageNumbers": 11,
+    "lootItems": 563,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 5,
+    "hazards": 0,
+    "frameTimes": 98,
+    "chestLog": 16,
+    "flightLog": 6,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 4,
+    "spawnLog": 400,
+    "fusionLog": 190,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 13
+   },
+   "updMs": 0.102,
+   "drawMs": 2.36,
+   "heapMB": 32.92,
+   "dom": 432,
+   "sound": 24,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 2,
+   "loot": {
+    "crystal": 113,
+    "gold": 253,
+    "xp": 183,
+    "chest": 14
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 12
+  },
+  {
+   "stats": {
+    "enemies": 34,
+    "projectiles": 0,
+    "particles": 12,
+    "damageNumbers": 25,
+    "lootItems": 603,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 105,
+    "chestLog": 20,
+    "flightLog": 6,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 1,
+    "spawnLog": 400,
+    "fusionLog": 210,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.088,
+   "drawMs": 2.275,
+   "heapMB": 32.66,
+   "dom": 432,
+   "sound": 32,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 2,
+   "loot": {
+    "crystal": 121,
+    "gold": 271,
+    "xp": 197,
+    "chest": 14
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 13
+  },
+  {
+   "stats": {
+    "enemies": 42,
+    "projectiles": 0,
+    "particles": 22,
+    "damageNumbers": 54,
+    "lootItems": 481,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 113,
+    "chestLog": 21,
+    "flightLog": 7,
+    "labels": 0,
+    "beams": 1,
+    "enemyShots": 8,
+    "spawnLog": 400,
+    "fusionLog": 229,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 10
+   },
+   "updMs": 0.094,
+   "drawMs": 2.245,
+   "heapMB": 32.54,
+   "dom": 436,
+   "sound": 43,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 2,
+   "loot": {
+    "crystal": 92,
+    "gold": 210,
+    "xp": 162,
+    "chest": 17
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     203
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     14
+    ]
+   ],
+   "endless": false,
+   "minute": 14
+  },
+  {
+   "stats": {
+    "enemies": 2,
+    "projectiles": 1,
+    "particles": 6,
+    "damageNumbers": 2,
+    "lootItems": 521,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 126,
+    "chestLog": 26,
+    "flightLog": 8,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 249,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 50,
+    "fx.active": 3
+   },
+   "updMs": 0.078,
+   "drawMs": 2.32,
+   "heapMB": 32.54,
+   "dom": 455,
+   "sound": 35,
+   "phase": "crack",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 101,
+    "gold": 225,
+    "xp": 178,
+    "chest": 17
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     214
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     16
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 2.7,
+    "scriptMsPerFrame": 117.24,
+    "styleLayoutMsPerFrame": 0.86,
+    "taskMsPerFrame": 130.83
+   },
+   "minute": 15
+  },
+  {
+   "stats": {
+    "enemies": 58,
+    "projectiles": 0,
+    "particles": 0,
+    "damageNumbers": 33,
+    "lootItems": 525,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 1,
+    "hazards": 2,
+    "frameTimes": 142,
+    "chestLog": 29,
+    "flightLog": 8,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 268,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.135,
+   "drawMs": 2.25,
+   "heapMB": 33.52,
+   "dom": 454,
+   "sound": 21,
+   "phase": "scene",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 102,
+    "gold": 226,
+    "xp": 179,
+    "chest": 18
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     214
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     16
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 16
+  },
+  {
+   "stats": {
+    "enemies": 53,
+    "projectiles": 0,
+    "particles": 58,
+    "damageNumbers": 31,
+    "lootItems": 532,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 151,
+    "chestLog": 31,
+    "flightLog": 8,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 287,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.072,
+   "drawMs": 2.775,
+   "heapMB": 33.29,
+   "dom": 462,
+   "sound": 24,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 103,
+    "gold": 229,
+    "xp": 180,
+    "chest": 20
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     227
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     18
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 17
+  },
+  {
+   "stats": {
+    "enemies": 92,
+    "projectiles": 0,
+    "particles": 169,
+    "damageNumbers": 60,
+    "lootItems": 574,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 6,
+    "zones": 5,
+    "hazards": 0,
+    "frameTimes": 157,
+    "chestLog": 35,
+    "flightLog": 9,
+    "labels": 1,
+    "beams": 1,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 307,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 6
+   },
+   "updMs": 0.093,
+   "drawMs": 3.265,
+   "heapMB": 33.71,
+   "dom": 462,
+   "sound": 32,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 3,
+   "loot": {
+    "crystal": 108,
+    "gold": 250,
+    "xp": 195,
+    "chest": 21
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     227
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     18
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 18
+  },
+  {
+   "stats": {
+    "enemies": 111,
+    "projectiles": 0,
+    "particles": 65,
+    "damageNumbers": 4,
+    "lootItems": 610,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 8,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 163,
+    "chestLog": 37,
+    "flightLog": 10,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 326,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.145,
+   "drawMs": 3.33,
+   "heapMB": 33.88,
+   "dom": 477,
+   "sound": 34,
+   "phase": "crack",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 111,
+    "gold": 271,
+    "xp": 206,
+    "chest": 22
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     238
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     20
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 19
+  },
+  {
+   "stats": {
+    "enemies": 73,
+    "projectiles": 0,
+    "particles": 0,
+    "damageNumbers": 10,
+    "lootItems": 614,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 169,
+    "chestLog": 37,
+    "flightLog": 10,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 345,
+    "chargeLog": 0,
+    "spirits": 1,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.102,
+   "drawMs": 2.495,
+   "heapMB": 34.29,
+   "dom": 480,
+   "sound": 34,
+   "phase": "scene",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 112,
+    "gold": 274,
+    "xp": 206,
+    "chest": 22
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     238
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     20
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 7.7,
+    "scriptMsPerFrame": 48.32,
+    "styleLayoutMsPerFrame": 0.72,
+    "taskMsPerFrame": 55.69
+   },
+   "minute": 20
+  },
+  {
+   "stats": {
+    "enemies": 98,
+    "projectiles": 0,
+    "particles": 118,
+    "damageNumbers": 52,
+    "lootItems": 618,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 4,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 201,
+    "chestLog": 41,
+    "flightLog": 10,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 365,
+    "chargeLog": 0,
+    "spirits": 3,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.121,
+   "drawMs": 3.06,
+   "heapMB": 34.3,
+   "dom": 496,
+   "sound": 25,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 3,
+   "loot": {
+    "crystal": 112,
+    "gold": 276,
+    "xp": 207,
+    "chest": 23
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     251
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     22
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 21
+  },
+  {
+   "stats": {
+    "enemies": 2,
+    "projectiles": 3,
+    "particles": 71,
+    "damageNumbers": 2,
+    "lootItems": 627,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 8,
+    "zones": 0,
+    "hazards": 2,
+    "frameTimes": 209,
+    "chestLog": 48,
+    "flightLog": 11,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 385,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.148,
+   "drawMs": 2.19,
+   "heapMB": 32.88,
+   "dom": 492,
+   "sound": 34,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 4,
+   "loot": {
+    "crystal": 114,
+    "gold": 281,
+    "xp": 209,
+    "chest": 23
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     251
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     22
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 22
+  },
+  {
+   "stats": {
+    "enemies": 110,
+    "projectiles": 0,
+    "particles": 101,
+    "damageNumbers": 60,
+    "lootItems": 642,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 2,
+    "hazards": 0,
+    "frameTimes": 215,
+    "chestLog": 49,
+    "flightLog": 12,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 25,
+    "spawnLog": 400,
+    "fusionLog": 404,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 3
+   },
+   "updMs": 0.141,
+   "drawMs": 3.135,
+   "heapMB": 34.12,
+   "dom": 512,
+   "sound": 20,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 116,
+    "gold": 289,
+    "xp": 214,
+    "chest": 23
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     264
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     24
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 23
+  },
+  {
+   "stats": {
+    "enemies": 104,
+    "projectiles": 0,
+    "particles": 83,
+    "damageNumbers": 60,
+    "lootItems": 721,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 8,
+    "zones": 0,
+    "hazards": 0,
+    "frameTimes": 223,
+    "chestLog": 50,
+    "flightLog": 12,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 10,
+    "spawnLog": 400,
+    "fusionLog": 424,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 11
+   },
+   "updMs": 0.12,
+   "drawMs": 3.63,
+   "heapMB": 34.36,
+   "dom": 527,
+   "sound": 22,
+   "phase": "crack",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 133,
+    "gold": 332,
+    "xp": 233,
+    "chest": 23
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     275
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     26
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 24
+  },
+  {
+   "stats": {
+    "enemies": 92,
+    "projectiles": 0,
+    "particles": 0,
+    "damageNumbers": 11,
+    "lootItems": 723,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 2,
+    "hazards": 0,
+    "frameTimes": 227,
+    "chestLog": 50,
+    "flightLog": 12,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 0,
+    "spawnLog": 400,
+    "fusionLog": 443,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 1
+   },
+   "updMs": 0.125,
+   "drawMs": 3.22,
+   "heapMB": 34.09,
+   "dom": 530,
+   "sound": 21,
+   "phase": "scene",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 133,
+    "gold": 332,
+    "xp": 235,
+    "chest": 23
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     275
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     26
+    ],
+    [
+     "absolute inset-0 pointer-events-none sel",
+     15
+    ]
+   ],
+   "endless": false,
+   "rt": {
+    "fps": 7.3,
+    "scriptMsPerFrame": 47.57,
+    "styleLayoutMsPerFrame": 0.71,
+    "taskMsPerFrame": 53.64
+   },
+   "minute": 25
+  },
+  {
+   "stats": {
+    "enemies": 109,
+    "projectiles": 0,
+    "particles": 99,
+    "damageNumbers": 60,
+    "lootItems": 755,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 6,
+    "zones": 7,
+    "hazards": 0,
+    "frameTimes": 256,
+    "chestLog": 51,
+    "flightLog": 13,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 13,
+    "spawnLog": 400,
+    "fusionLog": 463,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.1,
+   "drawMs": 4.015,
+   "heapMB": 35.35,
+   "dom": 522,
+   "sound": 17,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 4,
+   "loot": {
+    "crystal": 140,
+    "gold": 345,
+    "xp": 245,
+    "chest": 25
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     275
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     26
+    ],
+    [
+     "relative rounded-xl flex items-center ju",
+     15
+    ]
+   ],
+   "endless": false,
+   "minute": 26
+  },
+  {
+   "stats": {
+    "enemies": 110,
+    "projectiles": 0,
+    "particles": 77,
+    "damageNumbers": 46,
+    "lootItems": 790,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 7,
+    "zones": 2,
+    "hazards": 0,
+    "frameTimes": 263,
+    "chestLog": 55,
+    "flightLog": 14,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 16,
+    "spawnLog": 400,
+    "fusionLog": 482,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.176,
+   "drawMs": 3.81,
+   "heapMB": 34.08,
+   "dom": 554,
+   "sound": 34,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 146,
+    "gold": 360,
+    "xp": 259,
+    "chest": 25
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     297
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     30
+    ],
+    [
+     "artifacts",
+     16
+    ]
+   ],
+   "endless": false,
+   "minute": 27
+  },
+  {
+   "stats": {
+    "enemies": 108,
+    "projectiles": 0,
+    "particles": 0,
+    "damageNumbers": 60,
+    "lootItems": 804,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 5,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 270,
+    "chestLog": 61,
+    "flightLog": 14,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 16,
+    "spawnLog": 400,
+    "fusionLog": 501,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 1
+   },
+   "updMs": 0.148,
+   "drawMs": 4.01,
+   "heapMB": 34.6,
+   "dom": 570,
+   "sound": 40,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 147,
+    "gold": 366,
+    "xp": 265,
+    "chest": 26
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     310
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     32
+    ],
+    [
+     "artifacts",
+     17
+    ]
+   ],
+   "endless": false,
+   "minute": 28
+  },
+  {
+   "stats": {
+    "enemies": 114,
+    "projectiles": 0,
+    "particles": 120,
+    "damageNumbers": 48,
+    "lootItems": 810,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 8,
+    "zones": 2,
+    "hazards": 0,
+    "frameTimes": 276,
+    "chestLog": 65,
+    "flightLog": 14,
+    "labels": 1,
+    "beams": 0,
+    "enemyShots": 34,
+    "spawnLog": 400,
+    "fusionLog": 521,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 2
+   },
+   "updMs": 0.151,
+   "drawMs": 3.975,
+   "heapMB": 34.73,
+   "dom": 566,
+   "sound": 40,
+   "phase": "idle",
+   "alt": "ground",
+   "region": 4,
+   "loot": {
+    "crystal": 150,
+    "gold": 367,
+    "xp": 267,
+    "chest": 26
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     310
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     32
+    ],
+    [
+     "artifacts",
+     17
+    ]
+   ],
+   "endless": true,
+   "minute": 29
+  },
+  {
+   "stats": {
+    "enemies": 37,
+    "projectiles": 0,
+    "particles": 47,
+    "damageNumbers": 20,
+    "lootItems": 889,
+    "castLog": 60,
+    "comboLog": 0,
+    "synergies": 0,
+    "notices": 6,
+    "zones": 1,
+    "hazards": 0,
+    "frameTimes": 285,
+    "chestLog": 66,
+    "flightLog": 15,
+    "labels": 0,
+    "beams": 0,
+    "enemyShots": 17,
+    "spawnLog": 400,
+    "fusionLog": 540,
+    "chargeLog": 0,
+    "spirits": 7,
+    "spells": 5,
+    "weather.particles": 280,
+    "weather.splashes": 0,
+    "fx.active": 0
+   },
+   "updMs": 0.139,
+   "drawMs": 3.18,
+   "heapMB": 34.51,
+   "dom": 570,
+   "sound": 24,
+   "phase": "idle",
+   "alt": "hover",
+   "region": 4,
+   "loot": {
+    "crystal": 163,
+    "gold": 408,
+    "xp": 288,
+    "chest": 30
+   },
+   "lootFar": 0,
+   "domTop": [
+    [
+     "[object SVGAnimatedString]",
+     310
+    ],
+    [
+     "flex gap-[2px] mt-[5px] h-[4px]",
+     40
+    ],
+    [
+     "relative w-6 h-6 rounded-md flex items-c",
+     32
+    ],
+    [
+     "artifacts",
+     17
+    ]
+   ],
+   "endless": true,
+   "rt": {
+    "fps": 5.3,
+    "scriptMsPerFrame": 66.41,
+    "styleLayoutMsPerFrame": 0.82,
+    "taskMsPerFrame": 74.56
+   },
+   "minute": 30
+  }
+ ],
+ "errs": []
+}
